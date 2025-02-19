@@ -21,13 +21,28 @@
 //! let species = model.create_species("glucose");
 //! ```
 
+pub mod annotation;
 pub mod compartment;
 pub mod model;
 pub mod sbmldoc;
 pub mod species;
+pub mod unit;
+pub mod unitdef;
+
+/// Internal module containing the wrapper types for the annotation.
+pub(crate) mod wrapper;
 
 // Re-export commonly used types
+pub use annotation::Annotation;
 pub use sbmldoc::SBMLDocument;
+
+pub mod prelude {
+    pub use crate::annotation::Annotation;
+    pub use crate::compartment::Compartment;
+    pub use crate::model::Model;
+    pub use crate::sbmldoc::SBMLDocument;
+    pub use crate::species::{Species, SpeciesBuilder};
+}
 
 /// Internal module containing the raw FFI bindings to libSBML.
 ///
@@ -39,8 +54,9 @@ pub(crate) mod sbmlcxx {
 
     include_cpp! {
         #include "sbml/SBMLTypes.h"
-        #include "src/annotation.hpp"
+        #include "src/utils.hpp"
         safety!(unsafe_ffi)
+        // libsbml types
         generate!("SBase")
         generate!("Model")
         generate!("Species")
@@ -48,7 +64,16 @@ pub(crate) mod sbmlcxx {
         generate!("Compartment")
         generate!("SBMLDocument")
         generate!("SBMLWriter")
+        generate!("UnitDefinition")
+        generate!("Unit")
+        generate!("UnitKind")
+        // utils
         generate!("utils::getSpeciesAnnotationString")
+        generate!("utils::getModelAnnotationString")
+        generate!("utils::getCompartmentAnnotationString")
+        generate!("utils::setSpeciesAnnotation")
+        generate!("utils::setModelAnnotation")
+        generate!("utils::setCompartmentAnnotation")
     }
 
     pub use ffi::*;
