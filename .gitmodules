@@ -1,9 +1,6 @@
-[submodule "vendors/libxml2"]
-	path = vendors/libxml2
-	url = https://github.com/GNOME/libxml2.git
 [submodule "vendors/libsbml"]
 	path = vendors/libsbml
 	url = https://github.com/sbmlteam/libsbml.git
-[submodule "vendors/vendors/libxml2"]
-	path = vendors/vendors/libxml2
+[submodule "vendors/libxml2"]
+	path = vendors/libxml2
 	url = https://github.com/GNOME/libxml2.git
