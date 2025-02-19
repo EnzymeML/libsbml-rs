@@ -395,3 +395,78 @@ impl<'a> SpeciesBuilder<'a> {
         self.species
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::SBMLDocument;
+    use pretty_assertions::assert_eq;
+
+    use super::*;
+
+    #[test]
+    fn test_species() {
+        let doc = SBMLDocument::new(3, 2);
+        let model = Model::new(&doc, "test");
+        let species = Species::new(&model, "glucose");
+        species.set_name("Glucose");
+        species.set_compartment("cytosol");
+        species.set_initial_amount(1.0);
+        species.set_initial_concentration(0.5);
+        species.set_boundary_condition(true);
+        species.set_constant(false);
+        species.set_has_only_substance_units(true);
+
+        assert_eq!(species.name(), "Glucose");
+    }
+
+    #[test]
+    fn test_species_builder() {
+        let doc = SBMLDocument::new(3, 2);
+        let model = Model::new(&doc, "test");
+        let builder = SpeciesBuilder::new(&model, "glucose");
+        let species = builder
+            .name("Glucose")
+            .compartment("cytosol")
+            .initial_amount(1.0)
+            .boundary_condition(true)
+            .constant(false)
+            .has_only_substance_units(true)
+            .build();
+
+        assert_eq!(species.name(), "Glucose");
+        assert_eq!(species.id(), "glucose");
+        assert_eq!(species.compartment(), "cytosol");
+        assert_eq!(species.initial_amount(), 1.0);
+        assert_eq!(species.boundary_condition(), true);
+        assert_eq!(species.constant(), false);
+        assert_eq!(species.has_only_substance_units(), true);
+    }
+
+    #[test]
+    fn test_species_annotation() {
+        let doc = SBMLDocument::new(3, 2);
+        let model = Model::new(&doc, "test");
+        let species = Species::new(&model, "glucose");
+        species.set_annotation("<test>1</test>");
+        assert_eq!(
+            species.get_annotation().replace("\n", "").replace(' ', ""),
+            "<annotation><test>1</test></annotation>"
+        );
+    }
+
+    #[test]
+    fn test_species_annotation_serde() {
+        #[derive(Serialize, Deserialize)]
+        struct Test {
+            test: String,
+        }
+
+        let doc = SBMLDocument::new(3, 2);
+        let model = Model::new(&doc, "test");
+        let species = Species::new(&model, "glucose");
+        species.set_annotation_serde(&Test {
+            test: "test".to_string(),
+        });
+        assert_eq!(species.get_annotation_serde::<Test>().unwrap().test, "test");
+    }
+}
