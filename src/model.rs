@@ -121,10 +121,14 @@ impl<'a> Model<'a> {
     ///
     /// # Example
     /// ```no_run
+    /// use sbml::prelude::*;
+    ///
+    /// let doc = SBMLDocument::new(3, 2);
+    /// let model = Model::new(&doc, "test");
     /// let species = model.build_species("glucose")
-    ///     .set_name("Glucose")
-    ///     .set_compartment("cytosol")
-    ///     .set_initial_amount(10.0)
+    ///     .name("Glucose")
+    ///     .compartment("cytosol")
+    ///     .initial_amount(10.0)
     ///     .build();
     /// ```
     pub fn build_species(&self, id: &str) -> SpeciesBuilder<'a> {
@@ -182,8 +186,12 @@ impl<'a> Model<'a> {
     ///
     /// # Example
     /// ```no_run
+    /// use sbml::prelude::*;
+    ///
+    /// let doc = SBMLDocument::new(3, 2);
+    /// let model = Model::new(&doc, "test");
     /// let compartment = model.build_compartment("cytosol")
-    ///     .set_name("Cytosol")
+    ///     .name("Cytosol")
     ///     .build();
     /// ```
     pub fn build_compartment(&self, id: &str) -> CompartmentBuilder<'a> {
