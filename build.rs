@@ -11,7 +11,7 @@ fn main() -> miette::Result<()> {
     println!("cargo:rustc-link-search={}/lib", dst.display());
 
     // Link against the actual libSBML library.
-    println!("cargo:rustc-link-lib=sbml");
+    println!("cargo:rustc-link-lib=dylib=sbml");
 
     // Build the autocxx generated wrapper.
     let rs_file = "src/lib.rs";
