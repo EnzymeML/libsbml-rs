@@ -5,7 +5,7 @@
 //! computational models in systems biology. An SBMLDocument is the root container
 //! for all SBML content.
 
-use std::cell::RefCell;
+use std::{cell::RefCell, rc::Rc};
 
 use autocxx::{c_uint, WithinUniquePtr};
 use cxx::UniquePtr;
@@ -20,7 +20,7 @@ pub struct SBMLDocument<'a> {
     /// The underlying libSBML document, wrapped in RefCell to allow interior mutability
     document: RefCell<UniquePtr<sbmlcxx::SBMLDocument>>,
     /// The optional Model contained in this document
-    model: Option<Model<'a>>,
+    model: RefCell<Option<Rc<Model<'a>>>>,
 }
 
 impl<'a> SBMLDocument<'a> {
@@ -37,7 +37,7 @@ impl<'a> SBMLDocument<'a> {
             .within_unique_ptr();
         Self {
             document: RefCell::new(document),
-            model: None,
+            model: RefCell::new(None),
         }
     }
 
@@ -55,19 +55,36 @@ impl<'a> SBMLDocument<'a> {
     ///
     /// # Returns
     /// A reference to the newly created Model
-    pub fn create_model(&'a mut self, id: &str) -> &'a Model<'a> {
-        let model = Model::new(self, id);
-        self.model = Some(model);
-        self.model.as_ref().unwrap()
+    pub fn create_model(&'a self, id: &str) -> Rc<Model<'a>> {
+        let model = Rc::new(Model::new(self, id));
+        self.model.borrow_mut().replace(Rc::clone(&model));
+        model
     }
 
     /// Returns a reference to the Model if one exists.
-    pub fn model(&self) -> Option<&Model<'a>> {
-        self.model.as_ref()
+    pub fn model(&self) -> Option<Rc<Model<'a>>> {
+        self.model.borrow().as_ref().map(|model| Rc::clone(model))
     }
 
-    /// Returns a mutable reference to the Model if one exists.
-    pub fn model_mut(&'a mut self) -> Option<&'a mut Model<'a>> {
-        self.model.as_mut()
+    /// Converts the SBML document to an XML string representation.
+    ///
+    /// This function uses the SBMLWriter to serialize the current state of the
+    /// SBML document into an XML string. If the document is not available,
+    /// an empty string is returned.
+    ///
+    /// # Returns
+    /// A String containing the XML representation of the SBML document, or
+    /// an empty String if the document is not available.
+    pub fn to_xml_string(&self) -> String {
+        let mut writer = sbmlcxx::SBMLWriter::new().within_unique_ptr();
+
+        if let Some(doc) = self.document.borrow_mut().as_mut() {
+            let raw_ptr: *mut sbmlcxx::SBMLDocument = unsafe { doc.get_unchecked_mut() as *mut _ };
+            let string_ptr = unsafe { writer.pin_mut().writeSBMLToString(raw_ptr) };
+            let string = unsafe { std::ffi::CStr::from_ptr(string_ptr) };
+            string.to_string_lossy().into_owned()
+        } else {
+            String::new()
+        }
     }
 }

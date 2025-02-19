@@ -10,8 +10,17 @@
 use std::{cell::RefCell, pin::Pin, rc::Rc};
 
 use cxx::let_cxx_string;
+use quick_xml::{de::from_str, se::to_string, DeError};
+use serde::{Deserialize, Serialize};
 
-use crate::{compartment::Compartment, sbmlcxx, sbmldoc::SBMLDocument, species::Species};
+use crate::{
+    annotation::Annotation,
+    compartment::{Compartment, CompartmentBuilder},
+    sbmlcxx::{self, utils},
+    sbmldoc::SBMLDocument,
+    species::{Species, SpeciesBuilder},
+    wrapper::Wrapper,
+};
 
 /// A safe wrapper around the libSBML Model class.
 ///
@@ -98,6 +107,38 @@ impl<'a> Model<'a> {
         species
     }
 
+    /// Creates a new SpeciesBuilder for constructing a Species with a fluent API.
+    ///
+    /// This method provides a builder pattern interface for creating and configuring
+    /// a new Species within this model. The builder allows chaining method calls
+    /// to set various properties of the Species before building it.
+    ///
+    /// # Arguments
+    /// * `id` - The identifier for the new species
+    ///
+    /// # Returns
+    /// A SpeciesBuilder instance that can be used to configure and create the Species
+    ///
+    /// # Example
+    /// ```no_run
+    /// let species = model.build_species("glucose")
+    ///     .set_name("Glucose")
+    ///     .set_compartment("cytosol")
+    ///     .set_initial_amount(10.0)
+    ///     .build();
+    /// ```
+    pub fn build_species(&self, id: &str) -> SpeciesBuilder<'a> {
+        SpeciesBuilder::new(self, id)
+    }
+
+    /// Returns a vector of all species in the model.
+    ///
+    /// # Returns
+    /// A vector of all species in the model
+    pub fn species(&self) -> Vec<Rc<Species<'a>>> {
+        self.species.borrow().to_vec()
+    }
+
     /// Retrieves a species from the model by its identifier.
     ///
     /// # Arguments
@@ -127,5 +168,78 @@ impl<'a> Model<'a> {
         compartment
     }
 
-    pub fn annotation(&self) {}
+    /// Creates a new CompartmentBuilder for constructing a Compartment with a fluent API.
+    ///
+    /// This method provides a builder pattern interface for creating and configuring
+    /// a new Compartment within this model. The builder allows chaining method calls
+    /// to set various properties of the Compartment before building it.
+    ///
+    /// # Arguments
+    /// * `id` - The identifier for the new compartment
+    ///
+    /// # Returns
+    /// A CompartmentBuilder instance that can be used to configure and create the Compartment
+    ///
+    /// # Example
+    /// ```no_run
+    /// let compartment = model.build_compartment("cytosol")
+    ///     .set_name("Cytosol")
+    ///     .build();
+    /// ```
+    pub fn build_compartment(&self, id: &str) -> CompartmentBuilder<'a> {
+        CompartmentBuilder::new(self, id)
+    }
+}
+
+impl<'a> Annotation for Model<'a> {
+    /// Sets the annotation for the model.
+    ///
+    /// This function allows you to set a string annotation for the model,
+    /// which can be used to provide additional information or metadata.
+    ///
+    /// # Arguments
+    /// * `annotation` - A string slice that holds the annotation to set.
+    fn set_annotation(&self, annotation: &str) {
+        let_cxx_string!(annotation = annotation);
+        self.model.borrow_mut().as_mut().setAnnotation1(&annotation);
+    }
+
+    /// Sets the annotation for the model using a serializable type.
+    ///
+    /// This function serializes the provided annotation into a string format
+    /// and sets it as the model's annotation. It is useful for complex
+    /// data structures that can be serialized.
+    ///
+    /// # Arguments
+    /// * `annotation` - A reference to a serializable type that will be converted to a string.
+    fn set_annotation_serde<T: Serialize>(&self, annotation: &T) {
+        let annotation = to_string(annotation).unwrap();
+        self.set_annotation(&annotation);
+    }
+
+    /// Gets the annotation for the model.
+    ///
+    /// # Returns
+    /// The model's annotation as a String
+    fn get_annotation(&self) -> String {
+        let model_ptr: *mut sbmlcxx::Model =
+            unsafe { self.model.borrow_mut().as_mut().get_unchecked_mut() as *mut _ };
+        let annotation = unsafe { utils::getModelAnnotationString(model_ptr) };
+        annotation.to_str().unwrap().to_string()
+    }
+
+    /// Gets the annotation for the model as a serializable type.
+    ///
+    /// This function deserializes the model's annotation from a string format
+    /// into the specified type. It is useful for complex data structures that
+    /// can be deserialized.
+    ///
+    /// # Returns
+    /// The deserialized annotation as the specified type
+    fn get_annotation_serde<T: for<'de> Deserialize<'de>>(&self) -> Result<T, DeError> {
+        // Get the annotation string and attempt to parse it
+        let annotation = self.get_annotation();
+        let parsed: Wrapper<T> = from_str(&annotation)?;
+        Ok(parsed.annotation)
+    }
 }

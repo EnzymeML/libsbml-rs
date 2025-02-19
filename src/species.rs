@@ -8,11 +8,18 @@
 //! This wrapper provides safe access to the underlying C++ libSBML Species class while
 //! maintaining Rust's safety guarantees through the use of RefCell and Pin.
 
-use std::{cell::RefCell, pin::Pin};
+use std::{cell::RefCell, pin::Pin, rc::Rc};
 
 use cxx::let_cxx_string;
+use quick_xml::{de::from_str, se::to_string, DeError, SeError};
+use serde::{Deserialize, Serialize};
 
-use crate::{model::Model, sbmlcxx};
+use crate::{
+    model::Model,
+    sbmlcxx::{self, utils},
+    wrapper::Wrapper,
+    Annotation,
+};
 
 /// A safe wrapper around the libSBML Species class.
 ///
@@ -36,6 +43,9 @@ impl<'a> Species<'a> {
         let species_ref: &mut sbmlcxx::Species = unsafe { &mut *species_ptr };
 
         let mut pinned_species = unsafe { Pin::new_unchecked(species_ref) };
+
+        // Set the default
+        pinned_species.as_mut().initDefaults();
 
         // Set the id of the species
         let_cxx_string!(id = id);
@@ -209,6 +219,179 @@ impl<'a> Species<'a> {
             .as_mut()
             .setHasOnlySubstanceUnits(has_only_substance_units);
     }
+}
 
-    pub fn annotation(&self) {}
+impl<'a> Annotation for Species<'a> {
+    /// Gets the annotation for the species.
+    ///
+    /// # Returns
+    /// The species' annotation as a String
+    fn get_annotation(&self) -> String {
+        let annotation = unsafe {
+            utils::getSpeciesAnnotationString(
+                self.species.borrow_mut().as_mut().get_unchecked_mut(),
+            )
+        };
+        annotation.to_str().unwrap().to_string()
+    }
+
+    /// Sets the annotation for the species.
+    ///
+    /// This function allows you to set a string annotation for the species,
+    /// which can be used to provide additional information or metadata.
+    ///
+    /// # Arguments
+    /// * `annotation` - A string slice that holds the annotation to set.
+    fn set_annotation(&self, annotation: &str) {
+        let_cxx_string!(annotation = annotation);
+        unsafe {
+            utils::setSpeciesAnnotation(
+                self.species.borrow_mut().as_mut().get_unchecked_mut(),
+                &annotation,
+            );
+        }
+    }
+
+    /// Sets the annotation for the species using a serializable type.
+    ///
+    /// This function serializes the provided annotation into a string format
+    /// and sets it as the species' annotation. It is useful for complex
+    /// data structures that can be serialized.
+    ///
+    /// # Arguments
+    /// * `annotation` - A reference to a serializable type that will be converted to a string.
+    fn set_annotation_serde<T: Serialize>(&self, annotation: &T) {
+        let annotation = to_string(annotation).unwrap();
+        self.set_annotation(&annotation);
+    }
+
+    /// Gets the annotation for the species as a serializable type.
+    ///
+    /// This function deserializes the species' annotation from a string format
+    /// into the specified type. It is useful for complex data structures that
+    /// can be deserialized.
+    ///
+    /// # Returns
+    /// The deserialized annotation as the specified type
+    fn get_annotation_serde<T: for<'de> Deserialize<'de>>(&self) -> Result<T, DeError> {
+        let annotation = self.get_annotation();
+        let parsed: Wrapper<T> = from_str(&annotation)?;
+        Ok(parsed.annotation)
+    }
+}
+
+/// A builder for constructing Species instances with a fluent API.
+///
+/// This struct provides a builder pattern interface for creating and configuring
+/// Species objects. It allows chaining method calls to set various properties
+/// before finally constructing the Species.
+///
+/// # Example
+/// ```no_run
+/// let species = model.build_species("glucose")
+///     .name("Glucose")
+///     .compartment("cytosol")
+///     .initial_amount(10.0)
+///     .build();
+/// ```
+pub struct SpeciesBuilder<'a> {
+    species: Rc<Species<'a>>,
+}
+
+impl<'a> SpeciesBuilder<'a> {
+    /// Creates a new SpeciesBuilder.
+    ///
+    /// # Arguments
+    /// * `model` - The model that will contain the species
+    /// * `id` - The identifier for the new species
+    pub fn new(model: &Model<'a>, id: &str) -> Self {
+        let species = model.create_species(id);
+        Self { species }
+    }
+
+    /// Sets the name of the species.
+    ///
+    /// # Arguments
+    /// * `name` - The name to set
+    pub fn name(self, name: &str) -> Self {
+        self.species.set_name(name);
+        self
+    }
+
+    /// Sets the compartment that contains this species.
+    ///
+    /// # Arguments
+    /// * `compartment` - The compartment identifier
+    pub fn compartment(self, compartment: &str) -> Self {
+        self.species.set_compartment(compartment);
+        self
+    }
+
+    /// Sets the initial amount of the species.
+    ///
+    /// # Arguments
+    /// * `amount` - The initial amount value
+    pub fn initial_amount(self, amount: f64) -> Self {
+        self.species.set_initial_amount(amount);
+        self
+    }
+
+    /// Sets whether this species has a boundary condition.
+    ///
+    /// # Arguments
+    /// * `boundary` - True if this is a boundary species
+    pub fn boundary_condition(self, boundary: bool) -> Self {
+        self.species.set_boundary_condition(boundary);
+        self
+    }
+
+    /// Sets whether this species is constant.
+    ///
+    /// # Arguments
+    /// * `constant` - True if this species should be constant
+    pub fn constant(self, constant: bool) -> Self {
+        self.species.set_constant(constant);
+        self
+    }
+
+    /// Sets whether this species has only substance units.
+    ///
+    /// # Arguments
+    /// * `has_only_substance_units` - True if this species has only substance units
+    pub fn has_only_substance_units(self, has_only_substance_units: bool) -> Self {
+        self.species
+            .set_has_only_substance_units(has_only_substance_units);
+        self
+    }
+
+    /// Sets the annotation for this species.
+    ///
+    /// # Arguments
+    /// * `annotation` - The annotation string to set
+    pub fn annotation(self, annotation: &str) -> Self {
+        self.species.set_annotation(annotation);
+        self
+    }
+
+    /// Sets a serializable annotation for this species.
+    ///
+    /// # Arguments
+    /// * `annotation` - The annotation to serialize and set
+    ///
+    /// # Returns
+    /// Self with Result indicating success or serialization error
+    pub fn annotation_serde<T: Serialize>(self, annotation: &T) -> Result<Self, SeError> {
+        let annotation = to_string(annotation)?;
+        self.species.set_annotation(&annotation);
+        Ok(self)
+    }
+
+    /// Builds and returns the configured Species instance.
+    ///
+    /// # Note
+    /// If annotation_serde() was used in the builder chain, this should be called
+    /// with build()? to handle potential serialization errors.
+    pub fn build(self) -> Rc<Species<'a>> {
+        self.species
+    }
 }
