@@ -66,7 +66,7 @@ pub(crate) mod sbmlcxx {
         generate!("SBMLWriter")
         generate!("UnitDefinition")
         generate!("Unit")
-        generate!("UnitKind")
+        generate!("UnitKind_t")
         // utils
         generate!("utils::getSpeciesAnnotationString")
         generate!("utils::getModelAnnotationString")
