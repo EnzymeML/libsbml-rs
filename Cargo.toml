@@ -6,6 +6,8 @@ edition = "2021"
 [dependencies]
 autocxx = "0.27.1"
 cxx = "1.0.140"
+quick-xml = { version = "0.37.2", features = ["serialize"] }
+serde = { version = "1.0.217", features = ["derive"] }
 
 
 [build-dependencies]
