@@ -4,7 +4,8 @@ fn main() -> miette::Result<()> {
 
     // Build the libsbml submodule using cmake
     let dst = cmake::Config::new("libsbml")
-        .always_configure(false) // Only reconfigure when files change.
+        .define("BUILD_SHARED_LIBS", "ON")
+        .always_configure(false)
         .build();
 
     // Add the built library to linker search path
