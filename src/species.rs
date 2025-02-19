@@ -288,6 +288,10 @@ impl<'a> Annotation for Species<'a> {
 ///
 /// # Example
 /// ```no_run
+/// use sbml::prelude::*;
+///
+/// let doc = SBMLDocument::new(3, 2);
+/// let model = Model::new(&doc, "test");
 /// let species = model.build_species("glucose")
 ///     .name("Glucose")
 ///     .compartment("cytosol")
