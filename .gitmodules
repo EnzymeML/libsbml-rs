@@ -1,0 +1,3 @@
+[submodule "libsbml"]
+	path = libsbml
+	url = https://github.com/sbmlteam/libsbml.git
