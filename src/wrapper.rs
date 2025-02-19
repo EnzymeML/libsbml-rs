@@ -17,19 +17,6 @@ use serde::Deserialize;
 /// # Serde Configuration
 /// * Renames the root XML element to "annotation"
 /// * Uses "$value" to capture the inner content
-///
-/// # Examples
-/// ```
-/// // Deserialize a custom annotation type
-/// #[derive(Deserialize)]
-/// struct MyAnnotation {
-///     key: String,
-///     value: i32,
-/// }
-///
-/// // The Wrapper allows deserialization of MyAnnotation from XML
-/// let annotation: Wrapper<MyAnnotation> = from_str(xml_string)?;
-/// ```
 #[derive(Debug, Deserialize)]
 #[serde(rename = "annotation")]
 pub(crate) struct Wrapper<T> {
