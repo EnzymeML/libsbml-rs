@@ -13,9 +13,9 @@ fn main() -> miette::Result<()> {
 
     // Build and link the required C++ libraries
     // libxml2 is a dependency of libsbml
-    build_and_link("vendors/libxml2", "xml2")?;
+    build_and_link("vendors/libxml2", "xml2", false, true)?;
 
-    let sbml_build = build_and_link("vendors/libsbml", "sbml")?;
+    let sbml_build = build_and_link("vendors/libsbml", "sbml", true, true)?;
 
     // Configure autocxx to generate Rust bindings
     let rs_file = "src/lib.rs";
@@ -39,18 +39,29 @@ fn main() -> miette::Result<()> {
 ///
 /// # Returns
 /// * The build directory path as a String
-fn build_and_link(path: &str, lib_name: &str) -> miette::Result<String> {
+fn build_and_link(
+    path: &str,
+    lib_name: &str,
+    build_shared: bool,
+    static_lib: bool,
+) -> miette::Result<String> {
     // Configure and build the library using CMake
+    let build_shared_str = if build_shared { "ON" } else { "OFF" };
     let dst = cmake::Config::new(path)
         // Build shared libraries instead of static
-        .define("BUILD_SHARED_LIBS", "ON")
+        .define("BUILD_SHARED_LIBS", build_shared_str)
         // Skip configure step if CMake cache exists
         .always_configure(false)
         .build();
 
     // Configure cargo to link against the built library
     println!("cargo:rustc-link-search={}/lib", dst.display());
-    println!("cargo:rustc-link-lib=dylib={}", lib_name);
+
+    if static_lib {
+        println!("cargo:rustc-link-lib=static={}", lib_name);
+    } else {
+        println!("cargo:rustc-link-lib=dylib={}", lib_name);
+    }
 
     Ok(dst.display().to_string())
 }
