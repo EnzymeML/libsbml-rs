@@ -14,7 +14,7 @@ fn main() -> miette::Result<()> {
         &[
             ".",
             "/opt/homebrew/Cellar/libsbml/5.20.4/include/",
-            "src/annotation.hpp",
+            "src/utils.hpp",
         ],
     )
     .build()?;
