@@ -163,6 +163,10 @@ impl<'a> Annotation for Compartment<'a> {
 ///
 /// # Example
 /// ```no_run
+/// use sbml::prelude::*;
+///
+/// let doc = SBMLDocument::new(3, 2);
+/// let model = Model::new(&doc, "test");
 /// let compartment = model.build_compartment("cytosol")
 ///     .name("Cytosol")
 ///     .build();
