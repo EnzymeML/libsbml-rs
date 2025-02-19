@@ -15,7 +15,7 @@ fn main() -> miette::Result<()> {
     // libxml2 is a dependency of libsbml
     build_and_link("vendors/libxml2", "xml2", false, true)?;
 
-    let sbml_build = build_and_link("vendors/libsbml", "sbml", true, true)?;
+    let sbml_build = build_and_link("vendors/libsbml", "sbml", true, false)?;
 
     // Configure autocxx to generate Rust bindings
     let rs_file = "src/lib.rs";
