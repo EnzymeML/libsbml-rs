@@ -1,0 +1,34 @@
+name: Build and Test
+
+on:
+  push:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: Build and Test
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest, macos-14]
+        include:
+          - os: macos-14
+            name: "macOS ARM"
+          - os: macos-latest
+            name: "macOS x86"
+          - os: ubuntu-latest
+            name: "Linux"
+          - os: windows-latest
+            name: "Windows"
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build
+        run: cargo build --verbose
+
+      - name: Run tests
+        run: cargo test --verbose
