@@ -1,5 +1,5 @@
 [package]
-name = "libsbml"
+name = "sbml"
 version = "0.1.0"
 edition = "2021"
 
@@ -12,4 +12,8 @@ serde = { version = "1.0.217", features = ["derive"] }
 
 [build-dependencies]
 autocxx-build = "0.27.1"
+cmake = "0.1.54"
 miette = { version = "5", features = ["fancy"] }
+
+[dev-dependencies]
+pretty_assertions = "1.4.1"
