@@ -51,10 +51,10 @@ impl<'a> Compartment<'a> {
         }
     }
 
-    /// Gets the species' identifier.
+    /// Gets the compartment's identifier.
     ///
     /// # Returns
-    /// The species' ID as a String
+    /// The compartment's ID as a String
     pub fn id(&self) -> String {
         self.compartment
             .borrow()
@@ -86,7 +86,7 @@ impl<'a> Compartment<'a> {
             .to_string()
     }
 
-    /// Sets the species' name.
+    /// Sets the compartment's name.
     ///
     /// # Arguments
     /// * `name` - The new name to set
