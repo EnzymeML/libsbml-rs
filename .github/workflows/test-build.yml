@@ -30,6 +30,12 @@ jobs:
         with:
           submodules: true
 
+      - name: Install libxml2 on Windows
+        if: matrix.os == 'windows-latest'
+        run: |
+          vcpkg install libxml2:x64-windows
+          vcpkg integrate install
+
       - name: Build
         run: cargo build --verbose
 

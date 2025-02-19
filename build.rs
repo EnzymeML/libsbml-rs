@@ -11,10 +11,7 @@ fn main() -> miette::Result<()> {
     // Ensure cargo rebuilds if this build script changes
     println!("cargo:rerun-if-changed=build.rs");
 
-    // Build and link the required C++ libraries
-    // libxml2 is a dependency of libsbml
-    build_and_link("vendors/libxml2", "xml2", false, true)?;
-
+    // Build and link libSBML
     let sbml_build = build_and_link("vendors/libsbml", "sbml", true, false)?;
 
     // Configure autocxx to generate Rust bindings
