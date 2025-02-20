@@ -9,6 +9,15 @@
 
 const LIBSBML_NAME: &str = "sbml";
 const LIBSBML_PATH: &str = "vendors/libsbml";
+const LIBSBML_DEPENDENCY_DIR: &str = "vendors/libsbml-dependencies";
+
+const WITH_LIBXML: &str = "OFF";
+const WITH_EXPAT: &str = "True";
+const WITH_STATIC_RUNTIME: &str = if cfg!(target_os = "windows") {
+    "ON"
+} else {
+    "OFF"
+};
 
 fn main() -> miette::Result<()> {
     // Ensure cargo rebuilds if this build script changes
@@ -38,35 +47,25 @@ fn main() -> miette::Result<()> {
 /// # Arguments
 /// * `path` - Path to the library source directory
 /// * `lib_name` - Name of the library to link against
+/// * `static_lib` - Whether to link against a static library
 ///
 /// # Returns
 /// * The build directory path as a String
 fn build_and_link(path: &str, lib_name: &str, static_lib: bool) -> miette::Result<String> {
-    let with_libxml = if cfg!(target_os = "windows") {
-        "OFF"
+    let dst = if cfg!(target_os = "windows") {
+        cmake::Config::new(path)
+            .define("WITH_STATIC_RUNTIME", WITH_STATIC_RUNTIME)
+            .define("WITH_LIBXML", WITH_LIBXML)
+            .define("WITH_EXPAT", WITH_EXPAT)
+            .define("LIBSBML_DEPENDENCY_DIR", LIBSBML_DEPENDENCY_DIR)
+            .build()
     } else {
-        "ON"
+        cmake::Config::new(path)
+            .define("WITH_STATIC_RUNTIME", WITH_STATIC_RUNTIME)
+            .define("WITH_LIBXML", WITH_LIBXML)
+            .define("WITH_EXPAT", WITH_EXPAT)
+            .build()
     };
-    
-    let with_expat = if cfg!(target_os = "windows") {
-        "True"
-    } else {
-        "False"
-    };
-
-    let with_static_runtime = if cfg!(target_os = "windows") {
-        "ON"
-    } else {
-        "OFF"
-    };
-
-    // Configure and build the library using CMake
-    let dst = cmake::Config::new(path)
-        .define("WITH_STATIC_RUNTIME", with_static_runtime)
-        .define("WITH_LIBXML", with_libxml)
-        .define("WITH_EXPAT", with_expat)
-        .always_configure(false)
-        .build();
 
     // Configure cargo to link against the built library
     println!("cargo:rustc-link-search={}/lib", dst.display());
