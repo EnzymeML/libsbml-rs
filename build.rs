@@ -7,6 +7,7 @@
 //!
 //! The script requires CMake to be installed on the system for building the C++ libraries.
 
+#[cfg(target_os = "windows")]
 use vcpkg::Config;
 
 const LIBSBML_NAME: &str = "sbml";

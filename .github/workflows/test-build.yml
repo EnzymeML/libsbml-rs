@@ -35,9 +35,15 @@ jobs:
         run: |
           vcpkg install libxml2:x64-windows
           vcpkg integrate install
+        env:
+          VCPKGRS_DYNAMIC: 1
 
       - name: Build
         run: cargo build --verbose
+        env:
+          VCPKGRS_DYNAMIC: 1
 
       - name: Run tests
         run: cargo test --verbose
+        env:
+          VCPKGRS_DYNAMIC: 1
