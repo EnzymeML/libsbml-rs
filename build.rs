@@ -47,6 +47,12 @@ fn build_and_link(path: &str, lib_name: &str, static_lib: bool) -> miette::Resul
     } else {
         "ON"
     };
+    
+    let with_expat = if cfg!(target_os = "windows") {
+        "True"
+    } else {
+        "False"
+    };
 
     let with_static_runtime = if cfg!(target_os = "windows") {
         "ON"
@@ -58,6 +64,7 @@ fn build_and_link(path: &str, lib_name: &str, static_lib: bool) -> miette::Resul
     let dst = cmake::Config::new(path)
         .define("WITH_STATIC_RUNTIME", with_static_runtime)
         .define("WITH_LIBXML", with_libxml)
+        .define("WITH_EXPAT", with_expat)
         .always_configure(false)
         .build();
 
