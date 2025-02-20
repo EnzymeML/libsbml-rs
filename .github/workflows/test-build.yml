@@ -36,8 +36,8 @@ jobs:
         run: |
           curl -L https://github.com/sbmlteam/libSBML-dependencies/releases/download/latest/libSBML-dependencies-1.0.1-x64-Release-static.zip > dependencies.zip
           unzip dependencies.zip
-          mkdir libsbml/dependencies
-          mv libSBML-dependencies-1.0.1-x64-Release-static libsbml/dependencies
+          mkdir vendors/libsbml/dependencies
+          mv libSBML-dependencies-1.0.1-x64-Release-static vendors/libsbml/dependencies
 
       - name: setup Windows environment
         if: matrix.os == 'windows-latest'
