@@ -15,10 +15,11 @@ fn main() -> miette::Result<()> {
     println!("cargo:rerun-if-changed=build.rs");
 
     // Build and link libSBML
-    let sbml_build = build_and_link(LIBSBML_PATH, LIBSBML_NAME, true, false)?;
+    let sbml_build = build_and_link(LIBSBML_PATH, LIBSBML_NAME, false)?;
 
     // Configure autocxx to generate Rust bindings
     let rs_file = "src/lib.rs";
+
     // Point to the libSBML headers
     let sbml_include = format!("{}/include", sbml_build);
     let lib_root = ".";
@@ -40,20 +41,23 @@ fn main() -> miette::Result<()> {
 ///
 /// # Returns
 /// * The build directory path as a String
-fn build_and_link(
-    path: &str,
-    lib_name: &str,
-    build_shared: bool,
-    static_lib: bool,
-) -> miette::Result<String> {
+fn build_and_link(path: &str, lib_name: &str, static_lib: bool) -> miette::Result<String> {
+    let with_libxml = if cfg!(target_os = "windows") {
+        "OFF"
+    } else {
+        "ON"
+    };
+
+    let with_static_runtime = if cfg!(target_os = "windows") {
+        "ON"
+    } else {
+        "OFF"
+    };
+
     // Configure and build the library using CMake
-    let build_shared_str = if build_shared { "ON" } else { "OFF" };
     let dst = cmake::Config::new(path)
-        // Build shared libraries instead of static
-        .define("BUILD_SHARED_LIBS", build_shared_str)
-        // Disable libxml dependency
-        .define("WITH_LIBXML", "OFF")
-        // Skip configure step if CMake cache exists
+        .define("WITH_STATIC_RUNTIME", with_static_runtime)
+        .define("WITH_LIBXML", with_libxml)
         .always_configure(false)
         .build();
 
