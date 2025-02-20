@@ -26,9 +26,9 @@ fn main() -> miette::Result<()> {
     println!("cargo:rerun-if-changed=build.rs");
 
     // Build and link libSBML dependencies for Windows
-    if cfg!(target_os = "windows") {
-        build_and_link_sbml_deps()?;
-    }
+    // if cfg!(target_os = "windows") {
+    //     build_and_link_sbml_deps()?;
+    // }
 
     // Build and link libSBML
     let sbml_build = build_and_link_libsbml()?;
@@ -60,6 +60,7 @@ fn main() -> miette::Result<()> {
 /// * The build directory path as a String
 fn build_and_link_libsbml() -> miette::Result<String> {
     let dst = cmake::Config::new(LIBSBML_PATH)
+        .define("LIBSBML_DEPENDENCY_DIR", LIBSBML_DEPENDENCY_DIR)
         .define("WITH_STATIC_RUNTIME", WITH_STATIC_RUNTIME)
         .define("WITH_LIBXML", WITH_LIBXML)
         .define("WITH_EXPAT", WITH_EXPAT)
