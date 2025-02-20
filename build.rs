@@ -19,7 +19,9 @@ fn main() -> miette::Result<()> {
     // On Windows, use vcpkg to find and link libxml2
     #[cfg(target_os = "windows")]
     {
-        let libxml2 = find_package("libxml2").expect("Failed to find libxml2 via vcpkg");
+        let libxml2 = find_package("libxml2")
+            .with_triplet("x64-windows")
+            .expect("Failed to find libxml2 via vcpkg");
         for lib in libxml2.link_paths {
             println!("cargo:rustc-link-search=native={}", lib.display());
         }
