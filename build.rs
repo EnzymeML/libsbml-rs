@@ -25,13 +25,13 @@ fn main() -> miette::Result<()> {
     // Ensure cargo rebuilds if this build script changes
     println!("cargo:rerun-if-changed=build.rs");
 
-    // Build and link libSBML
-    let sbml_build = build_and_link_libsbml()?;
-
     // Build and link libSBML dependencies for Windows
     if cfg!(target_os = "windows") {
         build_and_link_sbml_deps()?;
     }
+
+    // Build and link libSBML
+    let sbml_build = build_and_link_libsbml()?;
 
     // Configure autocxx to generate Rust bindings
     let rs_file = "src/lib.rs";
