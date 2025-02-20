@@ -30,20 +30,23 @@ jobs:
         with:
           submodules: true
 
-      - name: Install libxml2 on Windows
+      - name: Download pre-built Windows dependencies and SWIG
         if: matrix.os == 'windows-latest'
+        shell: bash
         run: |
-          vcpkg install libxml2:x64-windows
-          vcpkg integrate install
-        env:
-          VCPKGRS_DYNAMIC: 1
+          curl -L https://github.com/sbmlteam/libSBML-dependencies/releases/download/latest/libSBML-dependencies-1.0.1-x64-Release-static.zip > dependencies.zip
+          unzip dependencies.zip
+          mv libSBML-dependencies-1.0.1-x64-Release-static libsbml/dependencies
+
+      - name: setup Windows environment
+        if: matrix.os == 'windows-latest'
+        shell: bash
+        run: |
+          echo RUNTIME_LINKING_OPTION="-DWITH_STATIC_RUNTIME=ON" >> "${GITHUB_ENV}"
+          echo PYTHON_LINKING_OPTION="-DWITH_PYTHON=ON" >> "${GITHUB_ENV}"
 
       - name: Build
         run: cargo build --verbose
-        env:
-          VCPKGRS_DYNAMIC: 1
 
       - name: Run tests
         run: cargo test --verbose
-        env:
-          VCPKGRS_DYNAMIC: 1

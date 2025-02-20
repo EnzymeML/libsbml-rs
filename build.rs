@@ -7,30 +7,12 @@
 //!
 //! The script requires CMake to be installed on the system for building the C++ libraries.
 
-#[cfg(target_os = "windows")]
-use vcpkg::Config;
-
 const LIBSBML_NAME: &str = "sbml";
 const LIBSBML_PATH: &str = "vendors/libsbml";
 
 fn main() -> miette::Result<()> {
     // Ensure cargo rebuilds if this build script changes
     println!("cargo:rerun-if-changed=build.rs");
-
-    // On Windows, use vcpkg to find and link libxml2
-    #[cfg(target_os = "windows")]
-    {
-        let libxml2 = Config::new()
-            .target_triplet("x64-windows")
-            .find_package("libxml2")
-            .expect("Failed to find libxml2 via vcpkg");
-        for lib in libxml2.link_paths {
-            println!("cargo:rustc-link-search=native={}", lib.display());
-        }
-        for lib in libxml2.found_libs {
-            println!("cargo:rustc-link-lib={}", lib.display());
-        }
-    }
 
     // Build and link libSBML
     let sbml_build = build_and_link(LIBSBML_PATH, LIBSBML_NAME, true, false)?;
