@@ -51,6 +51,8 @@ fn build_and_link(
     let dst = cmake::Config::new(path)
         // Build shared libraries instead of static
         .define("BUILD_SHARED_LIBS", build_shared_str)
+        // Disable libxml dependency
+        .define("WITH_LIBXML", "OFF")
         // Skip configure step if CMake cache exists
         .always_configure(false)
         .build();
