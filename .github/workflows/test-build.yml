@@ -30,22 +30,6 @@ jobs:
         with:
           submodules: true
 
-      - name: Download pre-built Windows dependencies and SWIG
-        if: matrix.os == 'windows-latest'
-        shell: bash
-        run: |
-          curl -L https://github.com/sbmlteam/libSBML-dependencies/releases/download/latest/libSBML-dependencies-1.0.1-x64-Release-static.zip > dependencies.zip
-          unzip dependencies.zip
-          mkdir vendors/libsbml/dependencies
-          mv libSBML-dependencies-1.0.1-x64-Release-static vendors/libsbml/dependencies
-
-      - name: setup Windows environment
-        if: matrix.os == 'windows-latest'
-        shell: bash
-        run: |
-          echo RUNTIME_LINKING_OPTION="-DWITH_STATIC_RUNTIME=ON" >> "${GITHUB_ENV}"
-          echo PYTHON_LINKING_OPTION="-DWITH_PYTHON=ON" >> "${GITHUB_ENV}"
-
       - name: Build
         run: cargo build --verbose
 
