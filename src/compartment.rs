@@ -35,7 +35,7 @@ impl<'a> Compartment<'a> {
     /// * `id` - The identifier for this compartment
     ///
     /// # Returns
-    /// A new Species instance
+    /// A new Compartment instance
     pub fn new(model: &Model<'a>, id: &str) -> Self {
         let compartment_ptr = model.inner().borrow_mut().as_mut().createCompartment();
         let compartment_ref: &mut sbmlcxx::Compartment = unsafe { &mut *compartment_ptr };

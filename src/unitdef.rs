@@ -1,11 +1,10 @@
-//! This module provides a safe Rust interface to the libSBML Species class.
+//! This module provides a safe Rust interface to the libSBML UnitDefinition class.
 //!
-//! The Species class represents a chemical or biological entity in an SBML model.
-//! It can represent molecules, ions, proteins, or any other entity that participates
-//! in reactions. Each species can have properties like initial amount/concentration,
-//! boundary conditions, and compartment location.
+//! The UnitDefinition class represents a unit definition in an SBML model.
+//! It can represent a unit, a unit system, or any other entity that can be used to define the units of a model.
+//! Each unit definition can have properties like name, kind, and exponent.
 //!
-//! This wrapper provides safe access to the underlying C++ libSBML Species class while
+//! This wrapper provides safe access to the underlying C++ libSBML UnitDefinition class while
 //! maintaining Rust's safety guarantees through the use of RefCell and Pin.
 
 use std::{cell::RefCell, pin::Pin};
@@ -17,23 +16,23 @@ use crate::{
     sbmlcxx::{self},
 };
 
-/// A safe wrapper around the libSBML Species class.
+/// A safe wrapper around the libSBML UnitDefinition class.
 ///
-/// This struct maintains a reference to the underlying C++ Species object
+/// This struct maintains a reference to the underlying C++ UnitDefinition object
 /// through a RefCell and Pin to ensure memory safety while allowing interior mutability.
 pub struct UnitDefinition<'a> {
     unit_definition: RefCell<Pin<&'a mut sbmlcxx::UnitDefinition>>,
 }
 
 impl<'a> UnitDefinition<'a> {
-    /// Creates a new Unit instance within the given Model.
+    /// Creates a new UnitDefinition instance within the given Model.
     ///
     /// # Arguments
-    /// * `model` - The parent Model that will contain this unit
-    /// * `id` - The identifier for this unit
+    /// * `model` - The parent Model that will contain this unit definition
+    /// * `id` - The identifier for this unit definition
     ///
     /// # Returns
-    /// A new Species instance
+    /// A new UnitDefinition instance
     pub fn new(model: &Model<'a>, id: &str, name: &str) -> Self {
         let unit_definition_ptr = model.inner().borrow_mut().as_mut().createUnitDefinition();
         let unit_definition_ref: &mut sbmlcxx::UnitDefinition =
