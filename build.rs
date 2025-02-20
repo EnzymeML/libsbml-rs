@@ -17,7 +17,7 @@ fn main() -> miette::Result<()> {
     println!("cargo:rerun-if-changed=build.rs");
 
     // On Windows, use vcpkg to find and link libxml2
-    #[cfg(target_os = "windows")] {
+    #[cfg(target_os = "windows")]
     {
         let libxml2 = Config::new()
             .target_triplet("x64-windows")
