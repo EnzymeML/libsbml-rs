@@ -7,12 +7,29 @@
 //!
 //! The script requires CMake to be installed on the system for building the C++ libraries.
 
+use vcpkg::find_package;
+
+const LIBSBML_NAME: &str = "sbml";
+const LIBSBML_PATH: &str = "vendors/libsbml";
+
 fn main() -> miette::Result<()> {
     // Ensure cargo rebuilds if this build script changes
     println!("cargo:rerun-if-changed=build.rs");
 
+    // On Windows, use vcpkg to find and link libxml2
+    #[cfg(target_os = "windows")]
+    {
+        let libxml2 = find_package("libxml2").expect("Failed to find libxml2 via vcpkg");
+        for lib in libxml2.link_paths {
+            println!("cargo:rustc-link-search=native={}", lib.display());
+        }
+        for lib in libxml2.libs {
+            println!("cargo:rustc-link-lib={}", lib);
+        }
+    }
+
     // Build and link libSBML
-    let sbml_build = build_and_link("vendors/libsbml", "sbml", true, false)?;
+    let sbml_build = build_and_link(LIBSBML_PATH, LIBSBML_NAME, true, false)?;
 
     // Configure autocxx to generate Rust bindings
     let rs_file = "src/lib.rs";
@@ -22,6 +39,7 @@ fn main() -> miette::Result<()> {
 
     // Build the C++ wrapper code and bindings
     let mut b = autocxx_build::Builder::new(rs_file, &[lib_root, &sbml_include]).build()?;
+
     // Ensure C++17 is used for compilation
     b.flag_if_supported("-std=c++17").compile("libsbml");
 
