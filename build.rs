@@ -29,11 +29,7 @@ const WITH_LIBXML: &str = "OFF";
 const WITH_EXPAT: &str = "ON";
 
 /// Whether to use static runtime libraries (enabled on Windows only)
-const WITH_STATIC_RUNTIME: &str = if cfg!(target_os = "windows") {
-    "ON"
-} else {
-    "OFF"
-};
+const WITH_STATIC_RUNTIME: &str = "OFF";
 
 /// Main build script function that orchestrates the build process
 ///
@@ -137,8 +133,6 @@ fn build_and_link_libsbml(dep_build: &str) -> miette::Result<String> {
         // static library is named "libsbml-static" and not "libsbml".
         // which seems to confuse the rustc linker.
         println!("cargo:rustc-link-lib=libsbml-static");
-        println!("cargo:rustc-link-lib=libexpat");
-        println!("cargo:rustc-link-lib=zdll");
     } else {
         // On MacOS and Linux, we can just link against the dynamic library
         println!("cargo:rustc-link-lib=dylib={}", LIBSBML_NAME);
