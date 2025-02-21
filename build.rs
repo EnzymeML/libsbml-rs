@@ -91,7 +91,7 @@ fn build_and_link_libsbml(dep_build: &str) -> miette::Result<String> {
     if cfg!(target_os = "windows") {
         println!("cargo:rustc-link-lib=sbml-static");
         println!("cargo:rustc-link-lib=expat");
-        println!("cargo:rustc-link-lib=zlib");
+        println!("cargo:rustc-link-lib=zdll");
     } else {
         println!("cargo:rustc-link-lib=dylib={}", LIBSBML_NAME);
     }
@@ -111,8 +111,8 @@ fn build_and_link_sbml_deps() -> miette::Result<String> {
 
     // Configure cargo to link against the built libraries
     println!("cargo:rustc-link-search=native={}/lib", dst.display());
-    println!("cargo:rustc-link-lib=static={}", EXPAT_NAME);
-    println!("cargo:rustc-link-lib=static={}", ZLIB_NAME);
+    println!("cargo:rustc-link-lib=expat");
+    println!("cargo:rustc-link-lib=zdll");
 
     Ok(dst.display().to_string())
 }
