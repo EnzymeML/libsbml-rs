@@ -7,8 +7,6 @@
 //!
 //! The script requires CMake to be installed on the system for building the C++ libraries.
 
-use std::path::Path;
-
 const LIBSBML_NAME: &str = "sbml";
 const LIBSBML_PATH: &str = "vendors/libsbml";
 const LIBSBML_DEPENDENCY_DIR: &str = "vendors/libsbml-dependencies";
@@ -35,21 +33,21 @@ fn main() -> miette::Result<()> {
         String::new()
     };
 
-    // // Build and link libSBML
-    // let sbml_build = build_and_link_libsbml(&dep_build)?;
+    // Build and link libSBML
+    let sbml_build = build_and_link_libsbml(&dep_build)?;
 
-    // // Configure autocxx to generate Rust bindings
-    // let rs_file = "src/lib.rs";
+    // Configure autocxx to generate Rust bindings
+    let rs_file = "src/lib.rs";
 
-    // // Point to the libSBML headers
-    // let sbml_include = format!("{}/include", sbml_build);
-    // let lib_root = ".";
+    // Point to the libSBML headers
+    let sbml_include = format!("{}/include", sbml_build);
+    let lib_root = ".";
 
-    // // Build the C++ wrapper code and bindings
-    // let mut b = autocxx_build::Builder::new(rs_file, &[lib_root, &sbml_include]).build()?;
+    // Build the C++ wrapper code and bindings
+    let mut b = autocxx_build::Builder::new(rs_file, &[lib_root, &sbml_include]).build()?;
 
-    // // Ensure C++17 is used for compilation
-    // b.flag_if_supported("-std=c++17").compile("libsbml");
+    // Ensure C++17 is used for compilation
+    b.flag_if_supported("-std=c++17").compile("libsbml");
 
     Ok(())
 }
@@ -73,6 +71,10 @@ fn build_and_link_libsbml(dep_build: &str) -> miette::Result<String> {
             .define("EXPAT_LIBRARY", format!("{}/lib/libexpat.lib", dep_build))
             .define("EXPAT_INCLUDE_DIR", format!("{}/include", dep_build))
             .define("ZLIB_LIBRARY", format!("{}/lib/zlib.lib", dep_build))
+            .define("ZLIB_INCLUDE_DIR", format!("{}/include", dep_build))
+            .define("EXPAT_LIBRARY", format!("{}/lib/libexpat.lib", dep_build))
+            .define("EXPAT_INCLUDE_DIR", format!("{}/include", dep_build))
+            .define("ZLIB_LIBRARY", format!("{}/lib/zdll.lib", dep_build))
             .define("ZLIB_INCLUDE_DIR", format!("{}/include", dep_build))
             .build()
     } else {
