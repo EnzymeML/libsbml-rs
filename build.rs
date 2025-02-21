@@ -91,6 +91,7 @@ fn build_and_link_libsbml(dep_build: &str) -> miette::Result<String> {
         // system directories by default. Unlinke MacOS and Linux kernels
         cmake::Config::new(LIBSBML_PATH)
             .static_crt(true)
+            .profile("Release")
             .define("WITH_STATIC_RUNTIME", "ON")
             .define("WITH_LIBXML", WITH_LIBXML)
             .define("WITH_EXPAT", WITH_EXPAT)
@@ -156,6 +157,7 @@ fn build_and_link_sbml_deps() -> miette::Result<String> {
     // be made more flexible.
     let dst = cmake::Config::new(LIBSBML_DEPENDENCY_DIR)
         .static_crt(true)
+        .profile("Release")
         .define("WITH_STATIC_RUNTIME", "ON")
         .define("EXPAT_MSVC_STATIC_CRT", "ON")
         .define("WITH_EXPAT", "ON")
