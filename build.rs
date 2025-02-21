@@ -171,7 +171,7 @@ fn build_and_link_sbml_deps() -> miette::Result<String> {
     // Note: We link against the static libraries, because the dynamic libraries
     // are not working for some reason.
     println!("cargo:rustc-link-search=native={}/lib", dst.display());
-    println!("cargo:rustc-link-lib=expat");
+    println!("cargo:rustc-link-lib=libexpat");
     println!("cargo:rustc-link-lib=zdll");
 
     Ok(dst.display().to_string())
