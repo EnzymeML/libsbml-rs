@@ -72,7 +72,7 @@ fn build_and_link_libsbml(dep_build: &str) -> miette::Result<String> {
             .define("WITH_EXPAT", WITH_EXPAT)
             .define("EXPAT_LIBRARY", format!("{}/lib/libexpat.lib", dep_build))
             .define("EXPAT_INCLUDE_DIR", format!("{}/include", dep_build))
-            .define("ZLIB_LIBRARY", format!("{}/lib/libzlib.lib", dep_build))
+            .define("ZLIB_LIBRARY", format!("{}/lib/zlib.lib", dep_build))
             .define("ZLIB_INCLUDE_DIR", format!("{}/include", dep_build))
             .build()
     } else {
