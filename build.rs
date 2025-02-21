@@ -159,6 +159,7 @@ fn build_and_link_sbml_deps() -> miette::Result<String> {
         .define("WITH_BZIP2", "False")
         .define("WITH_CHECK", "False")
         .define("BUILD_SHARED_LIBS", "False")
+        .define("MSVC", "ON")
         .build();
 
     // Configure cargo to link against the built libraries
