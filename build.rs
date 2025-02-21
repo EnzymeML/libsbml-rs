@@ -92,6 +92,7 @@ fn build_and_link_libsbml(dep_build: &str) -> miette::Result<String> {
         // This is necessary because the libraries are not installed in the
         // system directories by default. Unlinke MacOS and Linux kernels
         cmake::Config::new(LIBSBML_PATH)
+            .define("CMAKE_BUILD_TYPE", "Release")
             .define("WITH_STATIC_RUNTIME", WITH_STATIC_RUNTIME)
             .define("WITH_LIBXML", WITH_LIBXML)
             .define("WITH_EXPAT", WITH_EXPAT)
@@ -122,6 +123,7 @@ fn build_and_link_libsbml(dep_build: &str) -> miette::Result<String> {
             .define("WITH_STATIC_RUNTIME", WITH_STATIC_RUNTIME)
             .define("WITH_LIBXML", WITH_LIBXML)
             .define("WITH_EXPAT", WITH_EXPAT)
+            .define("LIBSBML_USE_STRICT_INCLUDES", "True")
             .build()
     };
 
@@ -159,7 +161,6 @@ fn build_and_link_sbml_deps() -> miette::Result<String> {
         .define("WITH_BZIP2", "False")
         .define("WITH_CHECK", "False")
         .define("BUILD_SHARED_LIBS", "False")
-        .define("MSVC", "ON")
         .build();
 
     // Configure cargo to link against the built libraries
