@@ -137,7 +137,7 @@ fn build_and_link_libsbml(dep_build: &str) -> miette::Result<String> {
         // static library is named "libsbml-static" and not "libsbml".
         // which seems to confuse the rustc linker.
         println!("cargo:rustc-link-lib=libsbml-static");
-        println!("cargo:rustc-link-lib=expat");
+        println!("cargo:rustc-link-lib=libexpat");
         println!("cargo:rustc-link-lib=zdll");
     } else {
         // On MacOS and Linux, we can just link against the dynamic library
