@@ -184,7 +184,15 @@ fn print_dir_contents(path: &str) -> miette::Result<()> {
     for entry in entries {
         let entry = entry.unwrap();
         let path = entry.path();
-        println!("cargo:warning={}", path.display());
+
+        if path.is_file() {
+            if let Some(ext) = path.extension() {
+                let ext_str = ext.to_string_lossy().to_lowercase();
+                if ["a", "dylib", "lib"].contains(&ext_str.as_str()) {
+                    println!("cargo:info={}", path.display());
+                }
+            }
+        }
 
         if path.is_dir() {
             print_dir_contents(path.to_str().unwrap())?;
