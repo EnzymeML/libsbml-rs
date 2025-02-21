@@ -14,7 +14,7 @@
 //!
 //! # Example
 //! ```
-//! use libsbml::SBMLDocument;
+//! use sbml::SBMLDocument;
 //!
 //! let mut document = SBMLDocument::new(3, 2); // Create SBML L3V2 document
 //! let model = document.create_model("example");
@@ -42,6 +42,8 @@ pub mod prelude {
     pub use crate::model::Model;
     pub use crate::sbmldoc::SBMLDocument;
     pub use crate::species::{Species, SpeciesBuilder};
+    pub use crate::unit::Unit;
+    pub use crate::unitdef::UnitDefinition;
 }
 
 /// Internal module containing the raw FFI bindings to libSBML.
@@ -66,7 +68,7 @@ pub(crate) mod sbmlcxx {
         generate!("SBMLWriter")
         generate!("UnitDefinition")
         generate!("Unit")
-        generate!("UnitKind")
+        generate!("UnitKind_t")
         // utils
         generate!("utils::getSpeciesAnnotationString")
         generate!("utils::getModelAnnotationString")

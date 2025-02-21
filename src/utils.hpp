@@ -1,5 +1,5 @@
 #pragma once
-#include "sbml/SBMLTypes.h"
+#include <sbml/SBMLTypes.h>
 #include <string>
 
 namespace utils {

@@ -1,4 +1,4 @@
-use libsbml::prelude::*;
+use sbml::prelude::*;
 use serde::{Deserialize, Serialize};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {

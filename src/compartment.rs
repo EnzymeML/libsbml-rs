@@ -35,7 +35,7 @@ impl<'a> Compartment<'a> {
     /// * `id` - The identifier for this compartment
     ///
     /// # Returns
-    /// A new Species instance
+    /// A new Compartment instance
     pub fn new(model: &Model<'a>, id: &str) -> Self {
         let compartment_ptr = model.inner().borrow_mut().as_mut().createCompartment();
         let compartment_ref: &mut sbmlcxx::Compartment = unsafe { &mut *compartment_ptr };
@@ -51,10 +51,10 @@ impl<'a> Compartment<'a> {
         }
     }
 
-    /// Gets the species' identifier.
+    /// Gets the compartment's identifier.
     ///
     /// # Returns
-    /// The species' ID as a String
+    /// The compartment's ID as a String
     pub fn id(&self) -> String {
         self.compartment
             .borrow()
@@ -86,7 +86,7 @@ impl<'a> Compartment<'a> {
             .to_string()
     }
 
-    /// Sets the species' name.
+    /// Sets the compartment's name.
     ///
     /// # Arguments
     /// * `name` - The new name to set
@@ -163,6 +163,10 @@ impl<'a> Annotation for Compartment<'a> {
 ///
 /// # Example
 /// ```no_run
+/// use sbml::prelude::*;
+///
+/// let doc = SBMLDocument::new(3, 2);
+/// let model = Model::new(&doc, "test");
 /// let compartment = model.build_compartment("cytosol")
 ///     .name("Cytosol")
 ///     .build();
