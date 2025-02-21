@@ -7,6 +7,8 @@
 //!
 //! The script requires CMake to be installed on the system for building the C++ libraries.
 
+use std::path::Path;
+
 const LIBSBML_NAME: &str = "sbml";
 const LIBSBML_PATH: &str = "vendors/libsbml";
 const LIBSBML_DEPENDENCY_DIR: &str = "vendors/libsbml-dependencies";
@@ -87,6 +89,12 @@ fn build_and_link_libsbml(expat_build: &str) -> miette::Result<String> {
 }
 
 fn build_and_link_sbml_deps() -> miette::Result<String> {
+    // Create expat directory if it doesn't exist
+    let expat_dir = Path::new("vendors/libsbml-dependencies/expat");
+    if !expat_dir.exists() {
+        std::fs::create_dir_all(expat_dir).expect("Failed to create expat directory");
+    }
+
     let dst = cmake::Config::new(LIBSBML_DEPENDENCY_DIR)
         .define("WITH_EXPAT", "True")
         .define("WITH_LIBXML", "False")

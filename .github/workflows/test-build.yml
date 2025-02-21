@@ -14,12 +14,12 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest, macos-14]
         include:
-          - os: macos-14
-            name: "macOS ARM"
-          - os: macos-latest
-            name: "macOS x86"
-          - os: ubuntu-latest
-            name: "Linux"
+          # - os: macos-14
+          #   name: "macOS ARM"
+          # - os: macos-latest
+          #   name: "macOS x86"
+          # - os: ubuntu-latest
+          #   name: "Linux"
           - os: windows-latest
             name: "Windows"
 
