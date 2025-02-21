@@ -75,6 +75,7 @@ fn build_and_link_libsbml(dep_build: &str) -> miette::Result<String> {
             .define("EXPAT_INCLUDE_DIR", format!("{}/include", dep_build))
             .define("ZLIB_LIBRARY", format!("{}/lib/zdll.lib", dep_build))
             .define("ZLIB_INCLUDE_DIR", format!("{}/include", dep_build))
+            .define("BUILD_SHARED_LIBS", "OFF")
             .build()
     } else {
         cmake::Config::new(LIBSBML_PATH)
@@ -89,7 +90,6 @@ fn build_and_link_libsbml(dep_build: &str) -> miette::Result<String> {
     println!("cargo:rustc-link-search={}/lib", dst.display());
     if cfg!(target_os = "windows") {
         println!("cargo:rustc-link-lib=static={}", "libsbml-static");
-        println!("cargo:rustc-link-lib=dylib={}", LIBSBML_NAME);
         println!("cargo:rustc-link-lib=static={}", EXPAT_NAME);
         println!("cargo:rustc-link-lib=static={}", ZLIB_NAME);
     } else {
