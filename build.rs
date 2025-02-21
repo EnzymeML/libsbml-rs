@@ -8,6 +8,7 @@
 //! The script requires CMake to be installed on the system for building the C++ libraries.
 
 const LIBSBML_NAME: &str = "sbml";
+const LIBSBML_STATIC_NAME: &str = "sbml-static";
 const LIBSBML_PATH: &str = "vendors/libsbml";
 const LIBSBML_DEPENDENCY_DIR: &str = "vendors/libsbml-dependencies";
 
@@ -70,12 +71,9 @@ fn build_and_link_libsbml(dep_build: &str) -> miette::Result<String> {
             .define("WITH_EXPAT", WITH_EXPAT)
             .define("EXPAT_LIBRARY", format!("{}/lib/libexpat.lib", dep_build))
             .define("EXPAT_INCLUDE_DIR", format!("{}/include", dep_build))
-            .define("ZLIB_LIBRARY", format!("{}/lib/zlib.lib", dep_build))
-            .define("ZLIB_INCLUDE_DIR", format!("{}/include", dep_build))
-            .define("EXPAT_LIBRARY", format!("{}/lib/libexpat.lib", dep_build))
-            .define("EXPAT_INCLUDE_DIR", format!("{}/include", dep_build))
             .define("ZLIB_LIBRARY", format!("{}/lib/zdll.lib", dep_build))
             .define("ZLIB_INCLUDE_DIR", format!("{}/include", dep_build))
+            .define("BUILD_SHARED_LIBS", "OFF")
             .build()
     } else {
         cmake::Config::new(LIBSBML_PATH)
@@ -88,7 +86,11 @@ fn build_and_link_libsbml(dep_build: &str) -> miette::Result<String> {
 
     // Configure cargo to link against the built library
     println!("cargo:rustc-link-search={}/lib", dst.display());
-    println!("cargo:rustc-link-lib=dylib={}", LIBSBML_NAME);
+    if cfg!(target_os = "windows") {
+        println!("cargo:rustc-link-lib=static={}", LIBSBML_STATIC_NAME);
+    } else {
+        println!("cargo:rustc-link-lib=dylib={}", LIBSBML_NAME);
+    }
 
     Ok(dst.display().to_string())
 }
@@ -107,26 +109,6 @@ fn build_and_link_sbml_deps() -> miette::Result<String> {
     println!("cargo:rustc-link-search={}/lib", dst.display());
     println!("cargo:rustc-link-lib=static={}", EXPAT_NAME);
     println!("cargo:rustc-link-lib=static={}", ZLIB_NAME);
-
-    // Print the contents of the expat directory recursively
-    fn print_dir_contents(dir: &std::path::Path) {
-        if let Ok(entries) = std::fs::read_dir(dir) {
-            for entry in entries {
-                if let Ok(entry) = entry {
-                    let path = entry.path();
-                    if path.is_file() {
-                        println!("cargo:warning=file={}", path.display());
-                    } else if path.is_dir() {
-                        println!("cargo:warning=dir={}", path.display());
-                        print_dir_contents(&path);
-                    }
-                }
-            }
-        }
-    }
-
-    let expat_build_dir = dst.display().to_string();
-    print_dir_contents(std::path::Path::new(&expat_build_dir));
 
     Ok(dst.display().to_string())
 }
