@@ -14,7 +14,7 @@ const LIBSBML_DEPENDENCY_DIR: &str = "vendors/libsbml-dependencies";
 const EXPAT_NAME: &str = "expat";
 
 const WITH_LIBXML: &str = "OFF";
-const WITH_EXPAT: &str = "True";
+const WITH_EXPAT: &str = "ON";
 const WITH_STATIC_RUNTIME: &str = if cfg!(target_os = "windows") {
     "ON"
 } else {
@@ -25,13 +25,15 @@ fn main() -> miette::Result<()> {
     // Ensure cargo rebuilds if this build script changes
     println!("cargo:rerun-if-changed=build.rs");
 
-    // Build and link libSBML dependencies for Windows
-    // if cfg!(target_os = "windows") {
-    //     build_and_link_sbml_deps()?;
-    // }
+    // Build and link libSBML dependencies
+    let expat_build = if cfg!(target_os = "windows") {
+        build_and_link_sbml_deps()?
+    } else {
+        String::new()
+    };
 
     // Build and link libSBML
-    let sbml_build = build_and_link_libsbml()?;
+    let sbml_build = build_and_link_libsbml(&expat_build)?;
 
     // Configure autocxx to generate Rust bindings
     let rs_file = "src/lib.rs";
@@ -58,13 +60,24 @@ fn main() -> miette::Result<()> {
 ///
 /// # Returns
 /// * The build directory path as a String
-fn build_and_link_libsbml() -> miette::Result<String> {
-    let dst = cmake::Config::new(LIBSBML_PATH)
-        .define("LIBSBML_DEPENDENCY_DIR", LIBSBML_DEPENDENCY_DIR)
-        .define("WITH_STATIC_RUNTIME", WITH_STATIC_RUNTIME)
-        .define("WITH_LIBXML", WITH_LIBXML)
-        .define("WITH_EXPAT", WITH_EXPAT)
-        .build();
+fn build_and_link_libsbml(expat_build: &str) -> miette::Result<String> {
+    let dst = if cfg!(target_os = "windows") {
+        cmake::Config::new(LIBSBML_PATH)
+            .define("LIBSBML_DEPENDENCY_DIR", LIBSBML_DEPENDENCY_DIR)
+            .define("WITH_STATIC_RUNTIME", WITH_STATIC_RUNTIME)
+            .define("WITH_LIBXML", WITH_LIBXML)
+            .define("WITH_EXPAT", WITH_EXPAT)
+            .define("EXPAT_LIBRARY", format!("{}/lib", expat_build))
+            .define("EXPAT_INCLUDE_DIR", format!("{}/include", expat_build))
+            .build()
+    } else {
+        cmake::Config::new(LIBSBML_PATH)
+            .define("LIBSBML_DEPENDENCY_DIR", LIBSBML_DEPENDENCY_DIR)
+            .define("WITH_STATIC_RUNTIME", WITH_STATIC_RUNTIME)
+            .define("WITH_LIBXML", WITH_LIBXML)
+            .define("WITH_EXPAT", WITH_EXPAT)
+            .build()
+    };
 
     // Configure cargo to link against the built library
     println!("cargo:rustc-link-search={}/lib", dst.display());
