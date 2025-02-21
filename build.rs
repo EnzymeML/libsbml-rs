@@ -35,21 +35,21 @@ fn main() -> miette::Result<()> {
         String::new()
     };
 
-    // Build and link libSBML
-    let sbml_build = build_and_link_libsbml(&dep_build)?;
+    // // Build and link libSBML
+    // let sbml_build = build_and_link_libsbml(&dep_build)?;
 
-    // Configure autocxx to generate Rust bindings
-    let rs_file = "src/lib.rs";
+    // // Configure autocxx to generate Rust bindings
+    // let rs_file = "src/lib.rs";
 
-    // Point to the libSBML headers
-    let sbml_include = format!("{}/include", sbml_build);
-    let lib_root = ".";
+    // // Point to the libSBML headers
+    // let sbml_include = format!("{}/include", sbml_build);
+    // let lib_root = ".";
 
-    // Build the C++ wrapper code and bindings
-    let mut b = autocxx_build::Builder::new(rs_file, &[lib_root, &sbml_include]).build()?;
+    // // Build the C++ wrapper code and bindings
+    // let mut b = autocxx_build::Builder::new(rs_file, &[lib_root, &sbml_include]).build()?;
 
-    // Ensure C++17 is used for compilation
-    b.flag_if_supported("-std=c++17").compile("libsbml");
+    // // Ensure C++17 is used for compilation
+    // b.flag_if_supported("-std=c++17").compile("libsbml");
 
     Ok(())
 }
@@ -105,6 +105,26 @@ fn build_and_link_sbml_deps() -> miette::Result<String> {
     println!("cargo:rustc-link-search={}/lib", dst.display());
     println!("cargo:rustc-link-lib=static={}", EXPAT_NAME);
     println!("cargo:rustc-link-lib=static={}", ZLIB_NAME);
+
+    // Print the contents of the expat directory recursively
+    fn print_dir_contents(dir: &std::path::Path) {
+        if let Ok(entries) = std::fs::read_dir(dir) {
+            for entry in entries {
+                if let Ok(entry) = entry {
+                    let path = entry.path();
+                    if path.is_file() {
+                        println!("cargo:warning=file={}", path.display());
+                    } else if path.is_dir() {
+                        println!("cargo:warning=dir={}", path.display());
+                        print_dir_contents(&path);
+                    }
+                }
+            }
+        }
+    }
+
+    let expat_build_dir = dst.display().to_string();
+    print_dir_contents(std::path::Path::new(&expat_build_dir));
 
     Ok(dst.display().to_string())
 }
