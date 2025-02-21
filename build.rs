@@ -73,7 +73,7 @@ fn main() -> miette::Result<()> {
     let mut b = autocxx_build::Builder::new(rs_file, &[lib_root, &sbml_include]).build()?;
 
     // Ensure C++20 is used for compilation
-    b.flag_if_supported("-std=c++20").compile("libsbml");
+    b.flag_if_supported("-std=c++20").compile("sbmlrs");
 
     Ok(())
 }
