@@ -28,11 +28,11 @@ const WITH_LIBXML: &str = "OFF";
 /// Whether to build with Expat XML parser support
 const WITH_EXPAT: &str = "ON";
 
-/// Whether to use static runtime libraries (enabled on Windows only)
-const WITH_STATIC_RUNTIME: &str = if cfg!(target_os = "windows") {
-    "ON"
+// Check whether we are in release or debug mode
+const BUILD_TYPE: &str = if cfg!(debug_assertions) {
+    "Debug"
 } else {
-    "OFF"
+    "Release"
 };
 
 /// Main build script function that orchestrates the build process
@@ -96,8 +96,8 @@ fn build_and_link_libsbml(dep_build: &str) -> miette::Result<String> {
         // This is necessary because the libraries are not installed in the
         // system directories by default. Unlinke MacOS and Linux kernels
         cmake::Config::new(LIBSBML_PATH)
-            .define("CMAKE_BUILD_TYPE", "Release")
-            .define("WITH_STATIC_RUNTIME", WITH_STATIC_RUNTIME)
+            .define("CMAKE_BUILD_TYPE", BUILD_TYPE)
+            .define("WITH_STATIC_RUNTIME", "ON")
             .define("WITH_LIBXML", WITH_LIBXML)
             .define("WITH_EXPAT", WITH_EXPAT)
             //
@@ -124,8 +124,8 @@ fn build_and_link_libsbml(dep_build: &str) -> miette::Result<String> {
     } else {
         // When building for MacOS and Linux, we can just use the system libraries
         cmake::Config::new(LIBSBML_PATH)
-            .define("CMAKE_BUILD_TYPE", "Release")
-            .define("WITH_STATIC_RUNTIME", WITH_STATIC_RUNTIME)
+            .define("CMAKE_BUILD_TYPE", BUILD_TYPE)
+            .define("WITH_STATIC_RUNTIME", "OFF")
             .define("WITH_LIBXML", WITH_LIBXML)
             .define("WITH_EXPAT", WITH_EXPAT)
             .build()
@@ -159,14 +159,15 @@ fn build_and_link_sbml_deps() -> miette::Result<String> {
     // We hard-code to EXPAT and ZLIB for now, but in the future this should
     // be made more flexible.
     let dst = cmake::Config::new(LIBSBML_DEPENDENCY_DIR)
+        .define("CMAKE_BUILD_TYPE", BUILD_TYPE)
+        .define("WITH_STATIC_RUNTIME", "ON")
+        .define("EXPAT_MSVC_STATIC_CRT", "ON")
         .define("WITH_EXPAT", "ON")
         .define("WITH_LIBXML", "OFF")
         .define("WITH_ZLIB", "ON")
         .define("WITH_BZIP2", "OFF")
         .define("WITH_CHECK", "OFF")
         .define("BUILD_SHARED_LIBS", "OFF")
-        .define("WITH_STATIC_RUNTIME", "ON")
-        .define("EXPAT_MSVC_STATIC_CRT", "ON")
         .build();
 
     // Configure cargo to link against the built libraries
