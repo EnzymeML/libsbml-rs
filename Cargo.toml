@@ -5,7 +5,7 @@ edition = "2021"
 
 [lib]
 name = "sbml"
-type = "staticlib"
+crate-type = ["staticlib"]
 
 [dependencies]
 autocxx = "0.27.1"
