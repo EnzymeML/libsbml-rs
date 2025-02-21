@@ -91,6 +91,7 @@ fn main() -> miette::Result<()> {
 /// * `miette::Result<String>` - Build directory path on success, error on failure
 fn build_and_link_libsbml(dep_build: &str) -> miette::Result<String> {
     let dst = if cfg!(target_os = "windows") {
+        println!("cargo:info=Building libSBML for Windows");
         // In order to build for windows, we need to carefully tell CMake
         // where to find the libraries and headers for libexpat and zlib.
         // This is necessary because the libraries are not installed in the
@@ -122,6 +123,7 @@ fn build_and_link_libsbml(dep_build: &str) -> miette::Result<String> {
             .define("BUILD_SHARED_LIBS", "OFF")
             .build()
     } else {
+        println!("cargo:info=Building libSBML for MacOS/Linux");
         // When building for MacOS and Linux, we can just use the system libraries
         cmake::Config::new(LIBSBML_PATH)
             .define("CMAKE_BUILD_TYPE", BUILD_TYPE)
@@ -155,6 +157,8 @@ fn build_and_link_libsbml(dep_build: &str) -> miette::Result<String> {
 /// # Returns
 /// * `miette::Result<String>` - Build directory path on success, error on failure
 fn build_and_link_sbml_deps() -> miette::Result<String> {
+    println!("cargo:info=Building libSBML dependencies");
+
     // Build the dependencies for libSBML
     // We hard-code to EXPAT and ZLIB for now, but in the future this should
     // be made more flexible.
