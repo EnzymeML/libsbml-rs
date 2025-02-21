@@ -3,10 +3,6 @@ name = "sbml"
 version = "0.1.0"
 edition = "2021"
 
-[lib]
-name = "sbml"
-crate-type = ["staticlib"]
-
 [dependencies]
 autocxx = "0.27.1"
 cxx = "1.0.140"
