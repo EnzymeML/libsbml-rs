@@ -69,7 +69,7 @@ fn build_and_link_libsbml(expat_build: &str) -> miette::Result<String> {
             .define("WITH_STATIC_RUNTIME", WITH_STATIC_RUNTIME)
             .define("WITH_LIBXML", WITH_LIBXML)
             .define("WITH_EXPAT", WITH_EXPAT)
-            .define("EXPAT_LIBRARY", format!("{}/lib", expat_build))
+            .define("EXPAT_LIBRARY", format!("{}/lib/libexpat.a", expat_build))
             .define("EXPAT_INCLUDE_DIR", format!("{}/include", expat_build))
             .build()
     } else {
@@ -101,6 +101,7 @@ fn build_and_link_sbml_deps() -> miette::Result<String> {
         .define("WITH_ZLIB", "False")
         .define("WITH_BZIP2", "False")
         .define("WITH_CHECK", "False")
+        .define("BUILD_SHARED_LIBS", "False")
         .build();
 
     // Configure cargo to link against the built library
