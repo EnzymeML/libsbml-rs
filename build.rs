@@ -29,7 +29,11 @@ const WITH_LIBXML: &str = "OFF";
 const WITH_EXPAT: &str = "ON";
 
 /// Whether to use static runtime libraries (enabled on Windows only)
-const WITH_STATIC_RUNTIME: &str = "OFF";
+const WITH_STATIC_RUNTIME: &str = if cfg!(target_os = "windows") {
+    "ON"
+} else {
+    "OFF"
+};
 
 /// Main build script function that orchestrates the build process
 ///
@@ -68,8 +72,8 @@ fn main() -> miette::Result<()> {
     // Build the C++ wrapper code and bindings
     let mut b = autocxx_build::Builder::new(rs_file, &[lib_root, &sbml_include]).build()?;
 
-    // Ensure C++17 is used for compilation
-    b.flag_if_supported("-std=c++17").compile("libsbml");
+    // Ensure C++20 is used for compilation
+    b.flag_if_supported("-std=c++20").compile("libsbml");
 
     Ok(())
 }
