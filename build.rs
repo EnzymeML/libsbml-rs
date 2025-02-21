@@ -97,15 +97,9 @@ fn build_and_link_libsbml(dep_build: &str) -> miette::Result<String> {
         // system directories by default. Unlinke MacOS and Linux kernels
         cmake::Config::new(LIBSBML_PATH)
             .define("CMAKE_BUILD_TYPE", "Release")
-            .define("WITH_STATIC_RUNTIME", "OFF")
+            .define("WITH_STATIC_RUNTIME", WITH_STATIC_RUNTIME)
             .define("WITH_LIBXML", WITH_LIBXML)
             .define("WITH_EXPAT", WITH_EXPAT)
-            // Add these definitions to disable debug CRT features
-            .define("CMAKE_C_FLAGS", "/DNDEBUG /D_CRT_SECURE_NO_WARNINGS")
-            .define("CMAKE_CXX_FLAGS", "/DNDEBUG /D_CRT_SECURE_NO_WARNINGS")
-            // Force dynamic release runtime
-            .define("CMAKE_C_FLAGS_RELEASE", "/MD /O2 /Ob2 /DNDEBUG")
-            .define("CMAKE_CXX_FLAGS_RELEASE", "/MD /O2 /Ob2 /DNDEBUG")
             //
             // Define the paths to the libraries and headers for libexpat and zlib
             //
@@ -130,6 +124,7 @@ fn build_and_link_libsbml(dep_build: &str) -> miette::Result<String> {
     } else {
         // When building for MacOS and Linux, we can just use the system libraries
         cmake::Config::new(LIBSBML_PATH)
+            .define("CMAKE_BUILD_TYPE", "Release")
             .define("WITH_STATIC_RUNTIME", WITH_STATIC_RUNTIME)
             .define("WITH_LIBXML", WITH_LIBXML)
             .define("WITH_EXPAT", WITH_EXPAT)
