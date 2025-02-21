@@ -29,7 +29,7 @@ const WITH_LIBXML: &str = "OFF";
 const WITH_EXPAT: &str = "ON";
 
 /// Whether to use static runtime libraries (enabled on Windows only)
-const WITH_STATIC_RUNTIME: &str = "OFF";
+const WITH_STATIC_RUNTIME: &str = "ON";
 
 /// Main build script function that orchestrates the build process
 ///
