@@ -69,7 +69,7 @@ fn build_and_link_libsbml(expat_build: &str) -> miette::Result<String> {
             .define("WITH_STATIC_RUNTIME", WITH_STATIC_RUNTIME)
             .define("WITH_LIBXML", WITH_LIBXML)
             .define("WITH_EXPAT", WITH_EXPAT)
-            .define("EXPAT_LIBRARY", format!("{}/lib/libexpat.a", expat_build))
+            .define("EXPAT_LIBRARY", format!("{}/lib/libexpat.lib", expat_build))
             .define("EXPAT_INCLUDE_DIR", format!("{}/include", expat_build))
             .build()
     } else {
@@ -107,22 +107,6 @@ fn build_and_link_sbml_deps() -> miette::Result<String> {
     // Configure cargo to link against the built library
     println!("cargo:rustc-link-search={}/lib", dst.display());
     println!("cargo:rustc-link-lib=static={}", EXPAT_NAME);
-
-    // Print the contents of the expat directory
-    let expat_build_dir = dst.display().to_string();
-
-    fn print_dir_contents(path: &str) {
-        for entry in std::fs::read_dir(path).unwrap() {
-            let entry = entry.unwrap();
-            let path = entry.path();
-            if path.is_file() {
-                println!("cargo:warning=file={}", path.display());
-            } else if path.is_dir() {
-                print_dir_contents(path.to_str().unwrap());
-            }
-        }
-    }
-    print_dir_contents(&expat_build_dir);
 
     Ok(dst.display().to_string())
 }
