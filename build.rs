@@ -29,11 +29,7 @@ const WITH_LIBXML: &str = "OFF";
 const WITH_EXPAT: &str = "ON";
 
 // Check whether we are in release or debug mode
-const BUILD_TYPE: &str = if cfg!(debug_assertions) {
-    "Debug"
-} else {
-    "Release"
-};
+const BUILD_TYPE: &str = "Release";
 
 /// Main build script function that orchestrates the build process
 ///
