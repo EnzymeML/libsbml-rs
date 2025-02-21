@@ -96,7 +96,6 @@ fn build_and_link_libsbml(dep_build: &str) -> miette::Result<String> {
         // This is necessary because the libraries are not installed in the
         // system directories by default. Unlinke MacOS and Linux kernels
         cmake::Config::new(LIBSBML_PATH)
-            .define("LIBSBML_DEPENDENCY_DIR", LIBSBML_DEPENDENCY_DIR)
             .define("WITH_STATIC_RUNTIME", WITH_STATIC_RUNTIME)
             .define("WITH_LIBXML", WITH_LIBXML)
             .define("WITH_EXPAT", WITH_EXPAT)
@@ -124,7 +123,6 @@ fn build_and_link_libsbml(dep_build: &str) -> miette::Result<String> {
     } else {
         // When building for MacOS and Linux, we can just use the system libraries
         cmake::Config::new(LIBSBML_PATH)
-            .define("LIBSBML_DEPENDENCY_DIR", LIBSBML_DEPENDENCY_DIR)
             .define("WITH_STATIC_RUNTIME", WITH_STATIC_RUNTIME)
             .define("WITH_LIBXML", WITH_LIBXML)
             .define("WITH_EXPAT", WITH_EXPAT)
@@ -138,7 +136,7 @@ fn build_and_link_libsbml(dep_build: &str) -> miette::Result<String> {
         // Note: This is where things get tricky, because the libsbml
         // static library is named "libsbml-static" and not "libsbml".
         // which seems to confuse the rustc linker.
-        println!("cargo:rustc-link-lib=static=sbml");
+        println!("cargo:rustc-link-lib=sbml-static");
         println!("cargo:rustc-link-lib=expat");
         println!("cargo:rustc-link-lib=zdll");
     } else {
