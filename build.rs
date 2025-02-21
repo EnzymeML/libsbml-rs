@@ -37,6 +37,9 @@ fn main() -> miette::Result<()> {
     // Build and link libSBML
     let sbml_build = build_and_link_libsbml(&dep_build)?;
 
+    // Print the contents of the sbml_build directory
+    print_dir_contents(&sbml_build)?;
+
     // Configure autocxx to generate Rust bindings
     let rs_file = "src/lib.rs";
 
@@ -85,9 +88,11 @@ fn build_and_link_libsbml(dep_build: &str) -> miette::Result<String> {
     };
 
     // Configure cargo to link against the built library
-    println!("cargo:rustc-link-search={}/lib", dst.display());
+    println!("cargo:rustc-link-search=native={}/lib", dst.display());
     if cfg!(target_os = "windows") {
         println!("cargo:rustc-link-lib=static={}", LIBSBML_STATIC_NAME);
+        println!("cargo:rustc-link-lib=static={}", EXPAT_NAME);
+        println!("cargo:rustc-link-lib=static={}", ZLIB_NAME);
     } else {
         println!("cargo:rustc-link-lib=dylib={}", LIBSBML_NAME);
     }
@@ -105,10 +110,24 @@ fn build_and_link_sbml_deps() -> miette::Result<String> {
         .define("BUILD_SHARED_LIBS", "False")
         .build();
 
-    // Configure cargo to link against the built library
-    println!("cargo:rustc-link-search={}/lib", dst.display());
+    // Configure cargo to link against the built libraries
+    println!("cargo:rustc-link-search=native={}/lib", dst.display());
     println!("cargo:rustc-link-lib=static={}", EXPAT_NAME);
     println!("cargo:rustc-link-lib=static={}", ZLIB_NAME);
 
     Ok(dst.display().to_string())
+}
+
+fn print_dir_contents(path: &str) -> miette::Result<()> {
+    let entries = std::fs::read_dir(path)?;
+    for entry in entries {
+        let entry = entry?;
+        let path = entry.path();
+        println!("cargo:warning={}", path.display());
+
+        if path.is_dir() {
+            print_dir_contents(path.to_str().unwrap())?;
+        }
+    }
+    Ok(())
 }
