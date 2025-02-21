@@ -128,7 +128,7 @@ fn build_and_link_libsbml(dep_build: &str) -> miette::Result<String> {
             .define("WITH_STATIC_RUNTIME", WITH_STATIC_RUNTIME)
             .define("WITH_LIBXML", WITH_LIBXML)
             .define("WITH_EXPAT", WITH_EXPAT)
-            .define("LIBSBML_USE_STRICT_INCLUDES", "True")
+            .define("LIBSBML_USE_STRICT_INCLUDES", "ON")
             .build()
     };
 
@@ -160,13 +160,13 @@ fn build_and_link_sbml_deps() -> miette::Result<String> {
     // We hard-code to EXPAT and ZLIB for now, but in the future this should
     // be made more flexible.
     let dst = cmake::Config::new(LIBSBML_DEPENDENCY_DIR)
-        .define("WITH_EXPAT", "True")
-        .define("WITH_LIBXML", "False")
-        .define("WITH_ZLIB", "True")
-        .define("WITH_BZIP2", "False")
-        .define("WITH_CHECK", "False")
-        .define("BUILD_SHARED_LIBS", "False")
-        .define("WITH_STATIC_RUNTIME", WITH_STATIC_RUNTIME)
+        .define("WITH_EXPAT", "ON")
+        .define("WITH_LIBXML", "OFF")
+        .define("WITH_ZLIB", "ON")
+        .define("WITH_BZIP2", "OFF")
+        .define("WITH_CHECK", "OFF")
+        .define("BUILD_SHARED_LIBS", "OFF")
+        .define("WITH_STATIC_RUNTIME", "ON")
         .build();
 
     // Configure cargo to link against the built libraries
