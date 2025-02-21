@@ -119,9 +119,9 @@ fn build_and_link_sbml_deps() -> miette::Result<String> {
 }
 
 fn print_dir_contents(path: &str) -> miette::Result<()> {
-    let entries = std::fs::read_dir(path)?;
+    let entries = std::fs::read_dir(path).unwrap();
     for entry in entries {
-        let entry = entry?;
+        let entry = entry.unwrap();
         let path = entry.path();
         println!("cargo:warning={}", path.display());
 
