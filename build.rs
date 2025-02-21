@@ -128,7 +128,6 @@ fn build_and_link_libsbml(dep_build: &str) -> miette::Result<String> {
             .define("WITH_STATIC_RUNTIME", WITH_STATIC_RUNTIME)
             .define("WITH_LIBXML", WITH_LIBXML)
             .define("WITH_EXPAT", WITH_EXPAT)
-            .define("LIBSBML_USE_STRICT_INCLUDES", "ON")
             .build()
     };
 
@@ -167,6 +166,7 @@ fn build_and_link_sbml_deps() -> miette::Result<String> {
         .define("WITH_CHECK", "OFF")
         .define("BUILD_SHARED_LIBS", "OFF")
         .define("WITH_STATIC_RUNTIME", "ON")
+        .define("EXPAT_MSVC_STATIC_CRT", "ON")
         .build();
 
     // Configure cargo to link against the built libraries
