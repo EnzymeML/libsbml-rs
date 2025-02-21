@@ -28,9 +28,6 @@ const WITH_LIBXML: &str = "OFF";
 /// Whether to build with Expat XML parser support
 const WITH_EXPAT: &str = "ON";
 
-// Check whether we are in release or debug mode
-const BUILD_TYPE: &str = "Release";
-
 /// Main build script function that orchestrates the build process
 ///
 /// This function:
@@ -93,7 +90,7 @@ fn build_and_link_libsbml(dep_build: &str) -> miette::Result<String> {
         // This is necessary because the libraries are not installed in the
         // system directories by default. Unlinke MacOS and Linux kernels
         cmake::Config::new(LIBSBML_PATH)
-            .define("CMAKE_BUILD_TYPE", BUILD_TYPE)
+            .static_crt(true)
             .define("WITH_STATIC_RUNTIME", "ON")
             .define("WITH_LIBXML", WITH_LIBXML)
             .define("WITH_EXPAT", WITH_EXPAT)
@@ -122,7 +119,6 @@ fn build_and_link_libsbml(dep_build: &str) -> miette::Result<String> {
         println!("cargo:warning=Building libSBML for MacOS/Linux");
         // When building for MacOS and Linux, we can just use the system libraries
         cmake::Config::new(LIBSBML_PATH)
-            .define("CMAKE_BUILD_TYPE", BUILD_TYPE)
             .define("WITH_STATIC_RUNTIME", "OFF")
             .define("WITH_LIBXML", WITH_LIBXML)
             .define("WITH_EXPAT", WITH_EXPAT)
@@ -159,7 +155,7 @@ fn build_and_link_sbml_deps() -> miette::Result<String> {
     // We hard-code to EXPAT and ZLIB for now, but in the future this should
     // be made more flexible.
     let dst = cmake::Config::new(LIBSBML_DEPENDENCY_DIR)
-        .define("CMAKE_BUILD_TYPE", BUILD_TYPE)
+        .static_crt(true)
         .define("WITH_STATIC_RUNTIME", "ON")
         .define("EXPAT_MSVC_STATIC_CRT", "ON")
         .define("WITH_EXPAT", "ON")
