@@ -89,7 +89,7 @@ fn build_and_link_libsbml(dep_build: &str) -> miette::Result<String> {
     // Configure cargo to link against the built library
     println!("cargo:rustc-link-search={}/lib", dst.display());
     if cfg!(target_os = "windows") {
-        println!("cargo:rustc-link-lib=static={}", "libsbml-static");
+        println!("cargo:rustc-link-lib=static={}", "libsbml-static.lib");
         println!("cargo:rustc-link-lib=static={}", EXPAT_NAME);
         println!("cargo:rustc-link-lib=static={}", ZLIB_NAME);
     } else {
