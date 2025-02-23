@@ -66,7 +66,7 @@ fn main() -> miette::Result<()> {
     let mut b = autocxx_build::Builder::new(rs_file, &[lib_root, &sbml_include]).build()?;
 
     // Ensure C++20 is used for compilation
-    b.flag_if_supported("-std=c++20").compile("sbmlrs");
+    b.flag_if_supported("-std=c++17").compile("sbmlrs");
 
     Ok(())
 }
@@ -120,6 +120,7 @@ fn build_and_link_libsbml(dep_build: &str) -> miette::Result<String> {
         println!("cargo:warning=Building libSBML for MacOS/Linux");
         // When building for MacOS and Linux, we can just use the system libraries
         cmake::Config::new(LIBSBML_PATH)
+            .profile("Release")
             .define("WITH_STATIC_RUNTIME", "OFF")
             .define("WITH_LIBXML", WITH_LIBXML)
             .define("WITH_EXPAT", WITH_EXPAT)
