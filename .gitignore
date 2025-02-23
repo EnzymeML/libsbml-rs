@@ -19,6 +19,3 @@ target/
 # Mac
 .DS_Store
 
-# Cargo
-.cargo/
-

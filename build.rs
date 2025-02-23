@@ -28,9 +28,6 @@ const WITH_LIBXML: &str = "OFF";
 /// Whether to build with Expat XML parser support
 const WITH_EXPAT: &str = "ON";
 
-/// Whether to use static runtime libraries (enabled on Windows only)
-const WITH_STATIC_RUNTIME: &str = "ON";
-
 /// Main build script function that orchestrates the build process
 ///
 /// This function:
@@ -68,8 +65,8 @@ fn main() -> miette::Result<()> {
     // Build the C++ wrapper code and bindings
     let mut b = autocxx_build::Builder::new(rs_file, &[lib_root, &sbml_include]).build()?;
 
-    // Ensure C++17 is used for compilation
-    b.flag_if_supported("-std=c++17").compile("libsbml");
+    // Ensure C++20 is used for compilation
+    b.flag_if_supported("-std=c++17").compile("sbmlrs");
 
     Ok(())
 }
@@ -87,13 +84,15 @@ fn main() -> miette::Result<()> {
 /// * `miette::Result<String>` - Build directory path on success, error on failure
 fn build_and_link_libsbml(dep_build: &str) -> miette::Result<String> {
     let dst = if cfg!(target_os = "windows") {
+        println!("cargo:warning=Building libSBML for Windows");
         // In order to build for windows, we need to carefully tell CMake
         // where to find the libraries and headers for libexpat and zlib.
         // This is necessary because the libraries are not installed in the
         // system directories by default. Unlinke MacOS and Linux kernels
         cmake::Config::new(LIBSBML_PATH)
-            .define("CMAKE_BUILD_TYPE", "Release")
-            .define("WITH_STATIC_RUNTIME", WITH_STATIC_RUNTIME)
+            .static_crt(true)
+            .profile("Release")
+            .define("WITH_STATIC_RUNTIME", "ON")
             .define("WITH_LIBXML", WITH_LIBXML)
             .define("WITH_EXPAT", WITH_EXPAT)
             //
@@ -118,12 +117,13 @@ fn build_and_link_libsbml(dep_build: &str) -> miette::Result<String> {
             .define("BUILD_SHARED_LIBS", "OFF")
             .build()
     } else {
+        println!("cargo:warning=Building libSBML for MacOS/Linux");
         // When building for MacOS and Linux, we can just use the system libraries
         cmake::Config::new(LIBSBML_PATH)
-            .define("WITH_STATIC_RUNTIME", WITH_STATIC_RUNTIME)
+            .profile("Release")
+            .define("WITH_STATIC_RUNTIME", "OFF")
             .define("WITH_LIBXML", WITH_LIBXML)
             .define("WITH_EXPAT", WITH_EXPAT)
-            .define("LIBSBML_USE_STRICT_INCLUDES", "True")
             .build()
     };
 
@@ -151,16 +151,22 @@ fn build_and_link_libsbml(dep_build: &str) -> miette::Result<String> {
 /// # Returns
 /// * `miette::Result<String>` - Build directory path on success, error on failure
 fn build_and_link_sbml_deps() -> miette::Result<String> {
+    println!("cargo:warning=Building libSBML dependencies");
+
     // Build the dependencies for libSBML
     // We hard-code to EXPAT and ZLIB for now, but in the future this should
     // be made more flexible.
     let dst = cmake::Config::new(LIBSBML_DEPENDENCY_DIR)
-        .define("WITH_EXPAT", "True")
-        .define("WITH_LIBXML", "False")
-        .define("WITH_ZLIB", "True")
-        .define("WITH_BZIP2", "False")
-        .define("WITH_CHECK", "False")
-        .define("BUILD_SHARED_LIBS", "False")
+        .static_crt(true)
+        .profile("Release")
+        .define("WITH_STATIC_RUNTIME", "ON")
+        .define("EXPAT_MSVC_STATIC_CRT", "ON")
+        .define("WITH_EXPAT", "ON")
+        .define("WITH_LIBXML", "OFF")
+        .define("WITH_ZLIB", "ON")
+        .define("WITH_BZIP2", "OFF")
+        .define("WITH_CHECK", "OFF")
+        .define("BUILD_SHARED_LIBS", "OFF")
         .build();
 
     // Configure cargo to link against the built libraries
