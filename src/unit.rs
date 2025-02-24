@@ -12,6 +12,7 @@ use std::{cell::RefCell, pin::Pin, str::FromStr};
 
 use crate::{
     model::Model,
+    pin_ptr,
     sbmlcxx::{self},
 };
 
@@ -32,25 +33,23 @@ impl<'a> Unit<'a> {
     ///
     /// # Arguments
     /// * `model` - The parent Model that will contain this unit
-    /// * `kind` - The kind of unit to create (e.g. meters, seconds, etc.)
+    /// * `kind` - The kind of unit to create
     ///
     /// # Returns
     /// A new Unit instance
     pub fn new(model: &Model<'a>, kind: UnitKind) -> Self {
         let unit_ptr = model.inner().borrow_mut().as_mut().createUnit();
-        let unit_ref: &mut sbmlcxx::Unit = unsafe { &mut *unit_ptr };
-
-        let mut pinned_unit = unsafe { Pin::new_unchecked(unit_ref) };
+        let mut unit = pin_ptr!(unit_ptr, sbmlcxx::Unit);
 
         // Set the default
-        pinned_unit.as_mut().initDefaults();
+        unit.as_mut().initDefaults();
 
         // Set the kind
         let kind = kind.into();
-        pinned_unit.as_mut().setKind(kind);
+        unit.as_mut().setKind(kind);
 
         Self {
-            unit: RefCell::new(pinned_unit),
+            unit: RefCell::new(unit),
         }
     }
 

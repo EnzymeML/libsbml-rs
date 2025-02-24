@@ -8,7 +8,7 @@
 //! This wrapper provides safe access to the underlying C++ libSBML Species class while
 //! maintaining Rust's safety guarantees through the use of RefCell and Pin.
 
-use std::{cell::RefCell, pin::Pin, rc::Rc};
+use std::{cell::RefCell, error::Error, pin::Pin, rc::Rc};
 
 use cxx::let_cxx_string;
 use quick_xml::{de::from_str, se::to_string, DeError, SeError};
@@ -16,6 +16,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     model::Model,
+    pin_ptr,
     sbmlcxx::{self, utils},
     wrapper::Wrapper,
     Annotation,
@@ -40,19 +41,17 @@ impl<'a> Species<'a> {
     /// A new Species instance
     pub fn new(model: &Model<'a>, id: &str) -> Self {
         let species_ptr = model.inner().borrow_mut().as_mut().createSpecies();
-        let species_ref: &mut sbmlcxx::Species = unsafe { &mut *species_ptr };
+        let mut species = pin_ptr!(species_ptr, sbmlcxx::Species);
 
-        let mut pinned_species = unsafe { Pin::new_unchecked(species_ref) };
-
-        // Set the default
-        pinned_species.as_mut().initDefaults();
+        // Set the default values for the species
+        species.as_mut().initDefaults();
 
         // Set the id of the species
         let_cxx_string!(id = id);
-        pinned_species.as_mut().setId(&id);
+        species.as_mut().setId(&id);
 
         Self {
-            species: RefCell::new(pinned_species),
+            species: RefCell::new(species),
         }
     }
 
@@ -242,7 +241,7 @@ impl<'a> Annotation for Species<'a> {
     ///
     /// # Arguments
     /// * `annotation` - A string slice that holds the annotation to set.
-    fn set_annotation(&self, annotation: &str) {
+    fn set_annotation(&self, annotation: &str) -> Result<(), Box<dyn Error>> {
         let_cxx_string!(annotation = annotation);
         unsafe {
             utils::setSpeciesAnnotation(
@@ -250,6 +249,7 @@ impl<'a> Annotation for Species<'a> {
                 &annotation,
             );
         }
+        Ok(())
     }
 
     /// Sets the annotation for the species using a serializable type.
@@ -260,9 +260,11 @@ impl<'a> Annotation for Species<'a> {
     ///
     /// # Arguments
     /// * `annotation` - A reference to a serializable type that will be converted to a string.
-    fn set_annotation_serde<T: Serialize>(&self, annotation: &T) {
-        let annotation = to_string(annotation).unwrap();
-        self.set_annotation(&annotation);
+    fn set_annotation_serde<T: Serialize>(&self, annotation: &T) -> Result<(), SeError> {
+        let annotation = to_string(annotation)?;
+        self.set_annotation(&annotation)
+            .map_err(|e| SeError::Custom(e.to_string()))?;
+        Ok(())
     }
 
     /// Gets the annotation for the species as a serializable type.
@@ -372,9 +374,11 @@ impl<'a> SpeciesBuilder<'a> {
     ///
     /// # Arguments
     /// * `annotation` - The annotation string to set
-    pub fn annotation(self, annotation: &str) -> Self {
-        self.species.set_annotation(annotation);
-        self
+    pub fn annotation(self, annotation: &str) -> Result<Self, SeError> {
+        self.species
+            .set_annotation(annotation)
+            .map_err(|e| SeError::Custom(e.to_string()))?;
+        Ok(self)
     }
 
     /// Sets a serializable annotation for this species.
@@ -386,7 +390,9 @@ impl<'a> SpeciesBuilder<'a> {
     /// Self with Result indicating success or serialization error
     pub fn annotation_serde<T: Serialize>(self, annotation: &T) -> Result<Self, SeError> {
         let annotation = to_string(annotation)?;
-        self.species.set_annotation(&annotation);
+        self.species
+            .set_annotation(&annotation)
+            .map_err(|e| SeError::Custom(e.to_string()))?;
         Ok(self)
     }
 
@@ -408,7 +414,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_species() {
+    fn test_species_from_model() {
         let doc = SBMLDocument::new(3, 2);
         let model = Model::new(&doc, "test");
         let species = Species::new(&model, "glucose");
@@ -451,7 +457,7 @@ mod tests {
         let doc = SBMLDocument::new(3, 2);
         let model = Model::new(&doc, "test");
         let species = Species::new(&model, "glucose");
-        species.set_annotation("<test>1</test>");
+        species.set_annotation("<test>1</test>").unwrap();
         assert_eq!(
             species.get_annotation().replace("\n", "").replace(' ', ""),
             "<annotation><test>1</test></annotation>"
@@ -468,9 +474,11 @@ mod tests {
         let doc = SBMLDocument::new(3, 2);
         let model = Model::new(&doc, "test");
         let species = Species::new(&model, "glucose");
-        species.set_annotation_serde(&Test {
-            test: "test".to_string(),
-        });
+        species
+            .set_annotation_serde(&Test {
+                test: "test".to_string(),
+            })
+            .unwrap();
         assert_eq!(species.get_annotation_serde::<Test>().unwrap().test, "test");
     }
 }
