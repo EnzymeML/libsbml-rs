@@ -29,6 +29,8 @@ pub mod species;
 pub mod unit;
 pub mod unitdef;
 
+pub mod macros;
+
 /// Internal module containing the wrapper types for the annotation.
 pub(crate) mod wrapper;
 
@@ -76,6 +78,10 @@ pub(crate) mod sbmlcxx {
         generate!("utils::setSpeciesAnnotation")
         generate!("utils::setModelAnnotation")
         generate!("utils::setCompartmentAnnotation")
+        generate!("utils::getUnitDefinitionAnnotationString")
+        generate!("utils::setUnitDefinitionAnnotation")
+        generate!("utils::getUnitAnnotationString")
+        generate!("utils::setUnitAnnotation")
     }
 
     pub use ffi::*;
