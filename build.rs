@@ -63,7 +63,7 @@ fn main() -> miette::Result<()> {
     let lib_root = ".";
 
     // Build the C++ wrapper code and bindings
-    let mut b = autocxx_build::Builder::new(rs_file, &[lib_root, &sbml_include]).build()?;
+    let mut b = autocxx_build::Builder::new(rs_file, [lib_root, &sbml_include]).build()?;
 
     // Ensure C++20 is used for compilation
     b.flag_if_supported("-std=c++17").compile("sbmlrs");

@@ -98,4 +98,69 @@ namespace utils {
             species->setAnnotation(annotation.c_str());
         }
     }
+
+    /*
+    UnitDefinition
+
+    These are helper functions for the UnitDefinition class. Because autocxx does not support
+    getting the annotation as a string, we need to use these functions.
+    */
+
+    /**
+     * Get the annotation of a unit definition as a string.
+     * 
+     * @param unit_definition A pointer to the LIBSBML_CPP_NAMESPACE::UnitDefinition object.
+     * @return A string containing the unit definition's annotation, or an empty string if the unit definition is null or has no annotation set.
+     */
+    std::string getUnitDefinitionAnnotationString(LIBSBML_CPP_NAMESPACE::UnitDefinition* unit_definition) {
+        if (unit_definition && unit_definition->isSetAnnotation()) {
+            return unit_definition->getAnnotationString();
+        }
+        return "";
+    }
+
+
+    /**
+     * Set the annotation of a unit definition.
+     * 
+     * @param unit_definition A pointer to the LIBSBML_CPP_NAMESPACE::UnitDefinition object.
+     * @param annotation A string containing the annotation to set for the unit definition.
+     */
+    void setUnitDefinitionAnnotation(LIBSBML_CPP_NAMESPACE::UnitDefinition* unit_definition, const std::string& annotation) {
+        if (unit_definition) {
+            unit_definition->setAnnotation(annotation.c_str());
+        }
+    }
+
+    /*
+    Unit
+
+    These are helper functions for the Unit class. Because autocxx does not support
+    getting the annotation as a string, we need to use these functions.
+    */
+    
+    /**
+     * Get the annotation of a unit as a string.
+     * 
+     * @param unit A pointer to the LIBSBML_CPP_NAMESPACE::Unit object.
+     * @return A string containing the unit's annotation, or an empty string if the unit is null or has no annotation set.
+     */
+    std::string getUnitAnnotationString(LIBSBML_CPP_NAMESPACE::Unit* unit) {
+        if (unit && unit->isSetAnnotation()) {
+            return unit->getAnnotationString();
+        }
+        return "";
+    }
+
+    /**
+     * Set the annotation of a unit.
+     * 
+     * @param unit A pointer to the LIBSBML_CPP_NAMESPACE::Unit object.
+     * @param annotation A string containing the annotation to set for the unit.
+     */
+    void setUnitAnnotation(LIBSBML_CPP_NAMESPACE::Unit* unit, const std::string& annotation) {
+        if (unit) {
+            unit->setAnnotation(annotation.c_str());
+        }
+    }
 } 

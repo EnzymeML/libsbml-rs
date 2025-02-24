@@ -32,7 +32,9 @@
 //! let retrieved: MyAnnotation = model.get_annotation_serde().unwrap();
 //! ```
 
-use quick_xml::DeError;
+use std::error::Error;
+
+use quick_xml::{DeError, SeError};
 use serde::{Deserialize, Serialize};
 
 /// Trait for handling annotations in SBML elements.
@@ -54,7 +56,7 @@ pub trait Annotation {
     ///
     /// # Arguments
     /// * `annotation` - The string annotation to set
-    fn set_annotation(&self, annotation: &str);
+    fn set_annotation(&self, annotation: &str) -> Result<(), Box<dyn Error>>;
 
     /// Sets an annotation using a serializable data structure.
     ///
@@ -63,7 +65,7 @@ pub trait Annotation {
     ///
     /// # Arguments
     /// * `annotation` - The serializable data structure to use as annotation
-    fn set_annotation_serde<T: Serialize>(&self, annotation: &T);
+    fn set_annotation_serde<T: Serialize>(&self, annotation: &T) -> Result<(), SeError>;
 
     /// Gets the annotation as a deserializable data structure.
     ///

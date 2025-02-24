@@ -7,18 +7,20 @@
 //! This wrapper provides safe access to the underlying C++ libSBML Model class while
 //! maintaining Rust's safety guarantees through the use of RefCell and Pin.
 
-use std::{cell::RefCell, pin::Pin, rc::Rc};
+use std::{cell::RefCell, error::Error, pin::Pin, rc::Rc};
 
 use cxx::let_cxx_string;
-use quick_xml::{de::from_str, se::to_string, DeError};
+use quick_xml::{de::from_str, se::to_string, DeError, SeError};
 use serde::{Deserialize, Serialize};
 
 use crate::{
     annotation::Annotation,
     compartment::{Compartment, CompartmentBuilder},
+    pin_ptr,
     sbmlcxx::{self, utils},
     sbmldoc::SBMLDocument,
     species::{Species, SpeciesBuilder},
+    unitdef::UnitDefinition,
     wrapper::Wrapper,
 };
 
@@ -30,6 +32,7 @@ pub struct Model<'a> {
     model: RefCell<Pin<&'a mut sbmlcxx::Model>>,
     species: RefCell<Vec<Rc<Species<'a>>>>,
     compartments: RefCell<Vec<Rc<Compartment<'a>>>>,
+    unit_definitions: RefCell<Vec<Rc<UnitDefinition<'a>>>>,
 }
 
 impl<'a> Model<'a> {
@@ -43,13 +46,13 @@ impl<'a> Model<'a> {
     /// A new Model instance
     pub fn new(document: &SBMLDocument, id: &str) -> Self {
         let model_ptr = document.inner().borrow_mut().pin_mut().createModel(id);
-        let model_ref: &mut sbmlcxx::Model = unsafe { &mut *model_ptr };
-        let pinned_model = unsafe { Pin::new_unchecked(model_ref) };
+        let model = pin_ptr!(model_ptr, sbmlcxx::Model);
 
         Self {
-            model: RefCell::new(pinned_model),
+            model: RefCell::new(model),
             species: RefCell::new(Vec::new()),
             compartments: RefCell::new(Vec::new()),
+            unit_definitions: RefCell::new(Vec::new()),
         }
     }
 
@@ -197,6 +200,22 @@ impl<'a> Model<'a> {
     pub fn build_compartment(&self, id: &str) -> CompartmentBuilder<'a> {
         CompartmentBuilder::new(self, id)
     }
+
+    /// Creates a new UnitDefinition within this model.
+    ///
+    /// # Arguments
+    /// * `id` - The identifier for the new unit definition
+    /// * `name` - The name of the unit definition
+    ///
+    /// # Returns
+    /// A new UnitDefinition instance
+    pub fn create_unit_definition(&self, id: &str, name: &str) -> Rc<UnitDefinition<'a>> {
+        let unit_definition = Rc::new(UnitDefinition::new(self, id, name));
+        self.unit_definitions
+            .borrow_mut()
+            .push(Rc::clone(&unit_definition));
+        unit_definition
+    }
 }
 
 impl<'a> Annotation for Model<'a> {
@@ -207,9 +226,10 @@ impl<'a> Annotation for Model<'a> {
     ///
     /// # Arguments
     /// * `annotation` - A string slice that holds the annotation to set.
-    fn set_annotation(&self, annotation: &str) {
+    fn set_annotation(&self, annotation: &str) -> Result<(), Box<dyn Error>> {
         let_cxx_string!(annotation = annotation);
         self.model.borrow_mut().as_mut().setAnnotation1(&annotation);
+        Ok(())
     }
 
     /// Sets the annotation for the model using a serializable type.
@@ -220,9 +240,11 @@ impl<'a> Annotation for Model<'a> {
     ///
     /// # Arguments
     /// * `annotation` - A reference to a serializable type that will be converted to a string.
-    fn set_annotation_serde<T: Serialize>(&self, annotation: &T) {
-        let annotation = to_string(annotation).unwrap();
-        self.set_annotation(&annotation);
+    fn set_annotation_serde<T: Serialize>(&self, annotation: &T) -> Result<(), SeError> {
+        let annotation = to_string(annotation)?;
+        self.set_annotation(&annotation)
+            .map_err(|e| SeError::Custom(e.to_string()))?;
+        Ok(())
     }
 
     /// Gets the annotation for the model.

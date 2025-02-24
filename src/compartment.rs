@@ -6,14 +6,15 @@
 //! This wrapper provides safe access to the underlying C++ libSBML Compartment class while
 //! maintaining Rust's safety guarantees through the use of RefCell and Pin.
 
-use std::{cell::RefCell, pin::Pin, rc::Rc};
+use std::{cell::RefCell, error::Error, pin::Pin, rc::Rc};
 
 use cxx::let_cxx_string;
-use quick_xml::{de::from_str, se::to_string, DeError};
+use quick_xml::{de::from_str, se::to_string, DeError, SeError};
 use serde::{Deserialize, Serialize};
 
 use crate::{
     model::Model,
+    pin_ptr,
     sbmlcxx::{self, utils},
     wrapper::Wrapper,
     Annotation,
@@ -38,16 +39,14 @@ impl<'a> Compartment<'a> {
     /// A new Compartment instance
     pub fn new(model: &Model<'a>, id: &str) -> Self {
         let compartment_ptr = model.inner().borrow_mut().as_mut().createCompartment();
-        let compartment_ref: &mut sbmlcxx::Compartment = unsafe { &mut *compartment_ptr };
-
-        let mut pinned_compartment = unsafe { Pin::new_unchecked(compartment_ref) };
+        let mut compartment = pin_ptr!(compartment_ptr, sbmlcxx::Compartment);
 
         // Set the id of the compartment
         let_cxx_string!(id = id);
-        pinned_compartment.as_mut().setId(&id);
+        compartment.as_mut().setId(&id);
 
         Self {
-            compartment: RefCell::new(pinned_compartment),
+            compartment: RefCell::new(compartment),
         }
     }
 
@@ -117,7 +116,7 @@ impl<'a> Annotation for Compartment<'a> {
     ///
     /// # Arguments
     /// * `annotation` - A string slice that holds the annotation to set.
-    fn set_annotation(&self, annotation: &str) {
+    fn set_annotation(&self, annotation: &str) -> Result<(), Box<dyn Error>> {
         let_cxx_string!(annotation = annotation);
         unsafe {
             utils::setCompartmentAnnotation(
@@ -125,6 +124,7 @@ impl<'a> Annotation for Compartment<'a> {
                 &annotation,
             );
         }
+        Ok(())
     }
 
     /// Sets the annotation for the compartment using a serializable type.
@@ -135,9 +135,11 @@ impl<'a> Annotation for Compartment<'a> {
     ///
     /// # Arguments
     /// * `annotation` - A reference to a serializable type that will be converted to a string.
-    fn set_annotation_serde<T: Serialize>(&self, annotation: &T) {
-        let annotation = to_string(annotation).unwrap();
-        self.set_annotation(&annotation);
+    fn set_annotation_serde<T: Serialize>(&self, annotation: &T) -> Result<(), SeError> {
+        let annotation = to_string(annotation)?;
+        self.set_annotation(&annotation)
+            .map_err(|e| SeError::Custom(e.to_string()))?;
+        Ok(())
     }
 
     /// Gets the annotation for the compartment as a serializable type.
@@ -199,19 +201,23 @@ impl<'a> CompartmentBuilder<'a> {
     ///
     /// # Arguments
     /// * `annotation` - The annotation string to set
-    pub fn annotation(self, annotation: &str) -> Self {
-        self.compartment.set_annotation(annotation);
-        self
+    pub fn annotation(self, annotation: &str) -> Result<Self, SeError> {
+        self.compartment
+            .set_annotation(annotation)
+            .map_err(|e| SeError::Custom(e.to_string()))?;
+        Ok(self)
     }
 
     /// Sets a serializable annotation for this compartment.
     ///
     /// # Arguments
     /// * `annotation` - The annotation to serialize and set
-    pub fn annotation_serde<T: Serialize>(self, annotation: &T) -> Self {
-        let annotation = to_string(annotation).expect("Failed to serialize annotation");
-        self.compartment.set_annotation(&annotation);
-        self
+    pub fn annotation_serde<T: Serialize>(self, annotation: &T) -> Result<Self, SeError> {
+        let annotation = to_string(annotation)?;
+        self.compartment
+            .set_annotation(&annotation)
+            .map_err(|e| SeError::Custom(e.to_string()))?;
+        Ok(self)
     }
 
     /// Builds and returns the configured Compartment instance.
