@@ -64,9 +64,9 @@ checksum = "ace50bade8e6234aa140d9a2f552bbee1db4d353f69b8217bc503490fc1a9f26"
 
 [[package]]
 name = "autocxx"
-version = "0.27.1"
+version = "0.28.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "df4cd53fbb324a8fdbe1a5419fa397c1b8471a81069805dc9c6e3aceeb2c995e"
+checksum = "68c55316bd7d6560588498fe43b1aee3fd36c17c7cd440d69a5b4ba7df33978f"
 dependencies = [
  "aquamarine",
  "autocxx-macro",
@@ -76,9 +76,9 @@ dependencies = [
 
 [[package]]
 name = "autocxx-bindgen"
-version = "0.71.1"
+version = "0.72.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a7d41cf081e31a74378456586b47a5bae2b75a98e5f7c248c9d9bf433e3637f4"
+checksum = "537ef6dffea4311d04a313f645bdd04d2c88b356a6eb7afd4258e5aee70dea8c"
 dependencies = [
  "bitflags",
  "cexpr",
@@ -95,9 +95,9 @@ dependencies = [
 
 [[package]]
 name = "autocxx-build"
-version = "0.27.1"
+version = "0.28.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d123397e75f904758fef490775a00b0ada545ab409cb0163d919799e5a30119b"
+checksum = "fab383d79e3f1fe444c2161c3a0331d0e1478f7fb74bde75e3f5032577a3f706"
 dependencies = [
  "autocxx-engine",
  "env_logger",
@@ -107,9 +107,9 @@ dependencies = [
 
 [[package]]
 name = "autocxx-engine"
-version = "0.27.1"
+version = "0.28.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8d8f30534af0f55d56743806ea9d49fbd85559f2bd3ec074fb3268ad1827fa92"
+checksum = "c00c4e7d232a15552eba90ec47c9a22c65e62816aef2ae4301801c3e1017737b"
 dependencies = [
  "aquamarine",
  "autocxx-bindgen",
@@ -136,9 +136,9 @@ dependencies = [
 
 [[package]]
 name = "autocxx-macro"
-version = "0.27.1"
+version = "0.28.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0a3c6868514727e4da46049b79941d989606e9eb054fb1915f02cad10a356b37"
+checksum = "14586f9015555a8d257259713ac4914184a5c8c3f0c22efb8e538f79d2b3d968"
 dependencies = [
  "autocxx-parser",
  "proc-macro-error",
@@ -149,9 +149,9 @@ dependencies = [
 
 [[package]]
 name = "autocxx-parser"
-version = "0.27.1"
+version = "0.28.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0cbe64c4c35a76ef3229505d336b3eef29e95b28f457b75e0f84b456a8107af9"
+checksum = "893a36d31f4618434f78f890f3136b039bbe6a719919e03eb249835e849454b7"
 dependencies = [
  "indexmap",
  "itertools 0.10.5",
