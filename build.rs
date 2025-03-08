@@ -41,6 +41,7 @@ const WITH_EXPAT: &str = "ON";
 fn main() -> miette::Result<()> {
     // Ensure cargo rebuilds if this build script changes
     println!("cargo:rerun-if-changed=build.rs");
+    println!("cargo:rerun-if-changed=src/lib.rs");
 
     // Build and link libSBML dependencies
     let dep_build = if cfg!(target_os = "windows") {
@@ -65,8 +66,10 @@ fn main() -> miette::Result<()> {
     // Build the C++ wrapper code and bindings
     let mut b = autocxx_build::Builder::new(rs_file, [lib_root, &sbml_include]).build()?;
 
-    // Ensure C++20 is used for compilation
-    b.flag_if_supported("-std=c++17").compile("sbmlrs");
+    // Ensure C++20 is used for compilation and disable warnings
+    b.flag_if_supported("-std=c++17")
+        .flag_if_supported("-w") // Disable all warnings
+        .compile("sbmlrs");
 
     Ok(())
 }
