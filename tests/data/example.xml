@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sbml xmlns="http://www.sbml.org/sbml/level3/version2/core" level="3" version="2">
+    <model id="example">
+        <listOfUnitDefinitions>
+            <unitDefinition id="mole" name="mole">
+                <listOfUnits>
+                    <unit kind="mole" exponent="1" scale="1" multiplier="1" />
+                </listOfUnits>
+            </unitDefinition>
+            <unitDefinition id="ml" name="ml">
+                <listOfUnits>
+                    <unit kind="litre" exponent="1" scale="-3" multiplier="1" />
+                </listOfUnits>
+            </unitDefinition>
+        </listOfUnitDefinitions>
+        <listOfCompartments>
+            <compartment id="cytosol" name="cytosol" units="ml" />
+        </listOfCompartments>
+        <listOfSpecies>
+            <species id="ethanol" name="Ethanol" compartment="cytosol" initialConcentration="0.5"
+                substanceUnits="mole" hasOnlySubstanceUnits="false" boundaryCondition="false"
+                constant="false" />
+            <species id="aldehyde" name="Aldehyde" compartment="cytosol" initialConcentration="0.5"
+                substanceUnits="mole" hasOnlySubstanceUnits="false" boundaryCondition="false"
+                constant="false" />
+        </listOfSpecies>
+        <listOfReactions>
+            <reaction id="reaction" name="Reaction">
+                <listOfReactants>
+                    <speciesReference species="ethanol" stoichiometry="1" />
+                </listOfReactants>
+                <listOfProducts>
+                    <speciesReference species="aldehyde" stoichiometry="1" />
+                </listOfProducts>
+            </reaction>
+        </listOfReactions>
+    </model>
+</sbml>

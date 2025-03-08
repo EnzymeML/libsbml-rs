@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sbml xmlns="http://www.sbml.org/sbml/level3/version2/core" level="3" version="2">
+  <model name="Test" volumeUnits="u5">
+    <listOfUnitDefinitions>
+      <unitDefinition id="u5" name="ml">
+        <listOfUnits>
+          <unit kind="litre" exponent="1" scale="-3" multiplier="1" />
+        </listOfUnits>
+      </unitDefinition>
+      <unitDefinition id="u6" name="mmol / l">
+        <listOfUnits>
+          <unit kind="mole" exponent="1" scale="-3" multiplier="1" />
+          <unit kind="litre" exponent="-1" scale="0" multiplier="1" />
+        </listOfUnits>
+      </unitDefinition>
+      <unitDefinition id="u7" name="s">
+        <listOfUnits>
+          <unit kind="second" exponent="1" scale="0" multiplier="1" />
+        </listOfUnits>
+      </unitDefinition>
+      <unitDefinition id="u8" name="K">
+        <listOfUnits>
+          <unit kind="kelvin" exponent="1" scale="0" multiplier="1" />
+        </listOfUnits>
+      </unitDefinition>
+      <unitDefinition id="u9" name="1 / s">
+        <listOfUnits>
+          <unit kind="second" exponent="-1" scale="0" multiplier="1" />
+        </listOfUnits>
+      </unitDefinition>
+    </listOfUnitDefinitions>
+    <listOfCompartments>
+      <compartment id="v0" name="Vessel 1" spatialDimensions="3" size="10" units="u5"
+        constant="true" />
+    </listOfCompartments>
+    <listOfSpecies>
+      <species sboTerm="SBO:0000252" id="p0" name="Enzyme" compartment="v0" substanceUnits="mole"
+        hasOnlySubstanceUnits="false" boundaryCondition="false" constant="true" />
+      <species sboTerm="SBO:0000296" id="c0" name="Enzyme-Substrate Complex" compartment="v0"
+        substanceUnits="mole" hasOnlySubstanceUnits="false" boundaryCondition="false"
+        constant="true" />
+      <species sboTerm="SBO:0000247" id="s0" name="Substrate" compartment="v0"
+        initialConcentration="0" substanceUnits="u6" hasOnlySubstanceUnits="false"
+        boundaryCondition="false" constant="false" />
+      <species sboTerm="SBO:0000247" id="s1" name="Product" compartment="v0"
+        initialConcentration="10" substanceUnits="u6" hasOnlySubstanceUnits="false"
+        boundaryCondition="false" constant="false" />
+    </listOfSpecies>
+    <listOfParameters>
+      <parameter id="K_m" name="K_m" units="u6" constant="true" />
+      <parameter id="kcat" name="kcat" units="u9" constant="true" />
+      <parameter id="E_tot" name="E_tot" units="u6" constant="true" />
+    </listOfParameters>
+    <listOfRules>
+      <rateRule variable="s1">
+        <annotation>
+          <variables xmlns="https://www.enzymeml.org/v2">
+            <variable id="s0" name="s0" symbol="s0" />
+          </variables>
+        </annotation>
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+          <apply>
+            <divide />
+            <apply>
+              <times />
+              <ci> E_tot </ci>
+              <ci> kcat </ci>
+              <ci> s0 </ci>
+            </apply>
+            <apply>
+              <plus />
+              <ci> K_m </ci>
+              <ci> s0 </ci>
+            </apply>
+          </apply>
+        </math>
+      </rateRule>
+    </listOfRules>
+  </model>
+</sbml>
