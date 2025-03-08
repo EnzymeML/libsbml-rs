@@ -8,18 +8,18 @@
 //! This wrapper provides safe access to the underlying C++ libSBML Species class while
 //! maintaining Rust's safety guarantees through the use of RefCell and Pin.
 
-use std::{cell::RefCell, error::Error, pin::Pin, rc::Rc};
+use std::{cell::RefCell, pin::Pin, rc::Rc};
 
 use cxx::let_cxx_string;
-use quick_xml::{de::from_str, se::to_string, DeError, SeError};
-use serde::{Deserialize, Serialize};
 
 use crate::{
+    inner,
     model::Model,
     pin_ptr,
-    sbmlcxx::{self, utils},
-    wrapper::Wrapper,
-    Annotation,
+    sbmlcxx::{self},
+    sbo_term,
+    traits::fromptr::FromPtr,
+    upcast_annotation,
 };
 
 /// A safe wrapper around the libSBML Species class.
@@ -27,8 +27,14 @@ use crate::{
 /// This struct maintains a reference to the underlying C++ Species object
 /// through a RefCell and Pin to ensure memory safety while allowing interior mutability.
 pub struct Species<'a> {
-    species: RefCell<Pin<&'a mut sbmlcxx::Species>>,
+    inner: RefCell<Pin<&'a mut sbmlcxx::Species>>,
 }
+
+// Set the inner trait for the Species struct
+inner!(sbmlcxx::Species, Species<'a>);
+
+// Set the annotation trait for the Species struct
+upcast_annotation!(Species<'a>, sbmlcxx::Species, sbmlcxx::SBase);
 
 impl<'a> Species<'a> {
     /// Creates a new Species instance within the given Model.
@@ -51,8 +57,16 @@ impl<'a> Species<'a> {
         species.as_mut().setId(&id);
 
         Self {
-            species: RefCell::new(species),
+            inner: RefCell::new(species),
         }
+    }
+
+    /// Returns a reference to the inner RefCell containing the Species pointer.
+    ///
+    /// This is primarily used internally by other parts of the library.
+    #[allow(dead_code)]
+    pub(crate) fn inner(&self) -> &RefCell<Pin<&'a mut sbmlcxx::Species>> {
+        &self.inner
     }
 
     /// Gets the species' identifier.
@@ -60,7 +74,7 @@ impl<'a> Species<'a> {
     /// # Returns
     /// The species' ID as a String
     pub fn id(&self) -> String {
-        self.species.borrow().getId().to_str().unwrap().to_string()
+        self.inner.borrow().getId().to_str().unwrap().to_string()
     }
 
     /// Sets the species' identifier.
@@ -69,7 +83,7 @@ impl<'a> Species<'a> {
     /// * `id` - The new identifier to set
     pub fn set_id(&self, id: &str) {
         let_cxx_string!(id = id);
-        self.species.borrow_mut().as_mut().setId(&id);
+        self.inner.borrow_mut().as_mut().setId(&id);
     }
 
     /// Gets the species' name.
@@ -77,12 +91,7 @@ impl<'a> Species<'a> {
     /// # Returns
     /// The species' name as a String
     pub fn name(&self) -> String {
-        self.species
-            .borrow()
-            .getName()
-            .to_str()
-            .unwrap()
-            .to_string()
+        self.inner.borrow().getName().to_str().unwrap().to_string()
     }
 
     /// Sets the species' name.
@@ -91,7 +100,7 @@ impl<'a> Species<'a> {
     /// * `name` - The new name to set
     pub fn set_name(&self, name: &str) {
         let_cxx_string!(name = name);
-        self.species.borrow_mut().as_mut().setName(&name);
+        self.inner.borrow_mut().as_mut().setName(&name);
     }
 
     /// Gets the compartment where this species is located.
@@ -99,7 +108,7 @@ impl<'a> Species<'a> {
     /// # Returns
     /// The compartment identifier as a String
     pub fn compartment(&self) -> String {
-        self.species
+        self.inner
             .borrow()
             .getCompartment()
             .to_str()
@@ -113,7 +122,7 @@ impl<'a> Species<'a> {
     /// * `compartment` - The identifier of the compartment
     pub fn set_compartment(&self, compartment: &str) {
         let_cxx_string!(compartment = compartment);
-        self.species
+        self.inner
             .borrow_mut()
             .as_mut()
             .setCompartment(&compartment);
@@ -124,7 +133,7 @@ impl<'a> Species<'a> {
     /// # Returns
     /// The initial amount as a f64
     pub fn initial_amount(&self) -> f64 {
-        self.species.borrow().getInitialAmount()
+        self.inner.borrow().getInitialAmount()
     }
 
     /// Sets the initial amount of this species.
@@ -132,7 +141,7 @@ impl<'a> Species<'a> {
     /// # Arguments
     /// * `initial_amount` - The initial amount to set
     pub fn set_initial_amount(&self, initial_amount: f64) {
-        self.species
+        self.inner
             .borrow_mut()
             .as_mut()
             .setInitialAmount(initial_amount);
@@ -143,7 +152,7 @@ impl<'a> Species<'a> {
     /// # Returns
     /// The initial concentration as a f64
     pub fn initial_concentration(&self) -> f64 {
-        self.species.borrow().getInitialConcentration()
+        self.inner.borrow().getInitialConcentration()
     }
 
     /// Sets the initial concentration of this species.
@@ -151,10 +160,27 @@ impl<'a> Species<'a> {
     /// # Arguments
     /// * `initial_concentration` - The initial concentration to set
     pub fn set_initial_concentration(&self, initial_concentration: f64) {
-        self.species
+        self.inner
             .borrow_mut()
             .as_mut()
             .setInitialConcentration(initial_concentration);
+    }
+
+    /// Gets the unit of this species.
+    ///
+    /// # Returns
+    /// The unit of the species
+    pub fn unit(&self) -> String {
+        self.inner.borrow().getUnits().to_str().unwrap().to_string()
+    }
+
+    /// Sets the unit of this species.
+    ///
+    /// # Arguments
+    /// * `unit` - The unit to set
+    pub fn set_unit(&self, unit: &str) {
+        let_cxx_string!(unit = unit);
+        self.inner.borrow_mut().as_mut().setUnits(&unit);
     }
 
     /// Gets whether this species has a boundary condition.
@@ -165,7 +191,7 @@ impl<'a> Species<'a> {
     /// # Returns
     /// true if this species has a boundary condition, false otherwise
     pub fn boundary_condition(&self) -> bool {
-        self.species.borrow().getBoundaryCondition()
+        self.inner.borrow().getBoundaryCondition()
     }
 
     /// Sets whether this species has a boundary condition.
@@ -173,7 +199,7 @@ impl<'a> Species<'a> {
     /// # Arguments
     /// * `boundary_condition` - Whether this species should have a boundary condition
     pub fn set_boundary_condition(&self, boundary_condition: bool) {
-        self.species
+        self.inner
             .borrow_mut()
             .as_mut()
             .setBoundaryCondition(boundary_condition);
@@ -186,7 +212,7 @@ impl<'a> Species<'a> {
     /// # Returns
     /// true if this species is constant, false otherwise
     pub fn constant(&self) -> bool {
-        self.species.borrow().getConstant()
+        self.inner.borrow().getConstant()
     }
 
     /// Sets whether this species is constant.
@@ -194,7 +220,7 @@ impl<'a> Species<'a> {
     /// # Arguments
     /// * `constant` - Whether this species should be constant
     pub fn set_constant(&self, constant: bool) {
-        self.species.borrow_mut().as_mut().setConstant(constant);
+        self.inner.borrow_mut().as_mut().setConstant(constant);
     }
 
     /// Gets whether this species has only substance units.
@@ -205,7 +231,7 @@ impl<'a> Species<'a> {
     /// # Returns
     /// true if this species has only substance units, false otherwise
     pub fn has_only_substance_units(&self) -> bool {
-        self.species.borrow().getHasOnlySubstanceUnits()
+        self.inner.borrow().getHasOnlySubstanceUnits()
     }
 
     /// Sets whether this species has only substance units.
@@ -213,72 +239,29 @@ impl<'a> Species<'a> {
     /// # Arguments
     /// * `has_only_substance_units` - Whether this species should have only substance units
     pub fn set_has_only_substance_units(&self, has_only_substance_units: bool) {
-        self.species
+        self.inner
             .borrow_mut()
             .as_mut()
             .setHasOnlySubstanceUnits(has_only_substance_units);
     }
+
+    // SBO Term Methods generated by the `sbo_term` macro
+    sbo_term!(sbmlcxx::Species, sbmlcxx::SBase);
 }
 
-impl<'a> Annotation for Species<'a> {
-    /// Gets the annotation for the species.
+impl FromPtr<sbmlcxx::Species> for Species<'_> {
+    /// Creates a new Species instance from a unique pointer to a libSBML Species.
     ///
-    /// # Returns
-    /// The species' annotation as a String
-    fn get_annotation(&self) -> String {
-        let annotation = unsafe {
-            utils::getSpeciesAnnotationString(
-                self.species.borrow_mut().as_mut().get_unchecked_mut(),
-            )
-        };
-        annotation.to_str().unwrap().to_string()
-    }
-
-    /// Sets the annotation for the species.
-    ///
-    /// This function allows you to set a string annotation for the species,
-    /// which can be used to provide additional information or metadata.
+    /// This method is primarily used internally by the Model class to create
+    /// Species instances from libSBML Species pointers.
     ///
     /// # Arguments
-    /// * `annotation` - A string slice that holds the annotation to set.
-    fn set_annotation(&self, annotation: &str) -> Result<(), Box<dyn Error>> {
-        let_cxx_string!(annotation = annotation);
-        unsafe {
-            utils::setSpeciesAnnotation(
-                self.species.borrow_mut().as_mut().get_unchecked_mut(),
-                &annotation,
-            );
+    /// * `ptr` - A unique pointer to a libSBML Species
+    fn from_ptr(ptr: *mut sbmlcxx::Species) -> Self {
+        let species = pin_ptr!(ptr, sbmlcxx::Species);
+        Self {
+            inner: RefCell::new(species),
         }
-        Ok(())
-    }
-
-    /// Sets the annotation for the species using a serializable type.
-    ///
-    /// This function serializes the provided annotation into a string format
-    /// and sets it as the species' annotation. It is useful for complex
-    /// data structures that can be serialized.
-    ///
-    /// # Arguments
-    /// * `annotation` - A reference to a serializable type that will be converted to a string.
-    fn set_annotation_serde<T: Serialize>(&self, annotation: &T) -> Result<(), SeError> {
-        let annotation = to_string(annotation)?;
-        self.set_annotation(&annotation)
-            .map_err(|e| SeError::Custom(e.to_string()))?;
-        Ok(())
-    }
-
-    /// Gets the annotation for the species as a serializable type.
-    ///
-    /// This function deserializes the species' annotation from a string format
-    /// into the specified type. It is useful for complex data structures that
-    /// can be deserialized.
-    ///
-    /// # Returns
-    /// The deserialized annotation as the specified type
-    fn get_annotation_serde<T: for<'de> Deserialize<'de>>(&self) -> Result<T, DeError> {
-        let annotation = self.get_annotation();
-        let parsed: Wrapper<T> = from_str(&annotation)?;
-        Ok(parsed.annotation)
     }
 }
 
@@ -333,6 +316,15 @@ impl<'a> SpeciesBuilder<'a> {
         self
     }
 
+    /// Sets the initial concentration of the species.
+    ///
+    /// # Arguments
+    /// * `concentration` - The initial concentration value
+    pub fn initial_concentration(self, concentration: f64) -> Self {
+        self.species.set_initial_concentration(concentration);
+        self
+    }
+
     /// Sets the initial amount of the species.
     ///
     /// # Arguments
@@ -342,6 +334,14 @@ impl<'a> SpeciesBuilder<'a> {
         self
     }
 
+    /// Sets the unit of the species.
+    ///
+    /// # Arguments
+    /// * `unit` - The unit to set
+    pub fn unit(self, unit: &str) -> Self {
+        self.species.set_unit(unit);
+        self
+    }
     /// Sets whether this species has a boundary condition.
     ///
     /// # Arguments
@@ -421,12 +421,18 @@ mod tests {
         species.set_name("Glucose");
         species.set_compartment("cytosol");
         species.set_initial_amount(1.0);
-        species.set_initial_concentration(0.5);
         species.set_boundary_condition(true);
         species.set_constant(false);
         species.set_has_only_substance_units(true);
+        species.set_unit("mole");
 
         assert_eq!(species.name(), "Glucose");
+        assert_eq!(species.compartment(), "cytosol");
+        assert_eq!(species.initial_amount(), 1.0);
+        assert_eq!(species.boundary_condition(), true);
+        assert_eq!(species.constant(), false);
+        assert_eq!(species.has_only_substance_units(), true);
+        assert_eq!(species.unit(), "mole");
     }
 
     #[test]
@@ -438,6 +444,7 @@ mod tests {
             .name("Glucose")
             .compartment("cytosol")
             .initial_amount(1.0)
+            .unit("mole")
             .boundary_condition(true)
             .constant(false)
             .has_only_substance_units(true)
@@ -450,6 +457,7 @@ mod tests {
         assert_eq!(species.boundary_condition(), true);
         assert_eq!(species.constant(), false);
         assert_eq!(species.has_only_substance_units(), true);
+        assert_eq!(species.unit(), "mole");
     }
 
     #[test]
