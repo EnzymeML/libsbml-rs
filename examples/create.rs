@@ -28,7 +28,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let ethanol = model
         .build_species("ethanol")
         .name("Ethanol")
-        .compartment(&compartment.id())
+        .compartment(&compartment)
         .initial_concentration(0.5)
         .unit(&mole.id())
         .has_only_substance_units(false)
@@ -38,7 +38,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let aldehyde = model
         .build_species("aldehyde")
         .name("Aldehyde")
-        .compartment(&compartment.id())
+        .compartment(&compartment)
         .initial_concentration(0.5)
         .unit(&mole.id())
         .has_only_substance_units(false)
@@ -48,8 +48,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     model
         .build_reaction("reaction")
         .name("Reaction")
-        .reactant(&ethanol.id(), 1.0)
-        .product(&aldehyde.id(), 1.0)
+        .reactant(&ethanol, 1.0)
+        .product(&aldehyde, 1.0)
         .build();
 
     // Serialize the document to an SBML string
