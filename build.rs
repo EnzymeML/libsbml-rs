@@ -95,7 +95,7 @@ fn build_and_link_libsbml(dep_build: &str) -> miette::Result<String> {
         cmake::Config::new(LIBSBML_PATH)
             .static_crt(true)
             .profile("Release")
-            .define("WITH_STATIC_RUNTIME", "ON")
+            .define("WITH_STATIC_RUNTIME", "OFF")
             .define("WITH_LIBXML", WITH_LIBXML)
             .define("WITH_EXPAT", WITH_EXPAT)
             //
@@ -115,9 +115,9 @@ fn build_and_link_libsbml(dep_build: &str) -> miette::Result<String> {
                 format!("{}/lib/{}", dep_build, ZLIB_WINDOWS_LIB),
             )
             //
-            // Build static libraries, because dynamic librarier somehow dont work
+            // Build static libraries, because dynamic libraries somehow dont work
             //
-            .define("BUILD_SHARED_LIBS", "OFF")
+            .define("BUILD_SHARED_LIBS", "ON")
             .build()
     } else {
         println!("cargo:warning=Building libSBML for MacOS/Linux");
@@ -132,16 +132,7 @@ fn build_and_link_libsbml(dep_build: &str) -> miette::Result<String> {
 
     // Configure cargo to link against the built library
     println!("cargo:rustc-link-search={}/lib", dst.display());
-    if cfg!(target_os = "windows") {
-        // On Windows, we need to link against the static libraries
-        // Note: This is where things get tricky, because the libsbml
-        // static library is named "libsbml-static" and not "libsbml".
-        // which seems to confuse the rustc linker.
-        println!("cargo:rustc-link-lib=libsbml-static");
-    } else {
-        // On MacOS and Linux, we can just link against the dynamic library
-        println!("cargo:rustc-link-lib=dylib={}", LIBSBML_NAME);
-    }
+    println!("cargo:rustc-link-lib={}", LIBSBML_NAME);
 
     Ok(dst.display().to_string())
 }
@@ -162,20 +153,20 @@ fn build_and_link_sbml_deps() -> miette::Result<String> {
     let dst = cmake::Config::new(LIBSBML_DEPENDENCY_DIR)
         .static_crt(true)
         .profile("Release")
-        .define("WITH_STATIC_RUNTIME", "ON")
-        .define("EXPAT_MSVC_STATIC_CRT", "ON")
+        .define("WITH_STATIC_RUNTIME", "OFF")
+        .define("EXPAT_MSVC_STATIC_CRT", "OFF")
         .define("WITH_EXPAT", "ON")
         .define("WITH_LIBXML", "OFF")
         .define("WITH_ZLIB", "ON")
         .define("WITH_BZIP2", "OFF")
         .define("WITH_CHECK", "OFF")
-        .define("BUILD_SHARED_LIBS", "OFF")
+        .define("BUILD_SHARED_LIBS", "ON")
         .build();
 
     // Configure cargo to link against the built libraries
     // Note: We link against the static libraries, because the dynamic libraries
     // are not working for some reason.
-    println!("cargo:rustc-link-search=native={}/lib", dst.display());
+    println!("cargo:rustc-link-search={}/lib", dst.display());
     println!("cargo:rustc-link-lib=libexpat");
     println!("cargo:rustc-link-lib=zdll");
 
