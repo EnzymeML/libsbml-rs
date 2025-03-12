@@ -12,14 +12,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-14, macos-latest, windows-latest]
+        os: [macos-14, macos-latest, windows-latest, ubuntu-latest]
         include:
           - os: macos-14
-            name: "macOS ARM"
+            name: 'macOS ARM'
           - os: macos-latest
-            name: "macOS x86"
+            name: 'macOS x86'
           - os: windows-latest
-            name: "Windows"
+            name: 'Windows'
+          - os: ubuntu-latest
+            name: 'Ubuntu'
 
     runs-on: ${{ matrix.os }}
 
