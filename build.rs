@@ -130,6 +130,9 @@ fn build_and_link_libsbml(dep_build: &str) -> miette::Result<String> {
             .build()
     };
 
+    // Lets look into the content of the build directory
+    print_dir_contents(dst.display().to_string().as_str())?;
+
     // Configure cargo to link against the built library
     println!("cargo:rustc-link-search={}/lib", dst.display());
     println!("cargo:rustc-link-lib={}", LIBSBML_NAME);
