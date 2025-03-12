@@ -154,7 +154,7 @@ fn build_and_link_sbml_deps() -> miette::Result<String> {
     // We hard-code to EXPAT and ZLIB for now, but in the future this should
     // be made more flexible.
     let dst = cmake::Config::new(LIBSBML_DEPENDENCY_DIR)
-        .static_crt(true)
+        .static_crt(false)
         .profile("Release")
         .define("WITH_STATIC_RUNTIME", "OFF")
         .define("EXPAT_MSVC_STATIC_CRT", "OFF")
