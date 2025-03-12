@@ -12,7 +12,7 @@ use std::{cell::RefCell, pin::Pin, rc::Rc};
 use autocxx::c_uint;
 use cxx::let_cxx_string;
 
-use crate::{inner, model::Model, pin_ptr, sbmlcxx, sbo_term, upcast_annotation};
+use crate::{inner, into_id, model::Model, pin_ptr, sbmlcxx, sbo_term, upcast_annotation};
 
 /// A safe wrapper around the libSBML Compartment class.
 ///
@@ -29,6 +29,9 @@ inner!(sbmlcxx::Compartment, Compartment<'a>);
 
 // Set the annotation trait for the Compartment struct
 upcast_annotation!(Compartment<'a>, sbmlcxx::Compartment, sbmlcxx::SBase);
+
+// Set the into_id trait for the Compartment struct
+into_id!(&Rc<Compartment<'_>>, id);
 
 impl<'a> Compartment<'a> {
     /// Creates a new Compartment instance within the given Model.

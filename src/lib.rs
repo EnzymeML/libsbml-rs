@@ -21,6 +21,7 @@ pub mod traits {
     pub mod annotation;
     pub mod fromptr;
     pub mod inner;
+    pub mod intoid;
 }
 
 /// Module providing upcast functionality
@@ -77,6 +78,7 @@ pub mod prelude {
     pub use crate::species::*;
     pub use crate::speciesref::*;
     pub use crate::traits::annotation::*;
+    pub use crate::traits::intoid::*;
     pub use crate::unit::*;
     pub use crate::unitdef::*;
 }

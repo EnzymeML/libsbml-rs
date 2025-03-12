@@ -253,3 +253,14 @@ macro_rules! sbo_term {
         }
     };
 }
+
+#[macro_export]
+macro_rules! into_id {
+    ($type:ty, $property:ident) => {
+        impl<'a> crate::traits::intoid::IntoId<'a> for $type {
+            fn into_id(self) -> &'a str {
+                Box::leak(self.$property().into_boxed_str())
+            }
+        }
+    };
+}
