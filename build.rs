@@ -117,7 +117,7 @@ fn build_and_link_libsbml(dep_build: &str) -> miette::Result<String> {
             //
             // Build static libraries, because dynamic libraries somehow dont work
             //
-            .define("BUILD_SHARED_LIBS", "ON")
+            .define("BUILD_SHARED_LIBS", "OFF")
             .build()
     } else {
         println!("cargo:warning=Building libSBML for MacOS/Linux");
@@ -163,7 +163,7 @@ fn build_and_link_sbml_deps() -> miette::Result<String> {
         .define("WITH_ZLIB", "ON")
         .define("WITH_BZIP2", "OFF")
         .define("WITH_CHECK", "OFF")
-        .define("BUILD_SHARED_LIBS", "ON")
+        .define("BUILD_SHARED_LIBS", "OFF")
         .build();
 
     // Configure cargo to link against the built libraries
