@@ -96,6 +96,7 @@ fn build_and_link_libsbml(dep_build: &str) -> miette::Result<String> {
             .static_crt(true)
             .profile("Release")
             .define("WITH_STATIC_RUNTIME", "ON")
+            .define("WITH_STABLE_PACKAGES", "ON") // add support for all stable packages
             .define("WITH_LIBXML", WITH_LIBXML)
             .define("WITH_EXPAT", WITH_EXPAT)
             //
@@ -125,6 +126,7 @@ fn build_and_link_libsbml(dep_build: &str) -> miette::Result<String> {
         cmake::Config::new(LIBSBML_PATH)
             .profile("Release")
             .define("WITH_STATIC_RUNTIME", "OFF")
+            .define("WITH_STABLE_PACKAGES", "ON") // add support for all stable packages
             .define("WITH_LIBXML", WITH_LIBXML)
             .define("WITH_EXPAT", WITH_EXPAT)
             .build()
@@ -138,8 +140,21 @@ fn build_and_link_libsbml(dep_build: &str) -> miette::Result<String> {
         // static library is named "libsbml-static" and not "libsbml".
         // which seems to confuse the rustc linker.
         println!("cargo:rustc-link-lib=libsbml-static");
+    } else if cfg!(target_os = "linux") {
+        // On Linux, we need to link against the static libraries
+        // if you thought windows had it rough, on linux
+        // it should just have been rustc-link-lib=sbml, 
+        // but that didnt work, so lets bypass what cargo is doing
+        // and sneak the static library and dependencies into the link line
+        println!("cargo:rustc-link-arg=-Wl,{}/lib/libsbml-static.a", dst.display());
+        println!("cargo:rustc-link-arg=-Wl,-lz");
+        println!("cargo:rustc-link-arg=-Wl,-lexpat");
+        println!("cargo:rustc-link-arg=-Wl,-lbz2");
+        println!("cargo:rustc-link-arg=-Wl,-lstdc++");
+        println!("cargo:rustc-link-arg=-Wl,-lc");
+        println!("cargo:rustc-link-arg=-Wl,-lm");
     } else {
-        // On MacOS and Linux, we can just link against the dynamic library
+        // On MacOS, we can just link against the dynamic library
         println!("cargo:rustc-link-lib=dylib={}", LIBSBML_NAME);
     }
 
@@ -198,7 +213,7 @@ fn print_dir_contents(path: &str) -> miette::Result<()> {
         if path.is_file() {
             if let Some(ext) = path.extension() {
                 let ext_str = ext.to_string_lossy().to_lowercase();
-                if ["a", "dylib", "lib"].contains(&ext_str.as_str()) {
+                if ["a", "dylib", "lib", "so"].contains(&ext_str.as_str()) {
                     println!("cargo:info={}", path.display());
                 }
             }
