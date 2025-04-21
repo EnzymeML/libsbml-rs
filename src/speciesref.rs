@@ -12,6 +12,7 @@ use std::{cell::RefCell, pin::Pin, rc::Rc};
 
 use crate::{
     inner, pin_ptr,
+    prelude::IntoId,
     reaction::Reaction,
     sbmlcxx::{self},
     sbo_term,
@@ -46,7 +47,11 @@ impl<'a> SpeciesReference<'a> {
     ///
     /// # Returns
     /// A new SpeciesReference instance
-    pub(crate) fn new(reaction: &Reaction<'a>, sid: &str, ref_type: SpeciesReferenceType) -> Self {
+    pub(crate) fn new(
+        reaction: &Reaction<'a>,
+        sid: impl IntoId<'a>,
+        ref_type: SpeciesReferenceType,
+    ) -> Self {
         let species_reference_ptr = match ref_type {
             SpeciesReferenceType::Reactant => {
                 reaction.inner().borrow_mut().as_mut().createReactant()
@@ -60,7 +65,7 @@ impl<'a> SpeciesReference<'a> {
         // We need to fall back to custom wrappers for the species reference
         // because autocxx does not support setting the species reference's species
         // most likely because it is a virtual base class.
-        let_cxx_string!(sid = sid);
+        let_cxx_string!(sid = sid.into_id());
         let simple_spec_ref = upcast_pin!(
             species_reference,
             sbmlcxx::SpeciesReference,
@@ -98,14 +103,14 @@ impl<'a> SpeciesReference<'a> {
     ///
     /// # Arguments
     /// * `species` - The species to set
-    pub fn set_species(&self, species: &str) {
+    pub fn set_species(&self, species: impl IntoId<'a>) {
         let simple_spec_ref = upcast!(
             self,
             sbmlcxx::SpeciesReference,
             sbmlcxx::SimpleSpeciesReference
         );
 
-        let_cxx_string!(species = species);
+        let_cxx_string!(species = species.into_id());
         simple_spec_ref.setSpecies(&species);
     }
 
@@ -193,10 +198,14 @@ impl<'a> SpeciesReferenceBuilder<'a> {
     ///
     /// # Returns
     /// A new SpeciesReferenceBuilder instance
-    pub fn new(reaction: &Reaction<'a>, sid: &str, ref_type: SpeciesReferenceType) -> Self {
+    pub fn new(
+        reaction: &Reaction<'a>,
+        sid: impl IntoId<'a>,
+        ref_type: SpeciesReferenceType,
+    ) -> Self {
         let species_reference = match ref_type {
-            SpeciesReferenceType::Reactant => reaction.create_reactant(sid, 1.0),
-            SpeciesReferenceType::Product => reaction.create_product(sid, 1.0),
+            SpeciesReferenceType::Reactant => reaction.create_reactant(sid.into_id(), 1.0),
+            SpeciesReferenceType::Product => reaction.create_product(sid.into_id(), 1.0),
         };
 
         Self { species_reference }

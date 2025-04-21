@@ -13,10 +13,11 @@ use std::{cell::RefCell, pin::Pin, rc::Rc};
 use cxx::let_cxx_string;
 
 use crate::{
-    inner,
+    inner, into_id,
     model::Model,
     modref::{ModifierSpeciesReference, ModifierSpeciesReferenceBuilder},
     pin_ptr,
+    prelude::IntoId,
     sbmlcxx::{self},
     sbo_term,
     speciesref::{SpeciesReference, SpeciesReferenceBuilder, SpeciesReferenceType},
@@ -41,6 +42,9 @@ inner!(sbmlcxx::Reaction, Reaction<'a>);
 
 // Set the annotation trait for the Reaction struct
 upcast_annotation!(Reaction<'a>, sbmlcxx::Reaction, sbmlcxx::SBase);
+
+// Set the into_id trait for the Reaction struct
+into_id!(&Rc<Reaction<'_>>, id);
 
 impl<'a> Reaction<'a> {
     /// Creates a new Reaction instance within the given Model.
@@ -116,7 +120,11 @@ impl<'a> Reaction<'a> {
     ///
     /// # Returns
     /// A reference-counted pointer to the new SpeciesReference
-    pub fn create_product(&self, sid: &str, stoichiometry: f64) -> Rc<SpeciesReference<'a>> {
+    pub fn create_product(
+        &self,
+        sid: impl IntoId<'a>,
+        stoichiometry: f64,
+    ) -> Rc<SpeciesReference<'a>> {
         let product = Rc::new(SpeciesReference::new(
             self,
             sid,
@@ -134,7 +142,7 @@ impl<'a> Reaction<'a> {
     ///
     /// # Returns
     /// A SpeciesReferenceBuilder for configuring and creating the product
-    pub fn build_product(&self, sid: &str) -> SpeciesReferenceBuilder<'a> {
+    pub fn build_product(&self, sid: impl IntoId<'a>) -> SpeciesReferenceBuilder<'a> {
         SpeciesReferenceBuilder::new(&self, sid, SpeciesReferenceType::Product)
     }
 
@@ -169,7 +177,11 @@ impl<'a> Reaction<'a> {
     ///
     /// # Returns
     /// A reference-counted pointer to the new SpeciesReference
-    pub fn create_reactant(&self, sid: &str, stoichiometry: f64) -> Rc<SpeciesReference<'a>> {
+    pub fn create_reactant(
+        &self,
+        sid: impl IntoId<'a>,
+        stoichiometry: f64,
+    ) -> Rc<SpeciesReference<'a>> {
         let reactant = Rc::new(SpeciesReference::new(
             self,
             sid,
@@ -187,7 +199,7 @@ impl<'a> Reaction<'a> {
     ///
     /// # Returns
     /// A SpeciesReferenceBuilder for configuring and creating the reactant
-    pub fn build_reactant(&self, sid: &str) -> SpeciesReferenceBuilder<'a> {
+    pub fn build_reactant(&self, sid: impl IntoId<'a>) -> SpeciesReferenceBuilder<'a> {
         SpeciesReferenceBuilder::new(&self, sid, SpeciesReferenceType::Reactant)
     }
 
@@ -234,7 +246,7 @@ impl<'a> Reaction<'a> {
     ///
     /// # Returns
     /// A ModifierSpeciesReferenceBuilder for configuring and creating the modifier
-    pub fn build_modifier(&self, sid: &str) -> ModifierSpeciesReferenceBuilder<'a> {
+    pub fn build_modifier(&self, sid: impl IntoId<'a>) -> ModifierSpeciesReferenceBuilder<'a> {
         ModifierSpeciesReferenceBuilder::new(&self, sid)
     }
     /// Returns a reference to the modifiers of this reaction.
@@ -324,8 +336,8 @@ impl<'a> ReactionBuilder<'a> {
     ///
     /// # Returns
     /// The builder instance for method chaining
-    pub fn product(self, sid: &str, stoichiometry: f64) -> Self {
-        self.reaction.create_product(sid, stoichiometry);
+    pub fn product(self, sid: impl IntoId<'a>, stoichiometry: f64) -> Self {
+        self.reaction.create_product(sid.into_id(), stoichiometry);
         self
     }
 
@@ -337,8 +349,8 @@ impl<'a> ReactionBuilder<'a> {
     ///
     /// # Returns
     /// The builder instance for method chaining
-    pub fn reactant(self, sid: &str, stoichiometry: f64) -> Self {
-        self.reaction.create_reactant(sid, stoichiometry);
+    pub fn reactant(self, sid: impl IntoId<'a>, stoichiometry: f64) -> Self {
+        self.reaction.create_reactant(sid.into_id(), stoichiometry);
         self
     }
 
@@ -349,10 +361,11 @@ impl<'a> ReactionBuilder<'a> {
     ///
     /// # Returns
     /// The builder instance for method chaining
-    pub fn modifier(self, sid: &str) -> Self {
-        self.reaction.create_modifier(sid);
+    pub fn modifier(self, sid: impl IntoId<'a>) -> Self {
+        self.reaction.create_modifier(sid.into_id());
         self
     }
+
     pub fn build(self) -> Rc<Reaction<'a>> {
         self.reaction
     }

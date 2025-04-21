@@ -13,7 +13,7 @@ use std::{cell::RefCell, pin::Pin, rc::Rc};
 use cxx::let_cxx_string;
 
 use crate::{
-    inner,
+    inner, into_id,
     model::Model,
     pin_ptr,
     sbmlcxx::{self},
@@ -35,6 +35,9 @@ inner!(sbmlcxx::Parameter, Parameter<'a>);
 
 // Set the annotation trait for the Parameter struct
 upcast_annotation!(Parameter<'a>, sbmlcxx::Parameter, sbmlcxx::SBase);
+
+// Set the into_id trait for the Compartment struct
+into_id!(&Rc<Parameter<'_>>, id);
 
 impl<'a> Parameter<'a> {
     /// Creates a new Parameter instance within the given Model.

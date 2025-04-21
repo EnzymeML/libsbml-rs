@@ -10,7 +10,8 @@
 use std::{cell::RefCell, pin::Pin};
 
 use crate::{
-    inner, pin_ptr, reaction::Reaction, sbmlcxx, sbo_term, upcast, upcast_annotation, upcast_pin,
+    inner, pin_ptr, prelude::IntoId, reaction::Reaction, sbmlcxx, sbo_term, upcast,
+    upcast_annotation, upcast_pin,
 };
 use cxx::let_cxx_string;
 
@@ -115,8 +116,8 @@ impl<'a> ModifierSpeciesReferenceBuilder<'a> {
     ///
     /// # Returns
     /// A new ModifierSpeciesReferenceBuilder instance
-    pub fn new(reaction: &Reaction<'a>, sid: &str) -> Self {
-        let modifier_reference = ModifierSpeciesReference::new(reaction, sid);
+    pub fn new(reaction: &Reaction<'a>, sid: impl IntoId<'a>) -> Self {
+        let modifier_reference = ModifierSpeciesReference::new(reaction, sid.into_id());
         Self { modifier_reference }
     }
 
