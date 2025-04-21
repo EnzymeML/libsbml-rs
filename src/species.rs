@@ -13,9 +13,10 @@ use std::{cell::RefCell, pin::Pin, rc::Rc};
 use cxx::let_cxx_string;
 
 use crate::{
-    inner,
+    inner, into_id,
     model::Model,
     pin_ptr,
+    prelude::IntoId,
     sbmlcxx::{self},
     sbo_term,
     traits::fromptr::FromPtr,
@@ -35,6 +36,9 @@ inner!(sbmlcxx::Species, Species<'a>);
 
 // Set the annotation trait for the Species struct
 upcast_annotation!(Species<'a>, sbmlcxx::Species, sbmlcxx::SBase);
+
+// Set the into_id trait for the Species struct
+into_id!(&Rc<Species<'_>>, id);
 
 impl<'a> Species<'a> {
     /// Creates a new Species instance within the given Model.
@@ -120,7 +124,8 @@ impl<'a> Species<'a> {
     ///
     /// # Arguments
     /// * `compartment` - The identifier of the compartment
-    pub fn set_compartment(&self, compartment: &str) {
+    pub fn set_compartment(&self, compartment: impl IntoId<'a>) {
+        let compartment = compartment.into_id();
         let_cxx_string!(compartment = compartment);
         self.inner
             .borrow_mut()
@@ -311,7 +316,7 @@ impl<'a> SpeciesBuilder<'a> {
     ///
     /// # Arguments
     /// * `compartment` - The compartment identifier
-    pub fn compartment(self, compartment: &str) -> Self {
+    pub fn compartment(self, compartment: impl IntoId<'a>) -> Self {
         self.species.set_compartment(compartment);
         self
     }
