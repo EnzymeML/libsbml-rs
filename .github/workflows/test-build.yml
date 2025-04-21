@@ -5,6 +5,11 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  CARGO_NET_RETRY: 10
+  RUSTC_WRAPPER: sccache
+  RUST_BACKTRACE: 1
+  # Enable parallel compilation
+  RUSTC_PARALLEL_COMPILER: true
 
 jobs:
   build:
@@ -15,11 +20,11 @@ jobs:
         os: [macos-14, macos-latest, windows-latest]
         include:
           - os: macos-14
-            name: "macOS ARM"
+            name: 'macOS ARM'
           - os: macos-latest
-            name: "macOS x86"
+            name: 'macOS x86'
           - os: windows-latest
-            name: "Windows"
+            name: 'Windows'
 
     runs-on: ${{ matrix.os }}
 
@@ -28,8 +33,30 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Build
-        run: cargo build
+      # Install and setup sccache
+      - name: Install sccache
+        uses: mozilla-actions/sccache-action@v0.0.3
+
+      # Setup Rust toolchain with caching
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+
+      # Cache dependencies and build outputs
+      - name: Cache cargo registry
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
 
       - name: Run tests
-        run: cargo test
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
