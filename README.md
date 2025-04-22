@@ -185,8 +185,7 @@ The following table shows the current implementation status of SBML objects in t
 Future development priorities:
 
 1. Complete implementation of remaining SBML core objects
-2. Add support for SBML Level 3 packages (Flux Balance Constraints, Hierarchical Model Composition, etc.)
-3. Improve error handling and validation
-4. Add more examples and documentation
-5. Performance optimizations
+2. Improve error handling and validation
+3. Add more examples and documentation
+4. Performance optimizations
 
