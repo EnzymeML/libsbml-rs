@@ -388,7 +388,7 @@ mod tests {
         assert_eq!(compartment.size(), 1.0);
         assert_eq!(compartment.volume(), 1.0);
         assert_eq!(compartment.outside(), "test");
-        assert_eq!(compartment.constant(), true);
+        assert!(compartment.constant());
     }
 
     #[test]
@@ -412,7 +412,7 @@ mod tests {
         assert_eq!(compartment.size(), 1.0);
         assert_eq!(compartment.volume(), 1.0);
         assert_eq!(compartment.outside(), "test");
-        assert_eq!(compartment.constant(), true);
+        assert!(compartment.constant());
     }
 
     #[test]

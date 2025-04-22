@@ -437,9 +437,9 @@ mod tests {
         assert_eq!(species.name(), "Glucose");
         assert_eq!(species.compartment(), "cytosol");
         assert_eq!(species.initial_amount(), 1.0);
-        assert_eq!(species.boundary_condition(), true);
-        assert_eq!(species.constant(), false);
-        assert_eq!(species.has_only_substance_units(), true);
+        assert!(species.boundary_condition());
+        assert!(!species.constant());
+        assert!(species.has_only_substance_units());
         assert_eq!(species.unit(), "mole");
     }
 
@@ -462,9 +462,9 @@ mod tests {
         assert_eq!(species.id(), "glucose");
         assert_eq!(species.compartment(), "cytosol");
         assert_eq!(species.initial_amount(), 1.0);
-        assert_eq!(species.boundary_condition(), true);
-        assert_eq!(species.constant(), false);
-        assert_eq!(species.has_only_substance_units(), true);
+        assert!(species.boundary_condition());
+        assert!(!species.constant());
+        assert!(species.has_only_substance_units());
         assert_eq!(species.unit(), "mole");
     }
 

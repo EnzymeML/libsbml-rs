@@ -297,7 +297,7 @@ mod tests {
 
         // Check that the species reference is created correctly
         assert_eq!(species_reference.species(), "test_species");
-        assert_eq!(species_reference.constant(), true);
+        assert!(species_reference.constant());
         assert_eq!(species_reference.stoichiometry(), 1.0);
     }
 
@@ -318,7 +318,7 @@ mod tests {
 
         // Check that the species reference is created correctly
         assert_eq!(species_reference.species(), "test_species");
-        assert_eq!(species_reference.constant(), true);
+        assert!(species_reference.constant());
         assert_eq!(species_reference.stoichiometry(), 1.0);
     }
 
@@ -341,7 +341,7 @@ mod tests {
 
         assert_eq!(species_reference.species(), "test_species");
         assert_eq!(species_reference.stoichiometry(), 1.0);
-        assert_eq!(species_reference.constant(), true);
+        assert!(species_reference.constant());
     }
 
     /// Tests setting string annotations via the builder

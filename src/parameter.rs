@@ -294,7 +294,7 @@ mod tests {
 
         assert_eq!(parameter.id(), "new_id");
         assert_eq!(parameter.name(), "test_name");
-        assert_eq!(parameter.constant(), true);
+        assert!(parameter.constant());
         assert_eq!(parameter.units(), "mole");
         assert_eq!(parameter.value(), Some(1.0));
     }
@@ -312,7 +312,7 @@ mod tests {
         assert_eq!(parameter.id(), "test");
         assert_eq!(parameter.value(), Some(1.0));
         assert_eq!(parameter.units(), "mole");
-        assert_eq!(parameter.constant(), true);
+        assert!(parameter.constant());
     }
 
     #[test]
