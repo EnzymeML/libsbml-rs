@@ -59,7 +59,7 @@ mod tests {
 
     #[test]
     fn test_read_sbml_string() {
-        let doc = SBMLReader::from_xml_string(include_str!("../../tests/data/example.xml"));
+        let doc = SBMLReader::from_xml_string(include_str!("../tests/data/example.xml"));
         assert_eq!(doc.model().expect("Model not found").id(), "example");
 
         // There are two species
@@ -88,8 +88,7 @@ mod tests {
 
     #[test]
     fn test_read_sbml_file_rules_only() {
-        let doc =
-            SBMLReader::from_xml_string(include_str!("../../tests/data/odes_example_test.xml"));
+        let doc = SBMLReader::from_xml_string(include_str!("../tests/data/odes_example_test.xml"));
 
         let model = doc.model().expect("Model not found");
 

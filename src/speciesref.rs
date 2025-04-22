@@ -11,7 +11,7 @@ use cxx::let_cxx_string;
 use std::{cell::RefCell, pin::Pin, rc::Rc};
 
 use crate::{
-    inner, pin_ptr,
+    clone, inner, pin_ptr,
     prelude::IntoId,
     reaction::Reaction,
     sbmlcxx::{self},
@@ -37,6 +37,9 @@ upcast_annotation!(
     sbmlcxx::SpeciesReference,
     sbmlcxx::SBase
 );
+
+// Implement the Clone trait for the SpeciesReference struct
+clone!(SpeciesReference<'a>, sbmlcxx::SpeciesReference);
 
 impl<'a> SpeciesReference<'a> {
     /// Creates a new SimpleSpeciesReference instance within the given Reaction.

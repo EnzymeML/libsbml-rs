@@ -53,13 +53,27 @@ pub mod unitdef;
 pub mod macros;
 
 /// Module containing reader functionality
-pub mod reader {
-    pub use reader::*;
-    pub mod reader;
-}
+pub mod reader;
 
 /// Internal module containing the wrapper types for the annotation.
 pub(crate) mod wrapper;
+
+/// Internal module containing the container types for the annotation. This is mainly used to extract annotations from the model. Collections are handled by the [`Model`] struct.
+pub(crate) mod collections {
+    pub(crate) use crate::collections::compartments::*;
+    pub(crate) use crate::collections::parameters::*;
+    pub(crate) use crate::collections::reactions::*;
+    pub(crate) use crate::collections::rules::*;
+    pub(crate) use crate::collections::species::*;
+    pub(crate) use crate::collections::unitdefs::*;
+
+    pub(crate) mod compartments;
+    pub(crate) mod parameters;
+    pub(crate) mod reactions;
+    pub(crate) mod rules;
+    pub(crate) mod species;
+    pub(crate) mod unitdefs;
+}
 
 // Re-export commonly used types
 pub use sbmldoc::SBMLDocument;

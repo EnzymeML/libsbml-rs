@@ -165,7 +165,7 @@ macro_rules! upcast_annotation {
             /// Result indicating success or containing an error if the annotation is invalid
             fn set_annotation(&self, annotation: &str) -> Result<(), Box<dyn Error>> {
                 let mut base = crate::upcast!(self, $cxx_type, $cxx_upcast);
-                let_cxx_string!(annotation = annotation);
+                cxx::let_cxx_string!(annotation = annotation);
                 base.as_mut().setAnnotation1(&annotation);
                 Ok(())
             }
@@ -254,12 +254,129 @@ macro_rules! sbo_term {
     };
 }
 
+/// A macro for generating the `into_id` method for a wrapper type.
+///
+/// This macro generates an implementation of the `IntoId` trait for a wrapper type,
+/// allowing the wrapper type to be converted into an identifier string.
+///
+/// # Arguments
+/// * `$type` - The Rust wrapper type (e.g. Species<'a>)
+/// * `$property` - The property to convert to an identifier string
+///
+/// This will generate an implementation of the `IntoId` trait for the wrapper type,
+/// allowing the wrapper type to be converted into an identifier string.
 #[macro_export]
 macro_rules! into_id {
     ($type:ty, $property:ident) => {
         impl<'a> crate::traits::intoid::IntoId<'a> for $type {
             fn into_id(self) -> &'a str {
                 Box::leak(self.$property().into_boxed_str())
+            }
+        }
+    };
+}
+
+/// A macro to implement the Clone trait for a wrapper type.
+///
+/// This macro generates an implementation of the Clone trait for a wrapper type,
+/// allowing the wrapper type to be cloned.
+///
+/// # Arguments
+/// * `$type` - The Rust wrapper type (e.g. Species<'a>)
+/// * `$cxx_type` - The C++ type that is being wrapped (e.g. sbmlcxx::Species)
+///
+/// This will generate an implementation of the Clone trait for the wrapper type,
+/// allowing the wrapper type to be cloned.
+#[macro_export]
+macro_rules! clone {
+    // Base case with just the inner field
+    ($type:ty, $cxx_type:ty) => {
+        impl<'a> Clone for $type {
+            fn clone(&self) -> Self {
+                let raw_ptr = self.inner.borrow_mut().as_mut().clone();
+                let inner_ptr = pin_ptr!(raw_ptr, $cxx_type);
+                Self {
+                    inner: RefCell::new(inner_ptr),
+                }
+            }
+        }
+    };
+
+    // Case with additional fields
+    ($type:ty, $cxx_type:ty, $($field:ident),+) => {
+        impl<'a> Clone for $type {
+            fn clone(&self) -> Self {
+                let raw_ptr = self.inner.borrow_mut().as_mut().clone();
+                let inner_ptr = pin_ptr!(raw_ptr, $cxx_type);
+                Self {
+                    inner: RefCell::new(inner_ptr),
+                    $(
+                        $field: self.$field.clone(),
+                    )+
+                }
+            }
+        }
+    };
+}
+
+/// A macro to implement the set_annotation method for collection types.
+///
+/// This macro generates an implementation of the set_annotation method for a collection type,
+/// allowing annotations to be set on the collection.
+///
+/// # Arguments
+/// * `$type` - The Rust wrapper type for the model (e.g. Model<'a>)
+/// * `$collection_name` - The name of the collection (e.g. "reactions", "species")
+/// * `$collection_type` - The Rust wrapper type for the collection (e.g. ListOfReactions)
+#[macro_export]
+macro_rules! set_collection_annotation {
+    ($type:ty, $collection_name:expr, $collection_type:ty) => {
+        paste::paste! {
+            /// Sets the annotation for the [$collection_name] collection.
+            ///
+            /// # Arguments
+            /// * `annotation` - A string slice containing the XML annotation to set
+            ///
+            /// # Returns
+            /// Result indicating success or containing an error if the annotation is invalid
+            pub fn [<set_ $collection_name _annotation>](&'a self, annotation: &str) -> Result<(), Box<dyn Error>> {
+                let collection = $collection_type::new(self);
+                collection.set_annotation(annotation)?;
+                Ok(())
+            }
+
+            /// Gets the annotation for the [$collection_name] collection.
+            ///
+            /// # Returns
+            /// The annotation for the [$collection_name] collection as a String
+            pub fn [<get_ $collection_name _annotation>](&'a self) -> String {
+                let collection = $collection_type::new(self);
+                collection.get_annotation()
+            }
+
+            /// Gets the annotation as a deserialized type.
+            ///
+            /// # Type Parameters
+            /// * `T` - The type to deserialize the annotation into
+            ///
+            /// # Returns
+            /// Result containing the deserialized type or a deserialization error
+            pub fn [<get_ $collection_name _annotation_serde>]<T: for<'de> Deserialize<'de>>(&'a self) -> Result<T, Box<dyn Error>> {
+                let collection = $collection_type::new(self);
+                Ok(collection.get_annotation_serde()?)
+            }
+
+            /// Sets a serializable annotation.
+            ///
+            /// # Arguments
+            /// * `annotation` - A reference to a type implementing Serialize that will be converted to XML
+            ///
+            /// # Returns
+            /// Result indicating success or containing a serialization error
+            pub fn [<set_ $collection_name _annotation_serde>]<T: Serialize>(&'a self, annotation: &T) -> Result<(), Box<dyn Error>> {
+                let collection = $collection_type::new(self);
+                collection.set_annotation_serde(annotation)?;
+                Ok(())
             }
         }
     };

@@ -11,10 +11,9 @@
 use std::{cell::RefCell, pin::Pin, rc::Rc, str::FromStr};
 
 use autocxx::c_int;
-use cxx::let_cxx_string;
 
 use crate::{
-    inner, pin_ptr, sbmlcxx, sbo_term, traits::fromptr::FromPtr, unitdef::UnitDefinition,
+    clone, inner, pin_ptr, sbmlcxx, sbo_term, traits::fromptr::FromPtr, unitdef::UnitDefinition,
     upcast_annotation,
 };
 
@@ -26,6 +25,7 @@ use crate::{
 ///
 /// This struct maintains a reference to the underlying C++ Unit object
 /// through a RefCell and Pin to ensure memory safety while allowing interior mutability.
+
 pub struct Unit<'a> {
     inner: RefCell<Pin<&'a mut sbmlcxx::Unit>>,
 }
@@ -35,6 +35,9 @@ inner!(sbmlcxx::Unit, Unit<'a>);
 
 // Set the annotation trait for the Unit struct
 upcast_annotation!(Unit<'a>, sbmlcxx::Unit, sbmlcxx::SBase);
+
+// Implement the Clone trait for the Unit struct
+clone!(Unit<'a>, sbmlcxx::Unit);
 
 impl<'a> Unit<'a> {
     /// Creates a new Unit instance within the given Model.

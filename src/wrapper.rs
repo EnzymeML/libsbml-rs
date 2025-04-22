@@ -17,7 +17,7 @@ use serde::Deserialize;
 /// # Serde Configuration
 /// * Renames the root XML element to "annotation"
 /// * Uses "$value" to capture the inner content
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 #[serde(rename = "annotation")]
 pub(crate) struct Wrapper<T> {
     /// The actual annotation content
