@@ -142,3 +142,51 @@ This crate is a Rust port of the [libsbml](https://github.com/sbmlteam/libsbml) 
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🚧 Roadmap
+
+The following table shows the current implementation status of SBML objects in this crate:
+
+| SBML Object              | Status                |
+| ------------------------ | --------------------- |
+| Model                    | ⚠️ Partially           |
+| Compartment              | ✅ Implemented         |
+| Species                  | ✅ Implemented         |
+| Parameter                | ✅ Implemented         |
+| Reaction                 | ✅ Implemented         |
+| Rule                     | ✅ Implemented         |
+| AssignmentRule           | ✅ Implemented         |
+| RateRule                 | ✅ Implemented         |
+| UnitDefinition           | ✅ Implemented         |
+| Unit                     | ✅ Implemented         |
+| KineticLaw               | ❌ Not yet implemented |
+| SpeciesReference         | ✅ Implemented         |
+| ModifierSpeciesReference | ✅ Implemented         |
+| InitialAssignment        | ❌ Not yet implemented |
+| Event                    | ❌ Not yet implemented |
+| EventAssignment          | ❌ Not yet implemented |
+| Trigger                  | ❌ Not yet implemented |
+| Delay                    | ❌ Not yet implemented |
+| Priority                 | ❌ Not yet implemented |
+| FunctionDefinition       | ❌ Not yet implemented |
+| Constraint               | ❌ Not yet implemented |
+| LocalParameter           | ❌ Not yet implemented |
+| StoichiometryMath        | ❌ Not yet implemented |
+| CompartmentType          | ❌ Not yet implemented |
+| SpeciesType              | ❌ Not yet implemented |
+| SBase                    | ✅ Implemented         |
+| ListOf                   | ✅ Implemented         |
+| ASTNode                  | ❌ Not yet implemented |
+| CVTerm                   | ❌ Not yet implemented |
+| Date                     | ❌ Not yet implemented |
+| ModelHistory             | ❌ Not yet implemented |
+| ModelCreator             | ❌ Not yet implemented |
+
+Future development priorities:
+
+1. Complete implementation of remaining SBML core objects
+2. Add support for SBML Level 3 packages (Flux Balance Constraints, Hierarchical Model Composition, etc.)
+3. Improve error handling and validation
+4. Add more examples and documentation
+5. Performance optimizations
+
