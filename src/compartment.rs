@@ -111,7 +111,7 @@ impl<'a> Compartment<'a> {
     /// # Returns
     /// The number of spatial dimensions as a u32
     pub fn spatial_dimensions(&self) -> u32 {
-        self.inner.borrow().getSpatialDimensions().0 as u32
+        self.inner.borrow().getSpatialDimensions().0
     }
 
     /// Sets the spatial dimensions of the compartment.

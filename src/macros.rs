@@ -41,7 +41,7 @@ macro_rules! pin_ptr {
 #[macro_export]
 macro_rules! upcast {
     ($name:expr, $from:ty, $to:ty) => {{
-        use crate::cast::upcast;
+        use $crate::cast::upcast;
         let mut borrow = $name.inner().borrow_mut();
         let ptr = unsafe { borrow.as_mut().get_unchecked_mut() };
         unsafe { upcast::<$from, $to>(ptr) }
@@ -69,7 +69,7 @@ macro_rules! upcast {
 #[macro_export]
 macro_rules! upcast_pin {
     ($name:expr, $from:ty, $to:ty) => {{
-        use crate::cast::upcast;
+        use $crate::cast::upcast;
         let ptr = unsafe { $name.as_mut().get_unchecked_mut() };
         unsafe { upcast::<$from, $to>(ptr) }
     }};
@@ -97,7 +97,7 @@ macro_rules! upcast_pin {
 macro_rules! inner {
     ($cxx_type:ty, $type:ty) => {
         // Import necessary modules
-        use crate::traits::inner::Inner;
+        use $crate::traits::inner::Inner;
 
         /// Implementation of the Inner trait for $type.
         ///
@@ -135,8 +135,8 @@ macro_rules! inner {
 macro_rules! upcast_annotation {
     ($type:ty, $cxx_type:ty, $cxx_upcast:ty) => {
         // Import necessary modules
-        use crate::traits::annotation::Annotation;
-        use crate::wrapper::Wrapper;
+        use $crate::traits::annotation::Annotation;
+        use $crate::wrapper::Wrapper;
 
         use quick_xml::{de::from_str, se::to_string, DeError, SeError};
         use serde::{Deserialize, Serialize};
@@ -150,7 +150,7 @@ macro_rules! upcast_annotation {
             /// # Returns
             /// The compartment's annotation as a String in XML format
             fn get_annotation(&self) -> String {
-                let base = crate::upcast!(self, $cxx_type, $cxx_upcast);
+                let base = $crate::upcast!(self, $cxx_type, $cxx_upcast);
                 base.getAnnotationString().to_str().unwrap().to_string()
             }
 
@@ -164,7 +164,7 @@ macro_rules! upcast_annotation {
             /// # Returns
             /// Result indicating success or containing an error if the annotation is invalid
             fn set_annotation(&self, annotation: &str) -> Result<(), Box<dyn Error>> {
-                let mut base = crate::upcast!(self, $cxx_type, $cxx_upcast);
+                let mut base = $crate::upcast!(self, $cxx_type, $cxx_upcast);
                 cxx::let_cxx_string!(annotation = annotation);
                 base.as_mut().setAnnotation1(&annotation);
                 Ok(())
@@ -229,7 +229,7 @@ macro_rules! sbo_term {
         /// # Returns
         /// The SBO term ID as a String (e.g. "SBO:0000001")
         pub fn sbo_term_id(&self) -> String {
-            let base = crate::upcast!(self, $cxx_type, $cxx_upcast);
+            let base = $crate::upcast!(self, $cxx_type, $cxx_upcast);
             base.getSBOTermID().to_str().unwrap().to_string()
         }
 
@@ -238,7 +238,7 @@ macro_rules! sbo_term {
         /// # Returns
         /// The SBO term URL as a String (e.g. "http://biomodels.net/SBO/SBO_0000001")
         pub fn sbo_term_url(&self) -> String {
-            let base = crate::upcast!(self, $cxx_type, $cxx_upcast);
+            let base = $crate::upcast!(self, $cxx_type, $cxx_upcast);
             base.getSBOTermAsURL().to_str().unwrap().to_string()
         }
 
@@ -247,7 +247,7 @@ macro_rules! sbo_term {
         /// # Arguments
         /// * `id` - The SBO term identifier to set (e.g. "SBO:0000001")
         pub fn set_sbo_term(&self, id: &str) {
-            let mut base = crate::upcast!(self, $cxx_type, $cxx_upcast);
+            let mut base = $crate::upcast!(self, $cxx_type, $cxx_upcast);
             cxx::let_cxx_string!(id = id);
             base.as_mut().setSBOTerm1(&id);
         }
@@ -268,7 +268,7 @@ macro_rules! sbo_term {
 #[macro_export]
 macro_rules! into_id {
     ($type:ty, $property:ident) => {
-        impl<'a> crate::traits::intoid::IntoId<'a> for $type {
+        impl<'a> $crate::traits::intoid::IntoId<'a> for $type {
             fn into_id(self) -> &'a str {
                 Box::leak(self.$property().into_boxed_str())
             }

@@ -193,7 +193,7 @@ impl<'a> Model<'a> {
             .borrow()
             .iter()
             .find(|species| (*species).id() == id)
-            .map(|species| Rc::clone(species))
+            .map(Rc::clone)
     }
 
     /// Creates a new Compartment within this model.
@@ -246,7 +246,7 @@ impl<'a> Model<'a> {
             .borrow()
             .iter()
             .find(|compartment| (*compartment).id() == id)
-            .map(|compartment| Rc::clone(compartment))
+            .map(Rc::clone)
     }
 
     /// Creates a new UnitDefinition within this model.
@@ -301,7 +301,7 @@ impl<'a> Model<'a> {
             .borrow()
             .iter()
             .find(|unit_definition| (*unit_definition).id() == id)
-            .map(|unit_definition| Rc::clone(unit_definition))
+            .map(Rc::clone)
     }
 
     /// Creates a new Reaction within this model.
@@ -354,7 +354,7 @@ impl<'a> Model<'a> {
             .borrow()
             .iter()
             .find(|reaction| (*reaction).id() == id)
-            .map(|reaction| Rc::clone(reaction))
+            .map(Rc::clone)
     }
 
     /// Creates a new Parameter within this model.
@@ -407,7 +407,7 @@ impl<'a> Model<'a> {
             .borrow()
             .iter()
             .find(|parameter| (*parameter).id() == id)
-            .map(|parameter| Rc::clone(parameter))
+            .map(Rc::clone)
     }
 
     /// Creates a new RateRule within this model.
@@ -462,7 +462,7 @@ impl<'a> Model<'a> {
             .borrow()
             .iter()
             .find(|rule| (*rule).variable() == variable)
-            .map(|rule| Rc::clone(rule))
+            .map(Rc::clone)
     }
 
     /// Creates a new AssignmentRule within this model.
@@ -521,7 +521,7 @@ impl<'a> Model<'a> {
             .borrow()
             .iter()
             .find(|rule| (*rule).variable() == variable)
-            .map(|rule| Rc::clone(rule))
+            .map(Rc::clone)
     }
 
     // Implement the set_annotation method for the Model type

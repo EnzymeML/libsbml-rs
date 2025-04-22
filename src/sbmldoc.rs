@@ -57,11 +57,10 @@ impl<'a> SBMLDocument<'a> {
         let document = RefCell::new(ptr);
 
         // Grab the model from the document
-        let model = if let Some(model) = document.borrow_mut().as_mut() {
-            Some(Rc::new(Model::from_ptr(model.getModel1())))
-        } else {
-            None
-        };
+        let model = document
+            .borrow_mut()
+            .as_mut()
+            .map(|model| Rc::new(Model::from_ptr(model.getModel1())));
 
         Self {
             document,
@@ -109,7 +108,7 @@ impl<'a> SBMLDocument<'a> {
 
     /// Returns a reference to the Model if one exists.
     pub fn model(&self) -> Option<Rc<Model<'a>>> {
-        self.model.borrow().as_ref().map(|model| Rc::clone(model))
+        self.model.borrow().as_ref().map(Rc::clone)
     }
 
     /// Converts the SBML document to an XML string representation.
