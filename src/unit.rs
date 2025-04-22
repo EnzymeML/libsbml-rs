@@ -25,7 +25,6 @@ use crate::{
 ///
 /// This struct maintains a reference to the underlying C++ Unit object
 /// through a RefCell and Pin to ensure memory safety while allowing interior mutability.
-
 pub struct Unit<'a> {
     inner: RefCell<Pin<&'a mut sbmlcxx::Unit>>,
 }
@@ -112,7 +111,7 @@ impl<'a> Unit<'a> {
     /// # Returns
     /// The multiplier value as an f64
     pub fn multiplier(&self) -> f64 {
-        self.inner.borrow().getMultiplier().into()
+        self.inner.borrow().getMultiplier()
     }
 
     /// Sets the multiplier of the unit.
@@ -153,7 +152,7 @@ impl<'a> Unit<'a> {
     /// # Returns
     /// The offset value as an f64
     pub fn offset(&self) -> f64 {
-        self.inner.borrow().getOffset().into()
+        self.inner.borrow().getOffset()
     }
 
     /// Sets the offset of the unit.

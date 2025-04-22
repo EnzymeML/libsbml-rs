@@ -143,10 +143,13 @@ fn build_and_link_libsbml(dep_build: &str) -> miette::Result<String> {
     } else if cfg!(target_os = "linux") {
         // On Linux, we need to link against the static libraries
         // if you thought windows had it rough, on linux
-        // it should just have been rustc-link-lib=sbml, 
+        // it should just have been rustc-link-lib=sbml,
         // but that didnt work, so lets bypass what cargo is doing
         // and sneak the static library and dependencies into the link line
-        println!("cargo:rustc-link-arg=-Wl,{}/lib/libsbml-static.a", dst.display());
+        println!(
+            "cargo:rustc-link-arg=-Wl,{}/lib/libsbml-static.a",
+            dst.display()
+        );
         println!("cargo:rustc-link-arg=-Wl,-lz");
         println!("cargo:rustc-link-arg=-Wl,-lexpat");
         println!("cargo:rustc-link-arg=-Wl,-lbz2");

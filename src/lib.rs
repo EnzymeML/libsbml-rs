@@ -15,6 +15,7 @@
 //! - Parameter: Represents numerical parameters used in the model
 //! - Unit/UnitDefinition: Represents units of measurement
 //! - SpeciesReference: Represents species participating in reactions
+//!
 
 /// Module providing traits for the SBML library
 pub mod traits {

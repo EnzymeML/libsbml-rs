@@ -19,3 +19,7 @@ miette = { version = "5", features = ["fancy"] }
 
 [dev-dependencies]
 pretty_assertions = "1.4.1"
+
+[lints.clippy]
+needless-lifetimes = "allow"
+macro-metavars-in-unsafe = "allow"
