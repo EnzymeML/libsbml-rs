@@ -17,7 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-14, macos-latest, windows-latest]
+        os: [macos-14, macos-latest, windows-latest, ubuntu-latest]
         include:
           - os: macos-14
             name: 'macOS ARM'
@@ -25,6 +25,8 @@ jobs:
             name: 'macOS x86'
           - os: windows-latest
             name: 'Windows'
+          - os: ubuntu-latest
+            name: 'Ubuntu'
 
     runs-on: ${{ matrix.os }}
 
@@ -32,6 +34,10 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
+
+      - name: Install Ubuntu dependencies
+        if: matrix.os == 'ubuntu-latest'
+        run: sudo apt-get update && sudo apt-get install -y zlib1g-dev libbz2-dev libexpat1-dev
 
       # Install and setup sccache
       - name: Install sccache
