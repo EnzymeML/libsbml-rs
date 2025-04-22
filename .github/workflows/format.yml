@@ -1,6 +1,7 @@
 name: Rust Format Check
 
 on:
+  workflow_dispatch:
   push:
     paths:
       - 'src/**'

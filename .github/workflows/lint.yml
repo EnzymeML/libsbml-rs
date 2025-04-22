@@ -1,5 +1,6 @@
 name: Clippy check
 on:
+  workflow_dispatch:
   push:
     paths:
       - 'src/**'
