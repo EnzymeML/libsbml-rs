@@ -1,7 +1,7 @@
 use sbml::{prelude::*, unit::UnitKind};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let doc = SBMLDocument::new(3, 2);
+    let doc = SBMLDocument::default();
 
     // Create a model
     let model = doc.create_model("example");
