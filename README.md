@@ -1,37 +1,54 @@
-# Rust SBML
+<div align="center">
 
-A Rust crate for reading and writing SBML files. This crate provides a thin wrapper around the `libsbml` C++ library and Rust structs to represent the SBML model.
+# 🧬 Rust SBML
 
-## Installation
+A Rust crate providing a robust interface for reading and writing SBML (Systems Biology Markup Language) files.
+Built as an ergonomic wrapper around the `libsbml` C++ library with type-safe Rust abstractions.
 
-This crate is not yet published to crates.io, so you need to add it to your `Cargo.toml` via the git repository.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Platforms](https://img.shields.io/badge/platforms-macOS%20%7C%20Windows%20%7C%20Linux-blue)]()
+
+</div>
+
+## 🚀 Features
+
+- Type-safe builder pattern API for SBML model creation
+- Seamless serialization/deserialization of annotations using `serde`
+- Bundled `libsbml` library - no external installation required
+- Cross-platform support (macOS and Windows)
+- Comprehensive error handling and type safety
+
+## 📦 Installation
+
+Currently available through Git:
 
 ```bash
-cargo add --git https://github.com/JR-1991/sbml-rs
+cargo add --git https://github.com/EnzymeML/sbml-rs
 ```
 
-### Dependencies
+### System Requirements
 
-This crate bundles the `libsbml` library and its dependencies, so you don't need to install it separately. However, you need to have the following dependencies installed on your system:
+- **CMake**: Required for building the bundled `libsbml` library
+- **Rust**: 1.70 or higher (recommended)
 
-- `CMake` - for building the `libsbml` library
+### Platform Support
 
-In the future, the crate will also allow you to provide an already installed `libsbml` library to use.
-
-### Platforms
-
-Currently, the crate is tested for the following platforms:
+✅ Tested and supported:
 
 - macOS (arm64, x86_64)
 - Windows (x86_64)
+- Linux (x86_64)
 
-At the moment, the crate is not running on Linux (x86_64), but will be made available soon.
+Please note, due to ongoing development to support platforms, the crate is currently only available as a static library for Windows and Linux. MacOS is available as a dynamic library. We will update this section as we add more support.
 
-## Usage
+## 💡 Usage
 
-The crate builds upon the SBML workflow by cascading objects through the root `SBMLDocument` object. We provide both a setter- and a builder-style API to create SBML models. The builder style is recommended, as it is more type-safe and easier to read, but this is a matter of preference.
+The crate follows SBML's hierarchical structure, with all operations flowing through the root `SBMLDocument`. We offer two API styles:
 
-### Creation of SBML models
+1. Builder pattern (recommended)
+2. Traditional setter methods
+
+### Creating SBML Models
 
 ```rust
 use sbml::prelude::*;
@@ -46,7 +63,7 @@ let compartment = model.build_compartment("cytosol")
     .name("Cytosol")
     .build();
 
-// Create the glucose species with the annotation
+// Create the glucose species with annotation
 let glucose = model
     .build_species("glucose")
     .name("Glucose")
@@ -56,23 +73,17 @@ let glucose = model
     .annotation_serde(&glucose_annotation)?
     .build();
 
-// Serialize the document to an SBML string
+// Export to SBML XML
 let sbml_string = doc.to_xml_string();
-
-// Print the SBML string
-println!("{}", sbml_string);
 ```
 
-### Adding annotations to SBML models
+### Type-Safe Annotations
 
-Annotations play a key role in SBML models, as they allow for a flexible extension of the SBML model. Since the C++ `libsbml` library either expects an annotation string or `XMLNode` object, which is not type-safe, we provide a `serde` implementation for the `Annotation` struct.
-
-Hence, adding an annotation to an SBML model is as easy as:
+Leverage Rust's type system for SBML annotations:
 
 ```rust
 use sbml::prelude::*;
 
-// Deifnition of your annotation struct
 #[derive(Serialize, Deserialize, Debug)]
 struct MyAnnotation {
     #[serde(rename = "@xmlns")]
@@ -81,11 +92,8 @@ struct MyAnnotation {
     value: i32,
 }
 
-let doc = SBMLDocument::new(3, 2);
-let model = doc.create_model("Model");
-
-// Create an annotation
-let glucose_annotation = MyAnnotation {
+// Create and attach annotation
+let annotation = MyAnnotation {
     xmlns: "http://my.namespace.com".to_string(),
     key: "test".to_string(),
     value: 1,
@@ -96,22 +104,41 @@ let species = model.build_species("glucose")
     .compartment(&compartment.id())
     .initial_amount(10.0)
     .boundary_condition(true)
-    .annotation_serde(&glucose_annotation)?
+    .annotation_serde(&annotation)?
     .build();
+
+// Read annotation
+let retrieved: MyAnnotation = species.get_annotation_serde()?;
 ```
 
-In the same way, you can also read annotations from an SBML model, by using the `get_annotation_serde` method. Rust's type inference will then infer the correct type of the annotation and extract it into the correct struct.
+## 🛠️ Development
 
-```rust
-let glucose_annotation: MyAnnotation = species.get_annotation_serde()?;
+### Code Quality
+
+```bash
+# Format code
+cargo fmt
+
+# Run linter
+cargo clippy --all-targets --all-features
+
+# Run tests
+cargo test
 ```
 
-We refer to the [serde](https://serde.rs/) and [quick-xml](https://docs.rs/quick-xml/latest/quick_xml/) documentation for more information on how to use the `serde` and `quick-xml` crates for serializing and deserializing annotations.
+## 🤝 Contributing
 
-## Acknowledgements
+Contributions are welcome! Please feel free to submit a Pull Request.
 
-This crate is a Rust port of the [libsbml](https://github.com/sbmlteam/libsbml) library.
+## 📚 Resources
 
-## License
+- [SBML Documentation](http://sbml.org/Documents/Specifications)
+- [libsbml Documentation](http://sbml.org/Software/libSBML)
 
-This crate is licensed under the MIT license. See the [LICENSE](LICENSE) file for details.
+## 🙏 Acknowledgements
+
+This crate is a Rust port of the [libsbml](https://github.com/sbmlteam/libsbml) library. Special thanks to the SBML team for their excellent work.
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
