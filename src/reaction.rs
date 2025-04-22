@@ -13,7 +13,7 @@ use std::{cell::RefCell, pin::Pin, rc::Rc};
 use cxx::let_cxx_string;
 
 use crate::{
-    inner, into_id,
+    clone, inner, into_id,
     model::Model,
     modref::{ModifierSpeciesReference, ModifierSpeciesReferenceBuilder},
     pin_ptr,
@@ -45,6 +45,15 @@ upcast_annotation!(Reaction<'a>, sbmlcxx::Reaction, sbmlcxx::SBase);
 
 // Set the into_id trait for the Reaction struct
 into_id!(&Rc<Reaction<'_>>, id);
+
+// Implement the Clone trait for the Reaction struct
+clone!(
+    Reaction<'a>,
+    sbmlcxx::Reaction,
+    reactants,
+    products,
+    modifiers
+);
 
 impl<'a> Reaction<'a> {
     /// Creates a new Reaction instance within the given Model.

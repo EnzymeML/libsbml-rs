@@ -13,7 +13,7 @@ use std::{cell::RefCell, pin::Pin, rc::Rc};
 use cxx::let_cxx_string;
 
 use crate::{
-    inner, into_id,
+    clone, inner, into_id,
     model::Model,
     pin_ptr,
     prelude::IntoId,
@@ -36,6 +36,9 @@ inner!(sbmlcxx::Species, Species<'a>);
 
 // Set the annotation trait for the Species struct
 upcast_annotation!(Species<'a>, sbmlcxx::Species, sbmlcxx::SBase);
+
+// Implement the Clone trait for the Species struct
+clone!(Species<'a>, sbmlcxx::Species);
 
 // Set the into_id trait for the Species struct
 into_id!(&Rc<Species<'_>>, id);

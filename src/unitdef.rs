@@ -12,7 +12,7 @@ use std::{cell::RefCell, pin::Pin, rc::Rc};
 use cxx::let_cxx_string;
 
 use crate::{
-    inner,
+    clone, inner,
     model::Model,
     pin_ptr,
     sbmlcxx::{self},
@@ -36,6 +36,9 @@ inner!(sbmlcxx::UnitDefinition, UnitDefinition<'a>);
 
 // Set the annotation trait for the UnitDefinition struct
 upcast_annotation!(UnitDefinition<'a>, sbmlcxx::UnitDefinition, sbmlcxx::SBase);
+
+// Implement the Clone trait for the UnitDefinition struct
+clone!(UnitDefinition<'a>, sbmlcxx::UnitDefinition, units);
 
 impl<'a> UnitDefinition<'a> {
     /// Creates a new UnitDefinition instance within the given Model.
@@ -142,6 +145,7 @@ impl FromPtr<sbmlcxx::UnitDefinition> for UnitDefinition<'_> {
         }
     }
 }
+
 /// A builder for constructing UnitDefinition instances with a fluent interface.
 ///
 /// This struct provides a builder pattern interface for creating and configuring

@@ -11,7 +11,7 @@ use std::{cell::RefCell, pin::Pin, rc::Rc};
 use cxx::let_cxx_string;
 
 use crate::{
-    inner,
+    clone, inner,
     model::Model,
     pin_ptr,
     sbmlcxx::{self},
@@ -41,6 +41,9 @@ inner!(sbmlcxx::Rule, Rule<'a>);
 
 // Set the annotation trait for the Rule struct
 upcast_annotation!(Rule<'a>, sbmlcxx::Rule, sbmlcxx::SBase);
+
+// Implement the Clone trait for the Rule struct
+clone!(Rule<'a>, sbmlcxx::Rule);
 
 impl<'a> Rule<'a> {
     /// Creates a new RateRule instance within the given Model.

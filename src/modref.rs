@@ -10,7 +10,7 @@
 use std::{cell::RefCell, pin::Pin};
 
 use crate::{
-    inner, pin_ptr, prelude::IntoId, reaction::Reaction, sbmlcxx, sbo_term, upcast,
+    clone, inner, pin_ptr, prelude::IntoId, reaction::Reaction, sbmlcxx, sbo_term, upcast,
     upcast_annotation, upcast_pin,
 };
 use cxx::let_cxx_string;
@@ -34,6 +34,12 @@ upcast_annotation!(
     ModifierSpeciesReference<'a>,
     sbmlcxx::ModifierSpeciesReference,
     sbmlcxx::SBase
+);
+
+// Implement the Clone trait for the ModifierSpeciesReference struct
+clone!(
+    ModifierSpeciesReference<'a>,
+    sbmlcxx::ModifierSpeciesReference
 );
 
 impl<'a> ModifierSpeciesReference<'a> {
