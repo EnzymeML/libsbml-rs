@@ -1,7 +1,7 @@
 {
-  "image": "mcr.microsoft.com/devcontainers/universal:2",
+  "image": "ubuntu:latest",
   "features": {
-    "ghcr.io/lee-orr/rusty-dev-containers/rust_windows_msvc:0": {},
-    "ghcr.io/devcontainers/features/rust:1": {}
+    "ghcr.io/devcontainers/features/rust:1": {},
+    "ghcr.io/lee-orr/rusty-dev-containers/rust_windows_msvc:0": {}
   }
 }
