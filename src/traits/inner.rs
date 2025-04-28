@@ -14,7 +14,7 @@ use std::{cell::RefCell, pin::Pin};
 ///
 /// Implementations must ensure that the returned pinned reference maintains
 /// the pinning guarantees - the data must not be moved after it is pinned.
-pub trait Inner<'a, T> {
+pub(crate) trait Inner<'a, T> {
     /// Returns a pinned mutable reference to the inner data.
     ///
     /// # Returns
