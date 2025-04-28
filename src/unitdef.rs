@@ -12,7 +12,7 @@ use std::{cell::RefCell, pin::Pin, rc::Rc};
 use cxx::let_cxx_string;
 
 use crate::{
-    clone, inner,
+    clone, inner, into_id,
     model::Model,
     pin_ptr,
     sbmlcxx::{self},
@@ -39,6 +39,9 @@ upcast_annotation!(UnitDefinition<'a>, sbmlcxx::UnitDefinition, sbmlcxx::SBase);
 
 // Implement the Clone trait for the UnitDefinition struct
 clone!(UnitDefinition<'a>, sbmlcxx::UnitDefinition, units);
+
+// Set the into_id trait for the UnitDefinition struct
+into_id!(UnitDefinition<'a>, id);
 
 impl<'a> UnitDefinition<'a> {
     /// Creates a new UnitDefinition instance within the given Model.
