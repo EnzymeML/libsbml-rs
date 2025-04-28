@@ -31,6 +31,8 @@ pub mod cast;
 pub mod compartment;
 /// Module providing kinetic law functionality
 pub mod kineticlaw;
+/// Module providing local parameter functionality
+pub mod localparameter;
 /// Module providing model functionality
 pub mod model;
 /// Module providing modifier species reference functionality
@@ -86,6 +88,7 @@ pub use traits::annotation::Annotation;
 pub mod prelude {
     pub use crate::compartment::Compartment;
     pub use crate::kineticlaw::*;
+    pub use crate::localparameter::*;
     pub use crate::model::*;
     pub use crate::modref::*;
     pub use crate::parameter::*;
@@ -124,6 +127,7 @@ pub(crate) mod sbmlcxx {
         // Leaf types
         generate!("Species")
         generate!("Parameter")
+        generate!("LocalParameter")
         generate!("Compartment")
         generate!("UnitDefinition")
         generate!("Unit")

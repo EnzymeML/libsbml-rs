@@ -1,0 +1,400 @@
+//! This module provides a safe Rust interface to the libSBML LocalParameter class.
+//!
+//! The LocalParameter class represents parameters that are local to a specific KineticLaw
+//! in an SBML model. Unlike global Parameters, LocalParameters are only accessible within
+//! the scope of the KineticLaw they belong to. They are used to define constants or variables
+//! that are specific to a particular reaction's rate equation.
+//!
+//! Each LocalParameter has properties like:
+//! - An identifier (required)
+//! - A numerical value
+//! - Optional units
+//! - An optional name
+//! - SBO terms for semantic annotation
+//!
+//! This wrapper provides safe access to the underlying C++ libSBML LocalParameter class while
+//! maintaining Rust's safety guarantees through the use of RefCell and Pin.
+
+use std::{cell::RefCell, pin::Pin, rc::Rc};
+
+use cxx::let_cxx_string;
+
+use crate::{
+    clone, inner, into_id, pin_ptr,
+    prelude::KineticLaw,
+    sbmlcxx::{self},
+    sbo_term,
+    traits::fromptr::FromPtr,
+    upcast, upcast_annotation, upcast_pin,
+};
+
+/// A safe wrapper around the libSBML LocalParameter class.
+///
+/// This struct maintains a reference to the underlying C++ LocalParameter object
+/// through a RefCell and Pin to ensure memory safety while allowing interior mutability.
+/// LocalParameters are scoped to a specific KineticLaw and cannot be referenced outside
+/// of that context.
+pub struct LocalParameter<'a> {
+    inner: RefCell<Pin<&'a mut sbmlcxx::LocalParameter>>,
+}
+
+// Set the inner trait for the LocalParameter struct
+inner!(sbmlcxx::LocalParameter, LocalParameter<'a>);
+
+// Set the annotation trait for the LocalParameter struct
+upcast_annotation!(LocalParameter<'a>, sbmlcxx::LocalParameter, sbmlcxx::SBase);
+
+// Implement the Clone trait for the LocalParameter struct
+clone!(LocalParameter<'a>, sbmlcxx::LocalParameter);
+
+// Set the into_id trait for the LocalParameter struct
+into_id!(&Rc<LocalParameter<'_>>, id);
+
+impl<'a> LocalParameter<'a> {
+    /// Creates a new LocalParameter instance within the given KineticLaw.
+    ///
+    /// # Arguments
+    /// * `kinetic_law` - The parent KineticLaw that will contain this local parameter
+    /// * `id` - The identifier for this local parameter
+    ///
+    /// # Returns
+    /// A new LocalParameter instance
+    pub fn new(kinetic_law: &KineticLaw<'a>, id: &str) -> Self {
+        let parameter_ptr = kinetic_law
+            .inner()
+            .borrow_mut()
+            .as_mut()
+            .createLocalParameter();
+        let mut local_parameter = pin_ptr!(parameter_ptr, sbmlcxx::LocalParameter);
+        let mut parameter =
+            upcast_pin!(local_parameter, sbmlcxx::LocalParameter, sbmlcxx::Parameter);
+
+        // Set the default values for the parameter
+        parameter.as_mut().initDefaults();
+
+        // Set the id of the parameter
+        let_cxx_string!(id = id);
+        parameter.as_mut().setId(&id);
+
+        Self {
+            inner: RefCell::new(local_parameter),
+        }
+    }
+
+    /// Gets the local parameter's identifier.
+    ///
+    /// # Returns
+    /// The parameter's ID as a String
+    pub fn id(&self) -> String {
+        let parameter = upcast!(self, sbmlcxx::LocalParameter, sbmlcxx::Parameter);
+        parameter.getId().to_str().unwrap().to_string()
+    }
+
+    /// Sets the parameter's identifier.
+    ///
+    /// # Arguments
+    /// * `id` - The new identifier to set
+    pub fn set_id(&self, id: &str) {
+        let_cxx_string!(id = id);
+        let mut parameter = upcast!(self, sbmlcxx::LocalParameter, sbmlcxx::Parameter);
+        parameter.as_mut().setId(&id);
+    }
+
+    /// Gets the parameter's name.
+    ///
+    /// # Returns
+    /// The parameter's name as a String
+    pub fn name(&self) -> String {
+        let parameter = upcast!(self, sbmlcxx::LocalParameter, sbmlcxx::Parameter);
+        parameter.getName().to_str().unwrap().to_string()
+    }
+
+    /// Sets the parameter's name.
+    ///
+    /// # Arguments
+    /// * `name` - The new name to set
+    pub fn set_name(&self, name: &str) {
+        let_cxx_string!(name = name);
+        let mut parameter = upcast!(self, sbmlcxx::LocalParameter, sbmlcxx::Parameter);
+        parameter.as_mut().setName(&name);
+    }
+
+    /// Gets the parameter's value.
+    ///
+    /// # Returns
+    /// Some(value) if the parameter has a value set, None otherwise
+    pub fn value(&self) -> Option<f64> {
+        let parameter = upcast!(self, sbmlcxx::LocalParameter, sbmlcxx::Parameter);
+        if parameter.isSetValue() {
+            Some(parameter.getValue())
+        } else {
+            None
+        }
+    }
+
+    /// Sets the parameter's value.
+    ///
+    /// # Arguments
+    /// * `value` - The new value to set
+    pub fn set_value(&self, value: f64) {
+        let mut parameter = upcast!(self, sbmlcxx::LocalParameter, sbmlcxx::Parameter);
+        parameter.as_mut().setValue(value);
+    }
+
+    /// Gets the parameter's units.
+    ///
+    /// # Returns
+    /// The parameter's units as a String
+    pub fn units(&self) -> String {
+        let parameter = upcast!(self, sbmlcxx::LocalParameter, sbmlcxx::Parameter);
+        parameter.getUnits().to_str().unwrap().to_string()
+    }
+
+    /// Sets the parameter's units.
+    ///
+    /// # Arguments
+    /// * `units` - The new units to set
+    pub fn set_units(&self, units: &str) {
+        let_cxx_string!(units = units);
+        let mut parameter = upcast!(self, sbmlcxx::LocalParameter, sbmlcxx::Parameter);
+        parameter.as_mut().setUnits(&units);
+    }
+
+    // SBO Term Methods generated by the `sbo_term` macro
+    sbo_term!(sbmlcxx::LocalParameter, sbmlcxx::SBase);
+}
+
+impl FromPtr<sbmlcxx::LocalParameter> for LocalParameter<'_> {
+    /// Creates a new LocalParameter instance from a unique pointer to a libSBML LocalParameter.
+    ///
+    /// This method is primarily used internally by the KineticLaw class to create
+    /// LocalParameter instances from libSBML LocalParameter pointers.
+    ///
+    /// # Arguments
+    /// * `ptr` - A unique pointer to a libSBML LocalParameter
+    ///
+    /// # Returns
+    /// A new LocalParameter instance
+    fn from_ptr(ptr: *mut sbmlcxx::LocalParameter) -> Self {
+        let local_parameter = pin_ptr!(ptr, sbmlcxx::LocalParameter);
+        Self {
+            inner: RefCell::new(local_parameter),
+        }
+    }
+}
+/// A builder for constructing LocalParameter instances with a fluent API.
+///
+/// This struct provides a builder pattern interface for creating and configuring
+/// LocalParameter objects. It allows chaining method calls to set various properties
+/// before finally constructing the LocalParameter.
+pub struct LocalParameterBuilder<'a> {
+    local_parameter: Rc<LocalParameter<'a>>,
+}
+
+impl<'a> LocalParameterBuilder<'a> {
+    /// Creates a new LocalParameterBuilder instance.
+    ///
+    /// # Arguments
+    /// * `kinetic_law` - The parent KineticLaw that will contain this local parameter
+    /// * `id` - The identifier for this local parameter
+    ///
+    /// # Returns
+    /// A new LocalParameterBuilder instance
+    pub fn new(kinetic_law: &KineticLaw<'a>, id: &str) -> Self {
+        let local_parameter = LocalParameter::new(kinetic_law, id);
+        Self {
+            local_parameter: Rc::new(local_parameter),
+        }
+    }
+
+    /// Sets the name for this local parameter.
+    ///
+    /// # Arguments
+    /// * `name` - The name to set
+    ///
+    /// # Returns
+    /// The builder instance for method chaining
+    pub fn name(self, name: &str) -> Self {
+        self.local_parameter.set_name(name);
+        self
+    }
+
+    /// Sets the value for this local parameter.
+    ///
+    /// # Arguments
+    /// * `value` - The value to set
+    ///
+    /// # Returns
+    /// The builder instance for method chaining
+    pub fn value(self, value: f64) -> Self {
+        self.local_parameter.set_value(value);
+        self
+    }
+
+    /// Sets the units for this parameter.
+    ///
+    /// # Arguments
+    /// * `units` - The units to set
+    ///
+    /// # Returns
+    /// The builder instance for method chaining
+    pub fn units(self, units: &str) -> Self {
+        self.local_parameter.set_units(units);
+        self
+    }
+
+    /// Sets the annotation for this parameter from a string.
+    ///
+    /// # Arguments
+    /// * `annotation` - The annotation string to set
+    ///
+    /// # Returns
+    /// Result containing the builder instance or error
+    pub fn annotation(self, annotation: &str) -> Result<Self, SeError> {
+        self.local_parameter
+            .set_annotation(annotation)
+            .map_err(|e| SeError::Custom(e.to_string()))?;
+        Ok(self)
+    }
+
+    /// Sets the annotation for this parameter by serializing the provided data.
+    ///
+    /// # Arguments
+    /// * `annotation` - The annotation data to serialize and set
+    ///
+    /// # Returns
+    /// Result containing the builder instance or serialization error
+    pub fn annotation_serde<T: serde::Serialize>(self, annotation: &T) -> Result<Self, SeError> {
+        let annotation = to_string(annotation)?;
+        self.local_parameter
+            .set_annotation(&annotation)
+            .map_err(|e| SeError::Custom(e.to_string()))?;
+        Ok(self)
+    }
+
+    /// Builds and returns the configured LocalParameter.
+    ///
+    /// # Returns
+    /// The constructed LocalParameter instance wrapped in an Rc
+    pub fn build(self) -> Rc<LocalParameter<'a>> {
+        self.local_parameter
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use serde::{Deserialize, Serialize};
+
+    use super::*;
+    use crate::{model::Model, prelude::Reaction, sbmldoc::SBMLDocument};
+
+    #[test]
+    fn test_parameter_creation() {
+        let doc = SBMLDocument::default();
+        let model = Model::new(&doc, "test");
+        let reaction = Reaction::new(&model, "test");
+        let kinetic_law = KineticLaw::new(&reaction, "test");
+        let local_parameter = LocalParameter::new(&kinetic_law, "test");
+
+        local_parameter.set_value(1.0);
+        local_parameter.set_id("new_id");
+        local_parameter.set_name("test_name");
+        local_parameter.set_units("mole");
+
+        assert_eq!(local_parameter.id(), "new_id");
+        assert_eq!(local_parameter.name(), "test_name");
+        assert_eq!(local_parameter.units(), "mole");
+        assert_eq!(local_parameter.value(), Some(1.0));
+    }
+
+    #[test]
+    fn test_parameter_builder() {
+        let doc = SBMLDocument::default();
+        let model = Model::new(&doc, "test");
+        let reaction = Reaction::new(&model, "test");
+        let kinetic_law = KineticLaw::new(&reaction, "test");
+        let local_parameter = LocalParameterBuilder::new(&kinetic_law, "test")
+            .value(1.0)
+            .units("mole")
+            .name("test_name")
+            .build();
+
+        assert_eq!(local_parameter.id(), "test");
+        assert_eq!(local_parameter.value(), Some(1.0));
+        assert_eq!(local_parameter.units(), "mole");
+        assert_eq!(local_parameter.name(), "test_name");
+    }
+
+    #[test]
+    fn test_parameter_annotation() {
+        let doc = SBMLDocument::default();
+        let model = Model::new(&doc, "test");
+        let reaction = Reaction::new(&model, "test");
+        let kinetic_law = KineticLaw::new(&reaction, "test");
+        let local_parameter = LocalParameterBuilder::new(&kinetic_law, "test")
+            .annotation("<test>test</test>")
+            .expect("Failed to set annotation")
+            .build();
+        assert_eq!(
+            local_parameter
+                .get_annotation()
+                .replace("\n", "")
+                .replace(" ", ""),
+            "<annotation><test>test</test></annotation>"
+        );
+    }
+
+    #[test]
+    fn test_parameter_builder_annotation_serde() {
+        #[derive(Serialize, Deserialize)]
+        struct Test {
+            test: String,
+        }
+
+        let annotation = Test {
+            test: String::from("test"),
+        };
+        let doc = SBMLDocument::default();
+        let model = Model::new(&doc, "test");
+        let reaction = Reaction::new(&model, "test");
+        let kinetic_law = KineticLaw::new(&reaction, "test");
+        let local_parameter = LocalParameterBuilder::new(&kinetic_law, "test")
+            .annotation_serde(&annotation)
+            .expect("Failed to set annotation")
+            .build();
+
+        let extracted: Test = local_parameter
+            .get_annotation_serde()
+            .expect("Failed to get annotation");
+        assert_eq!(extracted.test, "test");
+    }
+
+    #[test]
+    fn test_parameter_annotation_serde() {
+        #[derive(Serialize, Deserialize)]
+        struct Test {
+            test: String,
+        }
+
+        let annotation = Test {
+            test: String::from("test"),
+        };
+        let doc = SBMLDocument::default();
+        let model = Model::new(&doc, "test");
+        let reaction = Reaction::new(&model, "test");
+        let kinetic_law = KineticLaw::new(&reaction, "test");
+        let local_parameter = LocalParameterBuilder::new(&kinetic_law, "test")
+            .annotation_serde(&annotation)
+            .unwrap()
+            .build();
+
+        local_parameter
+            .set_annotation_serde(&annotation)
+            .expect("Failed to set annotation");
+
+        let extracted: Test = local_parameter
+            .get_annotation_serde()
+            .expect("Failed to get annotation");
+        assert_eq!(extracted.test, "test");
+    }
+}

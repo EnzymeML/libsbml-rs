@@ -159,7 +159,7 @@ The following table shows the current implementation status of SBML objects in t
 | RateRule                 | ✅ Implemented         |
 | UnitDefinition           | ✅ Implemented         |
 | Unit                     | ✅ Implemented         |
-| KineticLaw               | ❌ Not yet implemented |
+| KineticLaw               | ✅ Implemented         |
 | SpeciesReference         | ✅ Implemented         |
 | ModifierSpeciesReference | ✅ Implemented         |
 | InitialAssignment        | ❌ Not yet implemented |
@@ -170,7 +170,7 @@ The following table shows the current implementation status of SBML objects in t
 | Priority                 | ❌ Not yet implemented |
 | FunctionDefinition       | ❌ Not yet implemented |
 | Constraint               | ❌ Not yet implemented |
-| LocalParameter           | ❌ Not yet implemented |
+| LocalParameter           | ✅ Implemented         |
 | StoichiometryMath        | ❌ Not yet implemented |
 | CompartmentType          | ❌ Not yet implemented |
 | SpeciesType              | ❌ Not yet implemented |
