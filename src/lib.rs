@@ -29,6 +29,8 @@ pub mod traits {
 pub mod cast;
 /// Module providing compartment functionality
 pub mod compartment;
+/// Module providing kinetic law functionality
+pub mod kineticlaw;
 /// Module providing model functionality
 pub mod model;
 /// Module providing modifier species reference functionality
@@ -83,6 +85,7 @@ pub use traits::annotation::Annotation;
 /// Prelude module providing convenient imports of commonly used types
 pub mod prelude {
     pub use crate::compartment::Compartment;
+    pub use crate::kineticlaw::*;
     pub use crate::model::*;
     pub use crate::modref::*;
     pub use crate::parameter::*;
@@ -133,6 +136,7 @@ pub(crate) mod sbmlcxx {
         generate!("RateRule")
         generate!("AssignmentRule")
         generate!("Rule")
+        generate!("KineticLaw")
 
         // IO types
         generate!("SBMLWriter")
