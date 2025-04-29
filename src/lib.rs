@@ -57,6 +57,9 @@ pub mod unitdef;
 /// Module containing helper macros
 pub mod macros;
 
+/// Module containing property functionality
+pub mod property;
+
 /// Module containing reader functionality
 pub mod reader;
 
