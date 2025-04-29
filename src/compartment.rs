@@ -9,12 +9,11 @@
 
 use std::{cell::RefCell, pin::Pin, rc::Rc};
 
-use autocxx::c_uint;
 use cxx::let_cxx_string;
 
 use crate::{
-    clone, inner, into_id, model::Model, pin_ptr, sbmlcxx, sbo_term, traits::fromptr::FromPtr,
-    upcast_annotation,
+    clone, inner, into_id, model::Model, optional_property, pin_ptr, required_property, sbmlcxx,
+    sbo_term, traits::fromptr::FromPtr, upcast_annotation,
 };
 
 /// A safe wrapper around the libSBML Compartment class.
@@ -61,145 +60,64 @@ impl<'a> Compartment<'a> {
         }
     }
 
-    /// Gets the compartment's identifier.
-    ///
-    /// # Returns
-    /// The compartment's ID as a String
-    pub fn id(&self) -> String {
-        self.inner.borrow().getId().to_str().unwrap().to_string()
-    }
+    // Getter and setter methods for the id property
+    required_property!(Compartment<'a>, id, String, getId, setId);
 
-    /// Sets the compartment's identifier.
-    ///
-    /// # Arguments
-    /// * `id` - The new identifier to set
-    pub fn set_id(&self, id: &str) {
-        let_cxx_string!(id = id);
-        self.inner.borrow_mut().as_mut().setId(&id);
-    }
+    // Getter and setter methods for the name property
+    optional_property!(Compartment<'a>, name, String, getName, setName, isSetName);
 
-    /// Gets the compartment's name.
-    ///
-    /// # Returns
-    /// The compartment's name as a String
-    pub fn name(&self) -> String {
-        self.inner.borrow().getName().to_str().unwrap().to_string()
-    }
+    // Getter and setter methods for the spatial dimensions property
+    optional_property!(
+        Compartment<'a>,
+        spatial_dimensions,
+        u32,
+        getSpatialDimensions,
+        setSpatialDimensions,
+        isSetSpatialDimensions
+    );
 
-    /// Sets the compartment's name.
-    ///
-    /// # Arguments
-    /// * `name` - The new name to set
-    pub fn set_name(&self, name: &str) {
-        let_cxx_string!(name = name);
-        self.inner.borrow_mut().as_mut().setName(&name);
-    }
+    // Getter and setter methods for the unit property
+    optional_property!(
+        Compartment<'a>,
+        unit,
+        String,
+        getUnits,
+        setUnits,
+        isSetUnits
+    );
 
-    /// Gets the spatial dimensions of the compartment.
-    ///
-    /// # Returns
-    /// The number of spatial dimensions as a u32
-    pub fn spatial_dimensions(&self) -> u32 {
-        self.inner.borrow().getSpatialDimensions().0
-    }
+    // Getter and setter methods for the size property
+    optional_property!(Compartment<'a>, size, f64, getSize, setSize, isSetSize);
 
-    /// Sets the spatial dimensions of the compartment.
-    ///
-    /// # Arguments
-    /// * `spatial_dimensions` - The number of spatial dimensions to set (typically 0-3)
-    pub fn set_spatial_dimensions(&self, spatial_dimensions: u32) {
-        self.inner
-            .borrow_mut()
-            .as_mut()
-            .setSpatialDimensions(c_uint::from(spatial_dimensions));
-    }
+    // Getter and setter methods for the volume property
+    optional_property!(
+        Compartment<'a>,
+        volume,
+        f64,
+        getVolume,
+        setVolume,
+        isSetVolume
+    );
 
-    /// Gets the unit of measurement for the compartment.
-    ///
-    /// # Returns
-    /// The unit of measurement as a String (e.g., "litre", "metre^3")
-    pub fn unit(&self) -> String {
-        self.inner.borrow().getUnits().to_str().unwrap().to_string()
-    }
+    // Getter and setter methods for the constant property
+    optional_property!(
+        Compartment<'a>,
+        constant,
+        bool,
+        getConstant,
+        setConstant,
+        isSetConstant
+    );
 
-    /// Sets the unit of measurement for the compartment.
-    ///
-    /// # Arguments
-    /// * `unit` - The unit of measurement to set (e.g., "litre", "metre^3")
-    pub fn set_unit(&self, unit: &str) {
-        let_cxx_string!(unit = unit);
-        self.inner.borrow_mut().as_mut().setUnits(&unit);
-    }
-
-    /// Gets the size of the compartment.
-    ///
-    /// # Returns
-    /// The size as a f64 in the units specified by the compartment's units attribute
-    pub fn size(&self) -> f64 {
-        self.inner.borrow().getSize()
-    }
-
-    /// Sets the size of the compartment.
-    ///
-    /// # Arguments
-    /// * `size` - The size to set in the units specified by the compartment's units attribute
-    pub fn set_size(&self, size: f64) {
-        self.inner.borrow_mut().as_mut().setSize(size);
-    }
-
-    /// Gets the volume of the compartment.
-    ///
-    /// # Returns
-    /// The volume as a f64 in the units specified by the compartment's units attribute
-    pub fn volume(&self) -> f64 {
-        self.inner.borrow().getVolume()
-    }
-
-    /// Sets the volume of the compartment.
-    ///
-    /// # Arguments
-    /// * `volume` - The volume to set in the units specified by the compartment's units attribute
-    pub fn set_volume(&self, volume: f64) {
-        self.inner.borrow_mut().as_mut().setVolume(volume);
-    }
-
-    /// Gets whether the compartment is constant.
-    ///
-    /// # Returns
-    /// true if the compartment's size is constant over time, false otherwise
-    pub fn constant(&self) -> bool {
-        self.inner.borrow().getConstant()
-    }
-
-    /// Sets whether the compartment is constant.
-    ///
-    /// # Arguments
-    /// * `constant` - true if the compartment's size should be constant over time, false otherwise
-    pub fn set_constant(&self, constant: bool) {
-        self.inner.borrow_mut().as_mut().setConstant(constant);
-    }
-
-    /// Gets the outside compartment reference.
-    ///
-    /// # Returns
-    /// The ID of the containing (outside) compartment as a String
-    pub fn outside(&self) -> String {
-        self.inner
-            .borrow()
-            .getOutside()
-            .to_str()
-            .unwrap()
-            .to_string()
-    }
-
-    /// Sets the outside compartment reference.
-    ///
-    /// # Arguments
-    /// * `outside` - The ID of the containing (outside) compartment to set
-    pub fn set_outside(&self, outside: &str) {
-        let_cxx_string!(outside = outside);
-        self.inner.borrow_mut().as_mut().setOutside(&outside);
-    }
+    // Getter and setter methods for the outside property
+    optional_property!(
+        Compartment<'a>,
+        outside,
+        String,
+        getOutside,
+        setOutside,
+        isSetOutside
+    );
 
     // SBO Term Methods generated by the `sbo_term` macro
     sbo_term!(sbmlcxx::Compartment, sbmlcxx::SBase);
@@ -372,7 +290,7 @@ mod tests {
 
         // Use all setters to set all properties
         compartment.set_name("test");
-        compartment.set_spatial_dimensions(3);
+        compartment.set_spatial_dimensions(3u32);
         compartment.set_unit("test");
         compartment.set_size(1.0);
         compartment.set_volume(1.0);
@@ -380,13 +298,13 @@ mod tests {
         compartment.set_constant(true);
 
         assert_eq!(compartment.id(), "test");
-        assert_eq!(compartment.name(), "test");
-        assert_eq!(compartment.spatial_dimensions(), 3);
-        assert_eq!(compartment.unit(), "test");
-        assert_eq!(compartment.size(), 1.0);
-        assert_eq!(compartment.volume(), 1.0);
-        assert_eq!(compartment.outside(), "test");
-        assert!(compartment.constant());
+        assert_eq!(compartment.name(), Some("test".to_string()));
+        assert_eq!(compartment.spatial_dimensions(), Some(3));
+        assert_eq!(compartment.unit(), Some("test".to_string()));
+        assert_eq!(compartment.size(), Some(1.0));
+        assert_eq!(compartment.volume(), Some(1.0));
+        assert_eq!(compartment.outside(), Some("test".to_string()));
+        assert_eq!(compartment.constant(), Some(true));
     }
 
     #[test]
@@ -404,13 +322,13 @@ mod tests {
             .build();
 
         assert_eq!(compartment.id(), "test");
-        assert_eq!(compartment.name(), "test");
-        assert_eq!(compartment.spatial_dimensions(), 3);
-        assert_eq!(compartment.unit(), "test");
-        assert_eq!(compartment.size(), 1.0);
-        assert_eq!(compartment.volume(), 1.0);
-        assert_eq!(compartment.outside(), "test");
-        assert!(compartment.constant());
+        assert_eq!(compartment.name(), Some("test".to_string()));
+        assert_eq!(compartment.spatial_dimensions(), Some(3));
+        assert_eq!(compartment.unit(), Some("test".to_string()));
+        assert_eq!(compartment.size(), Some(1.0));
+        assert_eq!(compartment.volume(), Some(1.0));
+        assert_eq!(compartment.outside(), Some("test".to_string()));
+        assert_eq!(compartment.constant(), Some(true));
     }
 
     #[test]

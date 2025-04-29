@@ -16,8 +16,9 @@ use crate::{
     clone, inner, into_id,
     model::Model,
     modref::{ModifierSpeciesReference, ModifierSpeciesReferenceBuilder},
-    pin_ptr,
+    optional_property, pin_ptr,
     prelude::{IntoId, KineticLaw},
+    required_property,
     sbmlcxx::{self},
     sbo_term,
     speciesref::{SpeciesReference, SpeciesReferenceBuilder, SpeciesReferenceType},
@@ -80,46 +81,11 @@ impl<'a> Reaction<'a> {
         }
     }
 
-    /// Returns a reference to the inner RefCell containing the Reaction pointer.
-    ///
-    /// This is primarily used internally by other parts of the library.
-    pub(crate) fn inner(&self) -> &RefCell<Pin<&'a mut sbmlcxx::Reaction>> {
-        &self.inner
-    }
+    // Getter and setter for id
+    required_property!(Reaction<'a>, id, String, getId, setId);
 
-    /// Returns the id of the reaction.
-    ///
-    /// # Returns
-    /// The id of the reaction as a String
-    pub fn id(&self) -> String {
-        self.inner.borrow().getId().to_str().unwrap().to_string()
-    }
-
-    /// Sets the id of the reaction.
-    ///
-    /// # Arguments
-    /// * `id` - The id to set
-    pub fn set_id(&self, id: &str) {
-        let_cxx_string!(id = id);
-        self.inner.borrow_mut().as_mut().setId(&id);
-    }
-
-    /// Returns the name of the reaction.
-    ///
-    /// # Returns
-    /// The name of the reaction as a String
-    pub fn name(&self) -> String {
-        self.inner.borrow().getName().to_str().unwrap().to_string()
-    }
-
-    /// Sets the name of the reaction.
-    ///
-    /// # Arguments
-    /// * `name` - The name to set
-    pub fn set_name(&self, name: &str) {
-        let_cxx_string!(name = name);
-        self.inner.borrow_mut().as_mut().setName(&name);
-    }
+    // Getter and setter for name
+    optional_property!(Reaction<'a>, name, String, getName, setName, isSetName);
 
     /// Creates a new product species reference for this reaction.
     ///
@@ -322,12 +288,40 @@ impl FromPtr<sbmlcxx::Reaction> for Reaction<'_> {
     /// # Returns
     /// A new Reaction instance
     fn from_ptr(ptr: *mut sbmlcxx::Reaction) -> Self {
-        let reaction = pin_ptr!(ptr, sbmlcxx::Reaction);
+        let reaction = RefCell::new(pin_ptr!(ptr, sbmlcxx::Reaction));
+
+        // Get the list of reactants
+        let n_reactants = reaction.borrow().getNumReactants().0;
+        let reactants = (0..n_reactants)
+            .map(|i| {
+                let reactant = reaction.borrow_mut().as_mut().getReactant1(i.into());
+                Rc::new(SpeciesReference::from_ptr(reactant))
+            })
+            .collect::<Vec<_>>();
+
+        // Get the list of products
+        let n_products = reaction.borrow().getNumProducts().0;
+        let products = (0..n_products)
+            .map(|i| {
+                let product = reaction.borrow_mut().as_mut().getProduct1(i.into());
+                Rc::new(SpeciesReference::from_ptr(product))
+            })
+            .collect::<Vec<_>>();
+
+        // Get the list of modifiers
+        let n_modifiers = reaction.borrow().getNumModifiers().0;
+        let modifiers = (0..n_modifiers)
+            .map(|i| {
+                let modifier = reaction.borrow_mut().as_mut().getModifier1(i.into());
+                Rc::new(ModifierSpeciesReference::from_ptr(modifier))
+            })
+            .collect::<Vec<_>>();
+
         Self {
-            inner: RefCell::new(reaction),
-            reactants: RefCell::new(Vec::new()),
-            products: RefCell::new(Vec::new()),
-            modifiers: RefCell::new(Vec::new()),
+            inner: reaction,
+            reactants: RefCell::new(reactants),
+            products: RefCell::new(products),
+            modifiers: RefCell::new(modifiers),
         }
     }
 }
@@ -420,7 +414,7 @@ mod tests {
         reaction.set_name("test2");
 
         assert_eq!(reaction.id(), "test2");
-        assert_eq!(reaction.name(), "test2");
+        assert_eq!(reaction.name(), Some("test2".to_string()));
     }
 
     #[test]
@@ -472,7 +466,7 @@ mod tests {
             .modifier("test")
             .build();
 
-        assert_eq!(reaction.name(), "test");
+        assert_eq!(reaction.name(), Some("test".to_string()));
 
         let products = reaction.products();
         let reactants = reaction.reactants();

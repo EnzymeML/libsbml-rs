@@ -21,7 +21,7 @@ use cxx::let_cxx_string;
 use crate::{
     clone, inner, pin_ptr,
     prelude::{LocalParameter, LocalParameterBuilder, Reaction},
-    sbmlcxx, sbo_term,
+    required_property, sbmlcxx, sbo_term,
     traits::fromptr::FromPtr,
     upcast_annotation,
 };
@@ -75,29 +75,8 @@ impl<'a> KineticLaw<'a> {
         }
     }
 
-    /// Gets the mathematical formula of the kinetic law.
-    ///
-    /// This method retrieves the current mathematical expression that defines
-    /// the reaction rate. The formula is returned as a string representation.
-    ///
-    /// # Returns
-    /// The formula of the kinetic law as a string.
-    pub fn formula(&self) -> String {
-        self.inner().borrow().getFormula().to_string()
-    }
-
-    /// Sets the mathematical formula of the kinetic law.
-    ///
-    /// This method updates the mathematical expression that defines the reaction rate.
-    /// The formula should be a valid mathematical expression that can reference species,
-    /// parameters, and other model elements.
-    ///
-    /// # Arguments
-    /// * `formula` - The new mathematical formula to set for the kinetic law
-    pub fn set_formula(&self, formula: &str) {
-        let_cxx_string!(formula = formula);
-        self.inner().borrow_mut().as_mut().setFormula(&formula);
-    }
+    // Getter and setter for formula
+    required_property!(KineticLaw<'a>, formula, String, getFormula, setFormula);
 
     /// Gets the local parameters of the kinetic law.
     ///

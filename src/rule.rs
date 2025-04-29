@@ -13,7 +13,7 @@ use cxx::let_cxx_string;
 use crate::{
     clone, inner,
     model::Model,
-    pin_ptr,
+    pin_ptr, required_property,
     sbmlcxx::{self},
     sbo_term,
     traits::fromptr::FromPtr,
@@ -105,49 +105,11 @@ impl<'a> Rule<'a> {
         &self.inner
     }
 
-    /// Returns the variable of the rate rule.
-    ///
-    /// # Returns
-    /// The variable of the rate rule as a String
-    pub fn variable(&self) -> String {
-        self.inner
-            .borrow()
-            .getVariable()
-            .to_str()
-            .unwrap()
-            .to_string()
-    }
+    // Getter and setter for variable
+    required_property!(Rule<'a>, variable, String, getVariable, setVariable);
 
-    /// Sets the variable of the rate rule.
-    ///
-    /// # Arguments
-    /// * `variable` - The variable to set
-    pub fn set_variable(&self, variable: &str) {
-        let_cxx_string!(variable = variable);
-        self.inner.borrow_mut().as_mut().setVariable(&variable);
-    }
-
-    /// Returns the formula of the rate rule.
-    ///
-    /// # Returns
-    /// The formula of the rate rule as a String
-    pub fn formula(&self) -> String {
-        self.inner
-            .borrow()
-            .getFormula()
-            .to_str()
-            .unwrap()
-            .to_string()
-    }
-
-    /// Sets the formula of the rate rule.
-    ///
-    /// # Arguments
-    /// * `formula` - The formula to set
-    pub fn set_formula(&self, formula: &str) {
-        let_cxx_string!(formula = formula);
-        self.inner.borrow_mut().as_mut().setFormula(&formula);
-    }
+    // Getter and setter for formula
+    required_property!(Rule<'a>, formula, String, getFormula, setFormula);
 
     /// Returns the type of the rule.
     ///

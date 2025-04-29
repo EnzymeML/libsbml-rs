@@ -15,8 +15,9 @@ use cxx::let_cxx_string;
 use crate::{
     clone, inner, into_id,
     model::Model,
-    pin_ptr,
+    optional_property, pin_ptr,
     prelude::IntoId,
+    required_property,
     sbmlcxx::{self},
     sbo_term,
     traits::fromptr::FromPtr,
@@ -76,182 +77,68 @@ impl<'a> Species<'a> {
         &self.inner
     }
 
-    /// Gets the species' identifier.
-    ///
-    /// # Returns
-    /// The species' ID as a String
-    pub fn id(&self) -> String {
-        self.inner.borrow().getId().to_str().unwrap().to_string()
-    }
+    // Setter and getter for id
+    required_property!(Species<'a>, id, String, getId, setId);
 
-    /// Sets the species' identifier.
-    ///
-    /// # Arguments
-    /// * `id` - The new identifier to set
-    pub fn set_id(&self, id: &str) {
-        let_cxx_string!(id = id);
-        self.inner.borrow_mut().as_mut().setId(&id);
-    }
+    // Setter and getter for name
+    optional_property!(Species<'a>, name, String, getName, setName, isSetName);
 
-    /// Gets the species' name.
-    ///
-    /// # Returns
-    /// The species' name as a String
-    pub fn name(&self) -> String {
-        self.inner.borrow().getName().to_str().unwrap().to_string()
-    }
+    // Setter and getter for compartment
+    optional_property!(
+        Species<'a>,
+        compartment,
+        String,
+        getCompartment,
+        setCompartment,
+        isSetCompartment,
+        impl IntoId<'a>
+    );
 
-    /// Sets the species' name.
-    ///
-    /// # Arguments
-    /// * `name` - The new name to set
-    pub fn set_name(&self, name: &str) {
-        let_cxx_string!(name = name);
-        self.inner.borrow_mut().as_mut().setName(&name);
-    }
+    // Setter and getter for initial amount
+    optional_property!(
+        Species<'a>,
+        initial_amount,
+        f64,
+        getInitialAmount,
+        setInitialAmount,
+        isSetInitialAmount
+    );
 
-    /// Gets the compartment where this species is located.
-    ///
-    /// # Returns
-    /// The compartment identifier as a String
-    pub fn compartment(&self) -> String {
-        self.inner
-            .borrow()
-            .getCompartment()
-            .to_str()
-            .unwrap()
-            .to_string()
-    }
+    // Setter and getter for initial concentration
+    optional_property!(
+        Species<'a>,
+        initial_concentration,
+        f64,
+        getInitialConcentration,
+        setInitialConcentration,
+        isSetInitialConcentration
+    );
 
-    /// Sets the compartment where this species is located.
-    ///
-    /// # Arguments
-    /// * `compartment` - The identifier of the compartment
-    pub fn set_compartment(&self, compartment: impl IntoId<'a>) {
-        let compartment = compartment.into_id();
-        let_cxx_string!(compartment = compartment);
-        self.inner
-            .borrow_mut()
-            .as_mut()
-            .setCompartment(&compartment);
-    }
+    // Setter and getter for unit
+    optional_property!(Species<'a>, unit, String, getUnits, setUnits, isSetUnits);
 
-    /// Gets the initial amount of this species.
-    ///
-    /// # Returns
-    /// The initial amount as a f64
-    pub fn initial_amount(&self) -> f64 {
-        self.inner.borrow().getInitialAmount()
-    }
+    // Setter and getter for boundary condition
+    optional_property!(
+        Species<'a>,
+        boundary_condition,
+        bool,
+        getBoundaryCondition,
+        setBoundaryCondition,
+        isSetBoundaryCondition
+    );
 
-    /// Sets the initial amount of this species.
-    ///
-    /// # Arguments
-    /// * `initial_amount` - The initial amount to set
-    pub fn set_initial_amount(&self, initial_amount: f64) {
-        self.inner
-            .borrow_mut()
-            .as_mut()
-            .setInitialAmount(initial_amount);
-    }
+    // Setter and getter for constant
+    required_property!(Species<'a>, constant, bool, getConstant, setConstant);
 
-    /// Gets the initial concentration of this species.
-    ///
-    /// # Returns
-    /// The initial concentration as a f64
-    pub fn initial_concentration(&self) -> f64 {
-        self.inner.borrow().getInitialConcentration()
-    }
-
-    /// Sets the initial concentration of this species.
-    ///
-    /// # Arguments
-    /// * `initial_concentration` - The initial concentration to set
-    pub fn set_initial_concentration(&self, initial_concentration: f64) {
-        self.inner
-            .borrow_mut()
-            .as_mut()
-            .setInitialConcentration(initial_concentration);
-    }
-
-    /// Gets the unit of this species.
-    ///
-    /// # Returns
-    /// The unit of the species
-    pub fn unit(&self) -> String {
-        self.inner.borrow().getUnits().to_str().unwrap().to_string()
-    }
-
-    /// Sets the unit of this species.
-    ///
-    /// # Arguments
-    /// * `unit` - The unit to set
-    pub fn set_unit(&self, unit: &str) {
-        let_cxx_string!(unit = unit);
-        self.inner.borrow_mut().as_mut().setUnits(&unit);
-    }
-
-    /// Gets whether this species has a boundary condition.
-    ///
-    /// A boundary species is one whose value is not determined by any rule or reaction
-    /// in the model but is set by some external mechanism.
-    ///
-    /// # Returns
-    /// true if this species has a boundary condition, false otherwise
-    pub fn boundary_condition(&self) -> bool {
-        self.inner.borrow().getBoundaryCondition()
-    }
-
-    /// Sets whether this species has a boundary condition.
-    ///
-    /// # Arguments
-    /// * `boundary_condition` - Whether this species should have a boundary condition
-    pub fn set_boundary_condition(&self, boundary_condition: bool) {
-        self.inner
-            .borrow_mut()
-            .as_mut()
-            .setBoundaryCondition(boundary_condition);
-    }
-
-    /// Gets whether this species is constant.
-    ///
-    /// A constant species is one whose value cannot be changed by any reaction or rule.
-    ///
-    /// # Returns
-    /// true if this species is constant, false otherwise
-    pub fn constant(&self) -> bool {
-        self.inner.borrow().getConstant()
-    }
-
-    /// Sets whether this species is constant.
-    ///
-    /// # Arguments
-    /// * `constant` - Whether this species should be constant
-    pub fn set_constant(&self, constant: bool) {
-        self.inner.borrow_mut().as_mut().setConstant(constant);
-    }
-
-    /// Gets whether this species has only substance units.
-    ///
-    /// If true, the units of the species' amount is interpreted as substance units only,
-    /// rather than substance/size units.
-    ///
-    /// # Returns
-    /// true if this species has only substance units, false otherwise
-    pub fn has_only_substance_units(&self) -> bool {
-        self.inner.borrow().getHasOnlySubstanceUnits()
-    }
-
-    /// Sets whether this species has only substance units.
-    ///
-    /// # Arguments
-    /// * `has_only_substance_units` - Whether this species should have only substance units
-    pub fn set_has_only_substance_units(&self, has_only_substance_units: bool) {
-        self.inner
-            .borrow_mut()
-            .as_mut()
-            .setHasOnlySubstanceUnits(has_only_substance_units);
-    }
+    // Setter and getter for has only substance units
+    optional_property!(
+        Species<'a>,
+        has_only_substance_units,
+        bool,
+        getHasOnlySubstanceUnits,
+        setHasOnlySubstanceUnits,
+        isSetHasOnlySubstanceUnits
+    );
 
     // SBO Term Methods generated by the `sbo_term` macro
     sbo_term!(sbmlcxx::Species, sbmlcxx::SBase);
@@ -434,13 +321,13 @@ mod tests {
         species.set_has_only_substance_units(true);
         species.set_unit("mole");
 
-        assert_eq!(species.name(), "Glucose");
-        assert_eq!(species.compartment(), "cytosol");
-        assert_eq!(species.initial_amount(), 1.0);
-        assert!(species.boundary_condition());
+        assert_eq!(species.name(), Some("Glucose".to_string()));
+        assert_eq!(species.compartment(), Some("cytosol".to_string()));
+        assert_eq!(species.initial_amount(), Some(1.0));
+        assert_eq!(species.boundary_condition(), Some(true));
         assert!(!species.constant());
-        assert!(species.has_only_substance_units());
-        assert_eq!(species.unit(), "mole");
+        assert_eq!(species.has_only_substance_units(), Some(true));
+        assert_eq!(species.unit(), Some("mole".to_string()));
     }
 
     #[test]
@@ -458,14 +345,14 @@ mod tests {
             .has_only_substance_units(true)
             .build();
 
-        assert_eq!(species.name(), "Glucose");
+        assert_eq!(species.name(), Some("Glucose".to_string()));
         assert_eq!(species.id(), "glucose");
-        assert_eq!(species.compartment(), "cytosol");
-        assert_eq!(species.initial_amount(), 1.0);
-        assert!(species.boundary_condition());
+        assert_eq!(species.compartment(), Some("cytosol".to_string()));
+        assert_eq!(species.initial_amount(), Some(1.0));
+        assert_eq!(species.boundary_condition(), Some(true));
         assert!(!species.constant());
-        assert!(species.has_only_substance_units());
-        assert_eq!(species.unit(), "mole");
+        assert_eq!(species.has_only_substance_units(), Some(true));
+        assert_eq!(species.unit(), Some("mole".to_string()));
     }
 
     #[test]
