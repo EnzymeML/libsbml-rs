@@ -187,7 +187,7 @@ impl<'a> Model<'a> {
     /// * `id` - The identifier of the species to retrieve
     ///
     /// # Returns
-    /// Some(Rc<Species>) if found, None if not found
+    /// Some(`Rc<Species>`) if found, None if not found
     pub fn get_species(&self, id: &str) -> Option<Rc<Species<'a>>> {
         self.list_of_species
             .borrow()
@@ -240,7 +240,7 @@ impl<'a> Model<'a> {
     /// * `id` - The identifier of the compartment to retrieve
     ///
     /// # Returns
-    /// Some(Rc<Compartment>) if found, None if not found
+    /// Some(`Rc<Compartment>`) if found, None if not found
     pub fn get_compartment(&self, id: &str) -> Option<Rc<Compartment<'a>>> {
         self.list_of_compartments
             .borrow()
@@ -295,7 +295,7 @@ impl<'a> Model<'a> {
     /// * `id` - The identifier of the unit definition to retrieve
     ///
     /// # Returns
-    /// Some(Rc<UnitDefinition>) if found, None if not found
+    /// Some(`Rc<UnitDefinition>`) if found, None if not found
     pub fn get_unit_definition(&self, id: &str) -> Option<Rc<UnitDefinition<'a>>> {
         self.list_of_unit_definitions
             .borrow()
@@ -348,7 +348,7 @@ impl<'a> Model<'a> {
     /// * `id` - The identifier of the reaction to retrieve
     ///
     /// # Returns
-    /// Some(Rc<Reaction>) if found, None if not found
+    /// Some(`Rc<Reaction>`) if found, None if not found
     pub fn get_reaction(&self, id: &str) -> Option<Rc<Reaction<'a>>> {
         self.list_of_reactions
             .borrow()
@@ -401,7 +401,7 @@ impl<'a> Model<'a> {
     /// * `id` - The identifier of the parameter to retrieve
     ///
     /// # Returns
-    /// Some(Rc<Parameter>) if found, None if not found
+    /// Some(`Rc<Parameter>`) if found, None if not found
     pub fn get_parameter(&self, id: &str) -> Option<Rc<Parameter<'a>>> {
         self.list_of_parameters
             .borrow()
@@ -456,7 +456,7 @@ impl<'a> Model<'a> {
     /// * `variable` - The variable to apply the rate rule to
     ///
     /// # Returns
-    /// Some(Rc<Rule>) if found, None if not found
+    /// Some(`Rc<Rule>`) if found, None if not found
     pub fn get_rate_rule(&self, variable: &str) -> Option<Rc<Rule<'a>>> {
         self.list_of_rate_rules
             .borrow()
@@ -515,7 +515,7 @@ impl<'a> Model<'a> {
     /// * `variable` - The variable to apply the assignment rule to
     ///
     /// # Returns
-    /// Some(Rc<Rule>) if found, None if not found
+    /// Some(`Rc<Rule>`) if found, None if not found
     pub fn get_assignment_rule(&self, variable: &str) -> Option<Rc<Rule<'a>>> {
         self.list_of_assignment_rules
             .borrow()

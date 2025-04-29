@@ -236,7 +236,7 @@ macro_rules! sbo_term {
         /// Gets the SBO term as a URL.
         ///
         /// # Returns
-        /// The SBO term URL as a String (e.g. "http://biomodels.net/SBO/SBO_0000001")
+        /// The SBO term URL as a String (e.g. "<http://biomodels.net/SBO/SBO_0000001>")
         pub fn sbo_term_url(&self) -> String {
             let base = $crate::upcast!(self, $cxx_type, $cxx_upcast);
             base.getSBOTermAsURL().to_str().unwrap().to_string()

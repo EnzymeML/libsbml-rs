@@ -14,7 +14,7 @@ use cxx::let_cxx_string;
 use crate::{
     clone, inner, into_id,
     model::Model,
-    pin_ptr,
+    optional_property, pin_ptr, required_property,
     sbmlcxx::{self},
     sbo_term,
     traits::fromptr::FromPtr,
@@ -69,23 +69,18 @@ impl<'a> UnitDefinition<'a> {
         }
     }
 
-    pub fn name(&self) -> String {
-        self.inner.borrow().getName().to_str().unwrap().to_string()
-    }
+    // Getter and setter for id
+    required_property!(UnitDefinition<'a>, id, String, getId, setId);
 
-    pub fn set_name(&self, name: &str) {
-        let_cxx_string!(name = name);
-        self.inner.borrow_mut().as_mut().setName(&name);
-    }
-
-    pub fn id(&self) -> String {
-        self.inner.borrow().getId().to_str().unwrap().to_string()
-    }
-
-    pub fn set_id(&self, id: &str) {
-        let_cxx_string!(id = id);
-        self.inner.borrow_mut().as_mut().setId(&id);
-    }
+    // Getter and setter for name
+    optional_property!(
+        UnitDefinition<'a>,
+        name,
+        String,
+        getName,
+        setName,
+        isSetName
+    );
 
     /// Creates a new Unit within this UnitDefinition.
     ///
@@ -229,7 +224,7 @@ mod tests {
         unit_definition.set_id("test2");
 
         assert_eq!(unit_definition.id(), "test2");
-        assert_eq!(unit_definition.name(), "test2");
+        assert_eq!(unit_definition.name(), Some("test2".to_string()));
     }
 
     #[test]
