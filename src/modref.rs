@@ -93,7 +93,6 @@ impl<'a> ModifierSpeciesReference<'a> {
 /// It provides a consistent way to convert unsafe C++ pointers to safe Rust types.
 ///
 /// The main usage is to parse a libSBML ModifierSpeciesReference pointer into a ModifierSpeciesReference instance from an SBMLReader.
-
 impl FromPtr<sbmlcxx::ModifierSpeciesReference> for ModifierSpeciesReference<'_> {
     fn from_ptr(ptr: *mut sbmlcxx::ModifierSpeciesReference) -> Self {
         let modifier_reference = pin_ptr!(ptr, sbmlcxx::ModifierSpeciesReference);
