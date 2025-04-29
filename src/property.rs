@@ -25,7 +25,7 @@
 /// Generates getter and setter methods for an optional property with a specified type.
 ///
 /// This macro creates a getter and setter method for a property that may or may not be set.
-/// The getter returns an Option<T> that is None when the property is not set.
+/// The getter returns an `Option<T>` that is `None` when the property is not set.
 /// It handles the conversion between Rust and C++ types, including string conversions
 /// where necessary.
 ///
@@ -213,7 +213,7 @@ macro_rules! required_property {
 ///
 /// This macro creates a getter and setter method for a property that may or may not be set,
 /// using the upcast! macro to access the property from a parent type. The getter returns
-/// an Option<T> that is None when the property is not set.
+/// an `Option<T>` that is `None` when the property is not set.
 ///
 /// # Arguments
 /// * `$type` - The Rust wrapper type (e.g., Species<'a>)

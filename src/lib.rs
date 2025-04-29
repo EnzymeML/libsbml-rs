@@ -1,23 +1,34 @@
-//! Rust bindings for libSBML - Systems Biology Markup Language library
+//! # Rust bindings for libSBML - Systems Biology Markup Language library
 //!
-//! This crate provides safe Rust bindings to the C++ libSBML library, which is used for
-//! reading, writing, manipulating and validating SBML (Systems Biology Markup Language) files.
-//! SBML is a widely used format for representing computational models in systems biology.
+//! This crate provides safe, idiomatic Rust bindings to the C++ libSBML library for
+//! working with SBML (Systems Biology Markup Language) files - a standard format for
+//! representing computational models in systems biology research.
 //!
-//! The bindings are generated using autocxx to provide a safe interface while maintaining
-//! close integration with the underlying C++ library. The main components include:
+//! ## Features
 //!
-//! - SBMLDocument: The root container for SBML models
-//! - Model: Represents a biological model with species, reactions etc.
-//! - Species: Represents chemical species/entities in the model
-//! - Compartment: Represents physical containers/spaces in the model
-//! - Reaction: Represents biochemical reactions between species
-//! - Parameter: Represents numerical parameters used in the model
-//! - Unit/UnitDefinition: Represents units of measurement
-//! - SpeciesReference: Represents species participating in reactions
+//! - Complete access to libSBML functionality with a Rust-friendly API
+//! - Type-safe interfaces for creating and manipulating SBML models
+//! - Reading and writing SBML files with validation support
+//! - Memory-safe wrappers around the C++ library using autocxx
+//!
+//! ## Core Components
+//!
+//! - **SBMLDocument** (`sbmldoc`): Root container for SBML models
+//! - **Model** (`model`): Biological model with species, reactions, and other components
+//! - **Species** (`species`): Chemical entities/molecules in the model
+//! - **Compartment** (`compartment`): Physical containers/spaces where species reside
+//! - **Reaction** (`reaction`): Biochemical transformations with reactants, products and kinetics
+//! - **Parameter** (`parameter`): Numerical values used throughout the model
+//! - **LocalParameter** (`localparameter`): Parameters scoped to specific reactions
+//! - **KineticLaw** (`kineticlaw`): Mathematical expressions defining reaction rates
+//! - **Unit** (`unit`): Base units for quantities in the model
+//! - **UnitDefinition** (`unitdef`): Composite units of measurement
+//! - **Rule** (`rule`): Mathematical expressions that define model behavior
+//! - **SpeciesReference** (`speciesref`): References to species as reactants or products
+//! - **ModifierSpeciesReference** (`modref`): Species references for catalysts and regulators
 //!
 
-/// Module providing traits for the SBML library
+/// Traits providing common functionality across SBML components
 pub mod traits {
     pub mod annotation;
     pub mod fromptr;
@@ -25,48 +36,48 @@ pub mod traits {
     pub mod intoid;
 }
 
-/// Module providing upcast functionality
+/// Type casting and conversion utilities for SBML objects
 pub mod cast;
-/// Module providing compartment functionality
+/// Compartments representing physical containers in the model
 pub mod compartment;
-/// Module providing kinetic law functionality
+/// Kinetic laws that define reaction rates and mathematics
 pub mod kineticlaw;
-/// Module providing local parameter functionality
+/// Local parameters scoped to specific reactions or expressions
 pub mod localparameter;
-/// Module providing model functionality
+/// Model definition and management for biological systems
 pub mod model;
-/// Module providing modifier species reference functionality
+/// Modifier species references for catalysts and regulators
 pub mod modref;
-/// Module providing parameter functionality
+/// Global parameters defining constant or variable model values
 pub mod parameter;
-/// Module providing reaction functionality
+/// Reactions describing biochemical transformations between species
 pub mod reaction;
-/// Module providing rate rule functionality
+/// Rules for mathematical constraints and assignments within models
 pub mod rule;
-/// Module providing core SBML document functionality
+/// Core document handling for SBML files and model containers
 pub mod sbmldoc;
-/// Module providing species functionality
+/// Species representing chemical entities and molecules
 pub mod species;
-/// Module providing species reference functionality
+/// References to species as reactants or products in reactions
 pub mod speciesref;
-/// Module providing unit functionality
+/// Units of measurement for model quantities
 pub mod unit;
-/// Module providing unit definition functionality
+/// Unit definitions composing multiple base units
 pub mod unitdef;
 
-/// Module containing helper macros
+/// Helper macros for working with SBML components
 pub mod macros;
 
-/// Module containing property functionality
+/// Property handling for SBML element attributes
 pub mod property;
 
-/// Module containing reader functionality
+/// File and model input/output operations
 pub mod reader;
 
-/// Internal module containing the wrapper types for the annotation.
+/// Internal module containing the wrapper types for annotations
 pub(crate) mod wrapper;
 
-/// Internal module containing the container types for the annotation. This is mainly used to extract annotations from the model. Collections are handled by the [`Model`] struct.
+/// Internal module containing collections of SBML components
 pub(crate) mod collections {
     pub(crate) use crate::collections::compartments::*;
     pub(crate) use crate::collections::parameters::*;
