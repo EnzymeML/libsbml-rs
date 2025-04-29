@@ -228,8 +228,7 @@ impl<'a> AssignmentRuleBuilder<'a> {
     ///
     /// # Arguments
     /// * `model` - The parent Model that will contain this assignment rule
-    /// * `variable` - The variable that this assignment rule affects. This is the identifier
-    ///               of the element (species, parameter etc.) whose value is being set
+    /// * `variable` - The variable that this assignment rule affects.
     /// * `formula` - The mathematical formula defining the value to assign to the variable
     ///
     /// # Returns
