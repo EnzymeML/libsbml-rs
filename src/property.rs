@@ -1,6 +1,31 @@
-/// Generates getter and setter methods for a property with a specified type.
+//! Property macros for standardized handling of libSBML properties
+//!
+//! This module provides macros that standardize the handling of properties in libSBML objects.
+//! These macros generate consistent getter and setter methods for various types of properties:
+//!
+//! - `required_property!`: For properties that are always present and must have a value
+//! - `optional_property!`: For properties that may or may not be set (returns Option<T>)
+//! - `upcast_property!`: For properties that require upcasting to a parent class before access
+//! - `upcast_optional_property!`: Combines upcasting with optional property handling
+//!
+//! The macros ensure consistent behavior across the library by:
+//! 1. Properly checking if a property is set before returning its value (using isSet methods)
+//! 2. Handling type conversions between C++ and Rust types
+//! 3. Providing consistent documentation for generated methods
+//! 4. Standardizing error handling for missing or invalid properties
+//!
+//! The upcast variants handle cases where properties are defined in a parent class but
+//! need to be accessed through a child class. These macros automatically handle the
+//! upcasting process, making the API more intuitive while hiding the complexity of
+//! the underlying C++ class hierarchy.
+//!
+//! This approach makes it easy to extend property handling to new objects and properties
+//! while maintaining a consistent API throughout the library.
+
+/// Generates getter and setter methods for an optional property with a specified type.
 ///
-/// This macro creates a getter and setter method for a property on a wrapper type.
+/// This macro creates a getter and setter method for a property that may or may not be set.
+/// The getter returns an Option<T> that is None when the property is not set.
 /// It handles the conversion between Rust and C++ types, including string conversions
 /// where necessary.
 ///
@@ -11,7 +36,6 @@
 /// * `$cpp_getter` - The C++ getter method name (e.g., getId, getName)
 /// * `$cpp_setter` - The C++ setter method name (e.g., setId, setName)
 /// * `$cpp_isset` - The C++ isSet method name (e.g., isSetId, isSetName)
-/// * `$is_string` - Boolean indicating if the property is a string type (true/false)
 #[macro_export]
 macro_rules! optional_property {
     // String return type variant - handles CxxString conversion
@@ -98,9 +122,10 @@ macro_rules! optional_property {
     };
 }
 
-/// Generates getter and setter methods for a property with a specified type.
+/// Generates getter and setter methods for a required property with a specified type.
 ///
-/// This macro creates a getter and setter method for a property on a wrapper type.
+/// This macro creates a getter and setter method for a property that must always be set.
+/// The getter returns the value directly (not wrapped in an Option).
 /// It handles the conversion between Rust and C++ types, including string conversions
 /// where necessary.
 ///
@@ -110,8 +135,6 @@ macro_rules! optional_property {
 /// * `$return_type` - The return type for the getter (e.g., String, f64, bool)
 /// * `$cpp_getter` - The C++ getter method name (e.g., getId, getName)
 /// * `$cpp_setter` - The C++ setter method name (e.g., setId, setName)
-/// * `$cpp_isset` - The C++ isSet method name (e.g., isSetId, isSetName)
-/// * `$is_string` - Boolean indicating if the property is a string type (true/false)
 #[macro_export]
 macro_rules! required_property {
     // String return type variant - handles CxxString conversion
@@ -186,11 +209,11 @@ macro_rules! required_property {
     };
 }
 
-/// Generates getter and setter methods for a property with a specified type, using upcast.
+/// Generates getter and setter methods for an optional property with a specified type, using upcast.
 ///
-/// This macro creates a getter and setter method for a property on a wrapper type,
-/// using the upcast! macro to convert between types. It handles the conversion between
-/// Rust and C++ types, including string conversions where necessary.
+/// This macro creates a getter and setter method for a property that may or may not be set,
+/// using the upcast! macro to access the property from a parent type. The getter returns
+/// an Option<T> that is None when the property is not set.
 ///
 /// # Arguments
 /// * `$type` - The Rust wrapper type (e.g., Species<'a>)
@@ -198,7 +221,7 @@ macro_rules! required_property {
 /// * `$return_type` - The return type for the getter (e.g., String, f64, bool)
 /// * `$cpp_getter` - The C++ getter method name (e.g., getId, getName)
 /// * `$cpp_setter` - The C++ setter method name (e.g., setId, setName)
-/// * `$cpp_isset` - The C++ isSet method name (e.g., isSetId, isSetName) - for optional properties
+/// * `$cpp_isset` - The C++ isSet method name (e.g., isSetId, isSetName)
 /// * `$from_type` - The source C++ type to upcast from
 /// * `$to_type` - The target C++ type to upcast to
 #[macro_export]
@@ -263,8 +286,9 @@ macro_rules! upcast_optional_property {
 
 /// Generates getter and setter methods for a required property with a specified type, using upcast.
 ///
-/// This macro creates a getter and setter method for a required property on a wrapper type,
-/// using the upcast! macro to convert between types.
+/// This macro creates a getter and setter method for a property that must always be set,
+/// using the upcast! macro to access the property from a parent type. The getter returns
+/// the value directly (not wrapped in an Option).
 ///
 /// # Arguments
 /// * `$type` - The Rust wrapper type (e.g., Species<'a>)
