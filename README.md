@@ -14,8 +14,8 @@ Built as an ergonomic wrapper around the `libsbml` C++ library with type-safe Ru
 
 - Type-safe builder pattern API for SBML model creation
 - Seamless serialization/deserialization of annotations using `serde`
-- Bundled `libsbml` library - no external installation required
-- Cross-platform support (macOS and Windows)
+- C++ dependency via `cargo-vcpkg`
+- Cross-platform support (macOS, Windows, Linux)
 - Comprehensive error handling and type safety
 
 ## 📦 Installation
@@ -23,12 +23,18 @@ Built as an ergonomic wrapper around the `libsbml` C++ library with type-safe Ru
 Currently available through Git:
 
 ```bash
+# Install dependencies
+cargo install cargo-vcpkg
+cargo vcpkg build
+
+# Add the crate to your project
 cargo add --git https://github.com/EnzymeML/sbml-rs
 ```
 
+Please note, the C++ dependency `libsbml` is required to be installed before building the crate. This is done automatically when using the `cargo-vcpkg` tool. You dont need to link the library manually. The dependency is installed in the `target/vcpkg` directory.
+
 ### System Requirements
 
-- **CMake**: Required for building the bundled `libsbml` library
 - **Rust**: 1.70 or higher (recommended)
 
 ### Platform Support
@@ -38,8 +44,6 @@ cargo add --git https://github.com/EnzymeML/sbml-rs
 - macOS (arm64, x86_64)
 - Windows (x86_64)
 - Linux (x86_64)
-
-Please note, due to ongoing development to support platforms, the crate is currently only available as a static library for Windows and Linux. MacOS is available as a dynamic library. We will update this section as we add more support.
 
 ## 💡 Usage
 

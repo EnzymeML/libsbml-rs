@@ -4,6 +4,8 @@ on:
   workflow_dispatch:
   push:
     paths:
+      - 'build.rs'
+      - '.github/**/*.yml'
       - 'src/**/*.rs'
       - 'tests/**/*.rs'
       - 'Cargo.toml'
@@ -12,7 +14,6 @@ on:
 env:
   CARGO_TERM_COLOR: always
   CARGO_NET_RETRY: 10
-  RUSTC_WRAPPER: sccache
   RUST_BACKTRACE: 1
   RUSTC_PARALLEL_COMPILER: true
 
@@ -37,35 +38,15 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install cargo-vcpkg
+        uses: actions-rs/cargo@v1
         with:
-          submodules: recursive
+          command: install
+          args: cargo-vcpkg
 
-      - name: Install Ubuntu dependencies
-        if: matrix.os == 'ubuntu-latest'
-        run: sudo apt-get update && sudo apt-get install -y zlib1g-dev libbz2-dev libexpat1-dev
-
-      # Install and setup sccache
-      - name: Install sccache
-        uses: mozilla-actions/sccache-action@v0.0.3
-
-      # Setup Rust toolchain with caching
-      - name: Setup Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-
-      # Cache dependencies and build outputs
-      - name: Cache cargo registry
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-
+      - name: Build vcpkg
+        run: cargo vcpkg -v build
 
       - name: Run tests
         uses: actions-rs/cargo@v1
