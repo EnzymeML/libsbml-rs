@@ -39,15 +39,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install cargo-vcpkg
-        uses: actions-rs/cargo@v1
-        with:
-          command: install
-          args: cargo-vcpkg
-
-      - name: Build vcpkg
-        run: cargo vcpkg -v build
-
       - name: Run tests
         uses: actions-rs/cargo@v1
         with:

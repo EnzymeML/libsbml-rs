@@ -11,9 +11,6 @@ jobs:
   build:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable

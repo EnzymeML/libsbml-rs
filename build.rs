@@ -8,6 +8,8 @@
 //! The script requires vcpkg to be properly configured to find the dependencies.
 //! Use `cargo install cargo-vcpkg && cargo vcpkg build` to install all dependencies.
 
+use std::process::Command;
+
 use autocxx_build::BuilderError;
 
 /// Main build script function that orchestrates the build process
@@ -65,6 +67,28 @@ fn main() -> Result<(), BuilderError> {
 /// # Returns
 /// * `Result<vcpkg::Library, BuilderError>` - The libsbml library information
 fn setup_vcpkg() -> Result<vcpkg::Library, BuilderError> {
+    // Check if cargo-vcpkg is installed by checking if it's in the list of installed crates
+    let cargo_vcpkg_installed = Command::new("cargo")
+        .args(["--list"])
+        .output()
+        .map(|output| String::from_utf8_lossy(&output.stdout).contains("vcpkg"))
+        .unwrap_or(false);
+
+    if !cargo_vcpkg_installed {
+        // Install cargo-vcpkg if not found
+        println!("cargo:warning=Installing cargo-vcpkg...");
+        Command::new("cargo")
+            .args(["install", "cargo-vcpkg"])
+            .status()
+            .expect("Failed to install cargo-vcpkg");
+    }
+
+    // Run cargo vcpkg build to install dependencies
+    Command::new("cargo")
+        .args(["vcpkg", "build"])
+        .status()
+        .expect("Failed to run cargo vcpkg build");
+
     // Get the target directory from the environment or use the default "target"
     let target_dir = get_vcpkg_dir();
 
