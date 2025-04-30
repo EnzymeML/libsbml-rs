@@ -14,7 +14,7 @@ Built as an ergonomic wrapper around the `libsbml` C++ library with type-safe Ru
 
 - Type-safe builder pattern API for SBML model creation
 - Seamless serialization/deserialization of annotations using `serde`
-- C++ dependency via `cargo-vcpkg`
+- Automatic C++ dependency management via `cargo-vcpkg`
 - Cross-platform support (macOS, Windows, Linux)
 - Comprehensive error handling and type safety
 
@@ -23,15 +23,10 @@ Built as an ergonomic wrapper around the `libsbml` C++ library with type-safe Ru
 Currently available through Git:
 
 ```bash
-# Install dependencies
-cargo install cargo-vcpkg
-cargo vcpkg build
-
-# Add the crate to your project
 cargo add --git https://github.com/EnzymeML/sbml-rs
 ```
 
-Please note, the C++ dependency `libsbml` is required to be installed before building the crate. This is done automatically when using the `cargo-vcpkg` tool. You dont need to link the library manually. The dependency is installed in the `target/vcpkg` directory.
+Please note, the C++ dependency `libsbml` is automatically installed using `cargo-vcpkg`. You dont need to link the library manually, but note that the `build.rs` script will install `cargo-vcpkg` if it is not found in your environment.
 
 ### System Requirements
 
