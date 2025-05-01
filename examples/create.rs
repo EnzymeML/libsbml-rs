@@ -21,7 +21,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let compartment = model
         .build_compartment("cytosol")
         .name("cytosol")
-        .unit(&ml.id())
+        .unit(&ml)
         .build();
 
     // Create the ethanol species
@@ -30,7 +30,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .name("Ethanol")
         .compartment(&compartment)
         .initial_concentration(0.5)
-        .unit(&mole.id())
+        .unit(&mole)
         .has_only_substance_units(false)
         .build();
 
@@ -40,7 +40,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .name("Aldehyde")
         .compartment(&compartment)
         .initial_concentration(0.5)
-        .unit(&mole.id())
+        .unit(&mole)
         .has_only_substance_units(false)
         .build();
 
