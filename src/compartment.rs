@@ -13,7 +13,7 @@ use cxx::let_cxx_string;
 
 use crate::{
     clone, inner, into_id, model::Model, optional_property, pin_ptr, required_property, sbmlcxx,
-    sbo_term, traits::fromptr::FromPtr, upcast_annotation,
+    sbo_term, traits::fromptr::FromPtr, traits::intoid::IntoId, upcast_annotation,
 };
 
 /// A safe wrapper around the libSBML Compartment class.
@@ -83,7 +83,8 @@ impl<'a> Compartment<'a> {
         String,
         getUnits,
         setUnits,
-        isSetUnits
+        isSetUnits,
+        impl IntoId<'a>
     );
 
     // Getter and setter methods for the size property
@@ -186,7 +187,7 @@ impl<'a> CompartmentBuilder<'a> {
     ///
     /// # Returns
     /// The builder instance for method chaining
-    pub fn unit(self, unit: &str) -> Self {
+    pub fn unit(self, unit: impl IntoId<'a>) -> Self {
         self.compartment.set_unit(unit);
         self
     }

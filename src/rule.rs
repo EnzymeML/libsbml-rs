@@ -13,7 +13,9 @@ use cxx::let_cxx_string;
 use crate::{
     clone, inner,
     model::Model,
-    pin_ptr, required_property,
+    pin_ptr,
+    prelude::IntoId,
+    required_property,
     sbmlcxx::{self},
     sbo_term,
     traits::fromptr::FromPtr,
@@ -54,13 +56,13 @@ impl<'a> Rule<'a> {
     ///
     /// # Returns
     /// A new Rule instance
-    pub fn new_rate_rule(model: &Model<'a>, variable: &str, formula: &str) -> Self {
+    pub fn new_rate_rule(model: &Model<'a>, variable: impl IntoId<'a>, formula: &str) -> Self {
         let rate_rule_ptr = model.inner().borrow_mut().as_mut().createRateRule();
         let mut rate_rule = pin_ptr!(rate_rule_ptr, sbmlcxx::RateRule);
         let mut rule = upcast_pin!(rate_rule, sbmlcxx::RateRule, sbmlcxx::Rule);
 
         // Set the id of the rate rule
-        let_cxx_string!(variable = variable);
+        let_cxx_string!(variable = variable.into_id());
         rule.as_mut().setVariable(&variable);
 
         // Set the formula of the rate rule
@@ -81,12 +83,16 @@ impl<'a> Rule<'a> {
     ///
     /// # Returns
     /// A new Rule instance
-    pub fn new_assignment_rule(model: &Model<'a>, variable: &str, formula: &str) -> Self {
+    pub fn new_assignment_rule(
+        model: &Model<'a>,
+        variable: impl IntoId<'a>,
+        formula: &str,
+    ) -> Self {
         let assignment_rule_ptr = model.inner().borrow_mut().as_mut().createAssignmentRule();
         let mut assignment_rule = pin_ptr!(assignment_rule_ptr, sbmlcxx::AssignmentRule);
         let mut rule = upcast_pin!(assignment_rule, sbmlcxx::AssignmentRule, sbmlcxx::Rule);
 
-        let_cxx_string!(variable = variable);
+        let_cxx_string!(variable = variable.into_id());
         rule.as_mut().setVariable(&variable);
 
         let_cxx_string!(formula = formula);
@@ -165,7 +171,7 @@ impl<'a> RateRuleBuilder<'a> {
     ///
     /// # Returns
     /// A new RateRuleBuilder instance
-    pub fn new(model: &Model<'a>, variable: &str, formula: &str) -> Self {
+    pub fn new(model: &Model<'a>, variable: impl IntoId<'a>, formula: &str) -> Self {
         let rate_rule = model.create_rate_rule(variable, formula);
         Self { rate_rule }
     }
@@ -233,7 +239,7 @@ impl<'a> AssignmentRuleBuilder<'a> {
     ///
     /// # Returns
     /// A new AssignmentRuleBuilder instance configured with the provided parameters
-    pub fn new(model: &Model<'a>, variable: &str, formula: &str) -> Self {
+    pub fn new(model: &Model<'a>, variable: impl IntoId<'a>, formula: &str) -> Self {
         let assignment_rule = model.create_assignment_rule(variable, formula);
         Self { assignment_rule }
     }

@@ -41,7 +41,7 @@ upcast_annotation!(UnitDefinition<'a>, sbmlcxx::UnitDefinition, sbmlcxx::SBase);
 clone!(UnitDefinition<'a>, sbmlcxx::UnitDefinition, units);
 
 // Set the into_id trait for the UnitDefinition struct
-into_id!(UnitDefinition<'a>, id);
+into_id!(&Rc<UnitDefinition<'_>>, id);
 
 impl<'a> UnitDefinition<'a> {
     /// Creates a new UnitDefinition instance within the given Model.

@@ -18,6 +18,7 @@ use crate::{
     inner,
     parameter::{Parameter, ParameterBuilder},
     pin_ptr,
+    prelude::IntoId,
     reaction::{Reaction, ReactionBuilder},
     rule::{AssignmentRuleBuilder, RateRuleBuilder, Rule, RuleType},
     sbmlcxx::{self},
@@ -418,7 +419,7 @@ impl<'a> Model<'a> {
     ///
     /// # Returns
     /// A new RateRule instance wrapped in an Rc
-    pub fn create_rate_rule(&self, variable: &str, formula: &str) -> Rc<Rule<'a>> {
+    pub fn create_rate_rule(&self, variable: impl IntoId<'a>, formula: &str) -> Rc<Rule<'a>> {
         let rate_rule = Rc::new(Rule::new_rate_rule(self, variable, formula));
         self.list_of_rate_rules
             .borrow_mut()
@@ -438,7 +439,7 @@ impl<'a> Model<'a> {
     ///
     /// # Returns
     /// A RateRuleBuilder instance that can be used to configure and create the RateRule
-    pub fn build_rate_rule(&self, variable: &str, formula: &str) -> RateRuleBuilder<'a> {
+    pub fn build_rate_rule(&self, variable: impl IntoId<'a>, formula: &str) -> RateRuleBuilder<'a> {
         RateRuleBuilder::new(self, variable, formula)
     }
 
@@ -473,7 +474,7 @@ impl<'a> Model<'a> {
     ///
     /// # Returns
     /// A new AssignmentRule instance wrapped in an Rc
-    pub fn create_assignment_rule(&self, variable: &str, formula: &str) -> Rc<Rule<'a>> {
+    pub fn create_assignment_rule(&self, variable: impl IntoId<'a>, formula: &str) -> Rc<Rule<'a>> {
         let assignment_rule = Rc::new(Rule::new_assignment_rule(self, variable, formula));
         self.list_of_assignment_rules
             .borrow_mut()
@@ -495,7 +496,7 @@ impl<'a> Model<'a> {
     /// A AssignmentRuleBuilder instance that can be used to configure and create the AssignmentRule
     pub fn build_assignment_rule(
         &self,
-        variable: &str,
+        variable: impl IntoId<'a>,
         formula: &str,
     ) -> AssignmentRuleBuilder<'a> {
         AssignmentRuleBuilder::new(self, variable, formula)

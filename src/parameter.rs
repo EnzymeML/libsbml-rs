@@ -19,6 +19,7 @@ use crate::{
     sbmlcxx::{self},
     sbo_term,
     traits::fromptr::FromPtr,
+    traits::intoid::IntoId,
     upcast_annotation,
 };
 
@@ -77,7 +78,15 @@ impl<'a> Parameter<'a> {
     optional_property!(Parameter<'a>, value, f64, getValue, setValue, isSetValue);
 
     // Getter and setter for units
-    optional_property!(Parameter<'a>, units, String, getUnits, setUnits, isSetUnits);
+    optional_property!(
+        Parameter<'a>,
+        units,
+        String,
+        getUnits,
+        setUnits,
+        isSetUnits,
+        impl IntoId<'a>
+    );
 
     // Getter and setter for constant
     optional_property!(
@@ -153,8 +162,8 @@ impl<'a> ParameterBuilder<'a> {
     ///
     /// # Returns
     /// The builder instance for method chaining
-    pub fn units(self, units: &str) -> Self {
-        self.parameter.set_units(units);
+    pub fn units(self, units: impl IntoId<'a>) -> Self {
+        self.parameter.set_units(units.into_id());
         self
     }
 
