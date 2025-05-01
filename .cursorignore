@@ -1,4 +1,0 @@
-target/
-vendors/
-.clippy_output.txt
-tarpaulin-report.html
