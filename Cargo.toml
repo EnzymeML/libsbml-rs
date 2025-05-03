@@ -22,11 +22,13 @@ miette = { version = "5", features = ["fancy"] }
 vcpkg = "0.2.15"
 
 [dev-dependencies]
+insta = "1.43.1"
 pretty_assertions = "1.4.1"
 
 [lints.clippy]
 needless-lifetimes = "allow"
 macro-metavars-in-unsafe = "allow"
+too-many-arguments = "allow"
 
 [package.metadata.vcpkg]
 git = "https://github.com/microsoft/vcpkg"
