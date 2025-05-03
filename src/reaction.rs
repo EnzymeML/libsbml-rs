@@ -87,6 +87,26 @@ impl<'a> Reaction<'a> {
     // Getter and setter for name
     optional_property!(Reaction<'a>, name, String, getName, setName, isSetName);
 
+    // Getter and setter for reversible
+    optional_property!(
+        Reaction<'a>,
+        reversible,
+        bool,
+        getReversible,
+        setReversible,
+        isSetReversible
+    );
+
+    // Getter and setter for compartment
+    optional_property!(
+        Reaction<'a>,
+        compartment,
+        String,
+        getCompartment,
+        setCompartment,
+        isSetCompartment
+    );
+
     /// Creates a new product species reference for this reaction.
     ///
     /// # Arguments
@@ -325,6 +345,21 @@ impl FromPtr<sbmlcxx::Reaction> for Reaction<'_> {
         }
     }
 }
+
+impl std::fmt::Debug for Reaction<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut ds = f.debug_struct("Reaction");
+        ds.field("id", &self.id());
+        ds.field("name", &self.name());
+        ds.field("reversible", &self.reversible());
+        ds.field("compartment", &self.compartment());
+        ds.field("reactants", &self.reactants());
+        ds.field("products", &self.products());
+        ds.field("modifiers", &self.modifiers());
+        ds.finish()
+    }
+}
+
 /// A builder for creating Reaction instances with a fluent interface.
 pub struct ReactionBuilder<'a> {
     reaction: Rc<Reaction<'a>>,
@@ -353,6 +388,18 @@ impl<'a> ReactionBuilder<'a> {
     /// The builder instance for method chaining
     pub fn name(self, name: &str) -> Self {
         self.reaction.set_name(name);
+        self
+    }
+
+    /// Sets the reversible of the reaction.
+    ///
+    /// # Arguments
+    /// * `reversible` - The reversible to set
+    ///
+    /// # Returns
+    /// The builder instance for method chaining
+    pub fn reversible(self, reversible: bool) -> Self {
+        self.reaction.set_reversible(reversible);
         self
     }
 
@@ -464,6 +511,7 @@ mod tests {
             .product("test", 1.0)
             .reactant("test", 1.0)
             .modifier("test")
+            .reversible(true)
             .build();
 
         assert_eq!(reaction.name(), Some("test".to_string()));
@@ -474,6 +522,7 @@ mod tests {
         assert_eq!(products.borrow().len(), 1);
         assert_eq!(reactants.borrow().len(), 1);
         assert_eq!(modifiers.borrow().len(), 1);
+        assert_eq!(reaction.reversible(), Some(true));
         assert_eq!(reaction.id(), "test");
 
         let product = reaction.get_product("test").unwrap();

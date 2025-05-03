@@ -162,6 +162,15 @@ impl FromPtr<sbmlcxx::KineticLaw> for KineticLaw<'_> {
     }
 }
 
+impl std::fmt::Debug for KineticLaw<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut ds = f.debug_struct("KineticLaw");
+        ds.field("formula", &self.formula());
+        ds.field("local_parameters", &self.local_parameters());
+        ds.finish()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

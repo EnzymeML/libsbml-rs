@@ -80,6 +80,18 @@ impl<'a> Unit<'a> {
     sbo_term!(sbmlcxx::Unit, sbmlcxx::SBase);
 }
 
+impl<'a> std::fmt::Debug for Unit<'a> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut ds = f.debug_struct("Unit");
+        ds.field("kind", &self.kind());
+        ds.field("exponent", &self.exponent());
+        ds.field("multiplier", &self.multiplier());
+        ds.field("scale", &self.scale());
+        ds.field("offset", &self.offset());
+        ds.finish()
+    }
+}
+
 impl FromPtr<sbmlcxx::Unit> for Unit<'_> {
     /// Creates a new Unit instance from a unique pointer to a libSBML Unit.
     ///

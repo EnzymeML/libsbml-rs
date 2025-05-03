@@ -124,6 +124,16 @@ impl<'a> UnitDefinition<'a> {
     sbo_term!(sbmlcxx::UnitDefinition, sbmlcxx::SBase);
 }
 
+impl<'a> std::fmt::Debug for UnitDefinition<'a> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut ds = f.debug_struct("UnitDefinition");
+        ds.field("id", &self.id());
+        ds.field("name", &self.name());
+        ds.field("units", &self.units());
+        ds.finish()
+    }
+}
+
 impl FromPtr<sbmlcxx::UnitDefinition> for UnitDefinition<'_> {
     /// Creates a new UnitDefinition instance from a unique pointer to a libSBML UnitDefinition.
     ///

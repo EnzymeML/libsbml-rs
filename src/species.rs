@@ -311,6 +311,22 @@ impl<'a> SpeciesBuilder<'a> {
     }
 }
 
+impl<'a> std::fmt::Debug for Species<'a> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut ds = f.debug_struct("Species");
+        ds.field("id", &self.id());
+        ds.field("name", &self.name());
+        ds.field("compartment", &self.compartment());
+        ds.field("initial_amount", &self.initial_amount());
+        ds.field("initial_concentration", &self.initial_concentration());
+        ds.field("unit", &self.unit());
+        ds.field("boundary_condition", &self.boundary_condition());
+        ds.field("constant", &self.constant());
+        ds.field("has_only_substance_units", &self.has_only_substance_units());
+        ds.finish()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::SBMLDocument;

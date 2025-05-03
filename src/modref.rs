@@ -159,6 +159,14 @@ impl<'a> ModifierSpeciesReferenceBuilder<'a> {
     }
 }
 
+impl<'a> std::fmt::Debug for ModifierSpeciesReference<'a> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut ds = f.debug_struct("ModifierSpeciesReference");
+        ds.field("species", &self.species());
+        ds.finish()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::SBMLDocument;

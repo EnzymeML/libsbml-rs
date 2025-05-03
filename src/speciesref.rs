@@ -116,6 +116,16 @@ impl<'a> SpeciesReference<'a> {
     sbo_term!(sbmlcxx::SpeciesReference, sbmlcxx::SBase);
 }
 
+impl<'a> std::fmt::Debug for SpeciesReference<'a> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut ds = f.debug_struct("SpeciesReference");
+        ds.field("species", &self.species());
+        ds.field("stoichiometry", &self.stoichiometry());
+        ds.field("constant", &self.constant());
+        ds.finish()
+    }
+}
+
 impl FromPtr<sbmlcxx::SpeciesReference> for SpeciesReference<'_> {
     /// Creates a new SpeciesReference instance from a unique pointer to a libSBML SpeciesReference.
     ///

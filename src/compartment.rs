@@ -278,6 +278,21 @@ impl<'a> CompartmentBuilder<'a> {
     }
 }
 
+impl std::fmt::Debug for Compartment<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut ds = f.debug_struct("Compartment");
+        ds.field("id", &self.id());
+        ds.field("name", &self.name());
+        ds.field("spatial_dimensions", &self.spatial_dimensions());
+        ds.field("unit", &self.unit());
+        ds.field("size", &self.size());
+        ds.field("volume", &self.volume());
+        ds.field("outside", &self.outside());
+        ds.field("constant", &self.constant());
+        ds.finish()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

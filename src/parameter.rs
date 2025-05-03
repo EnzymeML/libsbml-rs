@@ -102,6 +102,18 @@ impl<'a> Parameter<'a> {
     sbo_term!(sbmlcxx::Parameter, sbmlcxx::SBase);
 }
 
+impl std::fmt::Debug for Parameter<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut ds = f.debug_struct("Parameter");
+        ds.field("id", &self.id());
+        ds.field("name", &self.name());
+        ds.field("value", &self.value());
+        ds.field("units", &self.units());
+        ds.field("constant", &self.constant());
+        ds.finish()
+    }
+}
+
 impl FromPtr<sbmlcxx::Parameter> for Parameter<'_> {
     /// Creates a new Parameter instance from a unique pointer to a libSBML Parameter.
     ///
