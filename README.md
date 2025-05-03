@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🧬 Rust libSBML
+# 🧬 Rust SBML
 
 A Rust crate providing a robust interface for reading and writing SBML (Systems Biology Markup Language) files.
 Built as an ergonomic wrapper around the `libsbml` C++ library with type-safe Rust abstractions.
@@ -50,7 +50,7 @@ The crate follows SBML's hierarchical structure, with all operations flowing thr
 ### Creating SBML Models
 
 ```rust
-use libsbml::prelude::*;
+use sbml::prelude::*;
 
 let doc = SBMLDocument::new(3, 2);
 
@@ -81,7 +81,7 @@ let sbml_string = doc.to_xml_string();
 Leverage Rust's type system for SBML annotations:
 
 ```rust
-use libsbml::prelude::*;
+use sbml::prelude::*;
 
 #[derive(Serialize, Deserialize, Debug)]
 struct MyAnnotation {

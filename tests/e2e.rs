@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use libsbml::prelude::*;
+    use sbml::prelude::*;
 
     #[test]
     fn test_sbmldoc_debug() {
