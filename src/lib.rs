@@ -65,6 +65,9 @@ pub mod unit;
 /// Unit definitions composing multiple base units
 pub mod unitdef;
 
+/// Error handling for SBML models
+pub mod sbmlerror;
+
 /// Helper macros for working with SBML components
 pub mod macros;
 
@@ -110,6 +113,7 @@ pub mod prelude {
     pub use crate::reader::*;
     pub use crate::rule::*;
     pub use crate::sbmldoc::*;
+    pub use crate::sbmlerror::*;
     pub use crate::species::*;
     pub use crate::speciesref::*;
     pub use crate::traits::annotation::*;
@@ -159,6 +163,13 @@ pub(crate) mod sbmlcxx {
         // IO types
         generate!("SBMLWriter")
         generate!("SBMLReader")
+
+        // Validation types
+        generate!("SBMLValidator")
+        generate!("SBMLInternalValidator")
+        generate!("SBMLError")
+        generate!("SBMLErrorLog")
+        generate!("XMLError")
 
         // Container types
         generate!("ListOfParameters")

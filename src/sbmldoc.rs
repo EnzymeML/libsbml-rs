@@ -10,7 +10,7 @@ use std::{cell::RefCell, rc::Rc};
 use autocxx::{c_uint, WithinUniquePtr};
 use cxx::UniquePtr;
 
-use crate::{cast::upcast, model::Model, sbmlcxx, traits::fromptr::FromPtr};
+use crate::{cast::upcast, model::Model, prelude::SBMLErrorLog, sbmlcxx, traits::fromptr::FromPtr};
 
 /// A wrapper around libSBML's SBMLDocument class that provides a safe Rust interface.
 ///
@@ -100,7 +100,7 @@ impl<'a> SBMLDocument<'a> {
     ///
     /// # Returns
     /// A reference to the newly created Model
-    pub fn create_model(&'a self, id: &str) -> Rc<Model<'a>> {
+    pub fn create_model(&self, id: &str) -> Rc<Model<'a>> {
         let model = Rc::new(Model::new(self, id));
         self.model.borrow_mut().replace(Rc::clone(&model));
         model
@@ -132,6 +132,38 @@ impl<'a> SBMLDocument<'a> {
             String::new()
         }
     }
+
+    /// Checks the consistency of the SBML document.
+    ///
+    /// This function performs a consistency check on the SBML document and returns
+    /// a Result containing an error log if the document is not consistent. The [`SBMLErrorLog`]
+    /// struct contains the validation status of the document and a list of all errors encountered
+    /// during validation.
+    ///
+    /// Users can simply check the `valid` field of the returned [`SBMLErrorLog`] to determine
+    /// if the document is consistent. If not, they can iterate over the `errors` vector to
+    ///
+    /// # Returns
+    /// A [`SBMLErrorLog`] containing the validation status and errors of the document.
+    pub fn check_consistency(&self) -> SBMLErrorLog {
+        self.inner()
+            .borrow_mut()
+            .as_mut()
+            .unwrap()
+            .checkConsistency();
+
+        SBMLErrorLog::new(self)
+    }
+}
+
+impl<'a> std::fmt::Debug for SBMLDocument<'a> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut ds = f.debug_struct("SBMLDocument");
+        ds.field("level", &self.level());
+        ds.field("version", &self.version());
+        ds.field("model", &self.model());
+        ds.finish()
+    }
 }
 
 impl<'a> Default for SBMLDocument<'a> {
@@ -142,6 +174,8 @@ impl<'a> Default for SBMLDocument<'a> {
 
 #[cfg(test)]
 mod tests {
+    use crate::prelude::SBMLErrorSeverity;
+
     use super::*;
 
     #[test]
@@ -174,5 +208,56 @@ mod tests {
 
         let xml_string = doc.to_xml_string();
         assert!(!xml_string.is_empty());
+    }
+
+    #[test]
+    fn test_sbmldoc_check_consistency() {
+        let doc = SBMLDocument::default();
+        let error_log = doc.check_consistency();
+        assert!(error_log.valid);
+    }
+
+    #[test]
+    fn test_sbmldoc_check_consistency_invalid() {
+        let doc = SBMLDocument::new(3, 2);
+        let model = doc.create_model("model");
+
+        // Lets add a species without a compartment
+        model
+            .build_species("some")
+            .initial_concentration(-10.0)
+            .build();
+
+        let error_log = doc.check_consistency();
+        let errors = error_log
+            .errors
+            .iter()
+            .filter(|e| e.severity == SBMLErrorSeverity::Error)
+            .count();
+
+        assert!(!error_log.valid);
+        assert_eq!(errors, 1);
+
+        // Check that the error log contains the correct number of errors
+    }
+
+    #[test]
+    fn test_sbmldoc_check_consistency_warning() {
+        let doc = SBMLDocument::new(3, 2);
+        let model = doc.create_model("model");
+
+        // Lets create a parameter with nothing
+        // This should throw a couple of warnings
+        model.build_parameter("test").build();
+
+        let error_log = doc.check_consistency();
+        let warnings = error_log
+            .errors
+            .iter()
+            .filter(|e| e.severity == SBMLErrorSeverity::Warning)
+            .count();
+
+        assert!(error_log.valid);
+        assert_eq!(warnings, 4);
     }
 }
