@@ -83,14 +83,20 @@ fn setup_vcpkg() -> Result<vcpkg::Library, BuilderError> {
             .expect("Failed to install cargo-vcpkg");
     }
 
+    // Get the target directory first so we can configure vcpkg
+    let target_dir = get_vcpkg_dir();
+
+    // Create the vcpkg directory if it doesn't exist
+    std::fs::create_dir_all(&target_dir).expect("Failed to create vcpkg directory");
+
+    // Set VCPKG_ROOT environment variable for the cargo vcpkg build command
+    std::env::set_var("VCPKG_ROOT", &target_dir);
+
     // Run cargo vcpkg build to install dependencies
     Command::new("cargo")
         .args(["vcpkg", "build"])
         .status()
         .expect("Failed to run cargo vcpkg build");
-
-    // Get the target directory from the environment or use the default "target"
-    let target_dir = get_vcpkg_dir();
 
     let libsbml = vcpkg::Config::new()
         .vcpkg_root(target_dir)
@@ -115,14 +121,14 @@ fn link_lib(cargo_metadata: &[String]) {
 /// This function:
 /// 1. Checks if CARGO_MANIFEST_DIR is set
 /// 2. If set, constructs the path to the vcpkg directory relative to the project root
-/// 3. If not set, uses a hardcoded path ("target/vcpkg"
+/// 3. If not set, uses a hardcoded path ("target/vcpkg")
 ///
 /// # Returns
 /// * `std::path::PathBuf` - The path to the vcpkg directory
 fn get_vcpkg_dir() -> std::path::PathBuf {
-    if let Ok(target_dir) = std::env::var("CARGO_MANIFEST_DIR") {
-        std::path::Path::new(&target_dir).join("target/vcpkg")
-    } else {
-        std::path::PathBuf::from("target/vcpkg")
-    }
+    // For publishing and regular builds, CARGO_MANIFEST_DIR should be set
+    let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").expect("CARGO_MANIFEST_DIR not set");
+
+    // When publishing, we need to install dependencies in the temporary package dir
+    std::path::Path::new(&manifest_dir).join("target/vcpkg")
 }
