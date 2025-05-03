@@ -2,7 +2,13 @@
 name = "libsbml"
 version = "0.1.0"
 edition = "2021"
-repository = "https://github.com/enzymeml/libsbml"
+repository = "https://github.com/EnzymeML/libsbml-rs"
+description = "Rust bindings for libSBML"
+keywords = ["sbml", "systems biology", "biology"]
+categories = ["biology::systems-biology", "science::biology"]
+authors = ["Jan Range <jan.range@simtech.uni-stuttgart.de>"]
+readme = "README.md"
+license = "LGPL-3.0-or-later"
 
 [lib]
 name = "libsbml"
