@@ -5,7 +5,7 @@
 A Rust crate providing a robust interface for reading and writing SBML (Systems Biology Markup Language) files.
 Built as an ergonomic wrapper around the `libsbml` C++ library with type-safe Rust abstractions.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![License: LGPL v3](https://img.shields.io/badge/License-LGPL%20v3-blue.svg)](LICENSE.txt)
 [![Platforms](https://img.shields.io/badge/platforms-macOS%20%7C%20Windows%20%7C%20Linux-blue)]()
 
 </div>
