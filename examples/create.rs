@@ -1,4 +1,4 @@
-use sbml::{prelude::*, unit::UnitKind};
+use libsbml::{prelude::*, unit::UnitKind};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let doc = SBMLDocument::default();

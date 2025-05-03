@@ -543,6 +543,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "libsbml"
+version = "0.1.0"
+dependencies = [
+ "autocxx",
+ "autocxx-build",
+ "cmake",
+ "cxx",
+ "insta",
+ "miette",
+ "paste",
+ "pretty_assertions",
+ "quick-xml",
+ "serde",
+ "vcpkg",
+]
+
+[[package]]
 name = "link-cplusplus"
 version = "1.0.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -799,23 +816,6 @@ name = "ryu"
 version = "1.0.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6ea1a2d0a644769cc99faa24c3ad26b379b786fe7c36fd3c546254801650e6dd"
-
-[[package]]
-name = "sbml"
-version = "0.1.0"
-dependencies = [
- "autocxx",
- "autocxx-build",
- "cmake",
- "cxx",
- "insta",
- "miette",
- "paste",
- "pretty_assertions",
- "quick-xml",
- "serde",
- "vcpkg",
-]
 
 [[package]]
 name = "serde"

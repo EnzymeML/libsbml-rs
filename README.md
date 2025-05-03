@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🧬 Rust SBML
+# 🧬 Rust libSBML
 
 A Rust crate providing a robust interface for reading and writing SBML (Systems Biology Markup Language) files.
 Built as an ergonomic wrapper around the `libsbml` C++ library with type-safe Rust abstractions.
@@ -23,7 +23,7 @@ Built as an ergonomic wrapper around the `libsbml` C++ library with type-safe Ru
 Currently available through Git:
 
 ```bash
-cargo add --git https://github.com/EnzymeML/sbml-rs
+cargo install libsbml
 ```
 
 Please note, the C++ dependency `libsbml` is automatically installed using `cargo-vcpkg`. You dont need to link the library manually, but note that the `build.rs` script will install `cargo-vcpkg` if it is not found in your environment.
@@ -50,7 +50,7 @@ The crate follows SBML's hierarchical structure, with all operations flowing thr
 ### Creating SBML Models
 
 ```rust
-use sbml::prelude::*;
+use libsbml::prelude::*;
 
 let doc = SBMLDocument::new(3, 2);
 
@@ -81,7 +81,7 @@ let sbml_string = doc.to_xml_string();
 Leverage Rust's type system for SBML annotations:
 
 ```rust
-use sbml::prelude::*;
+use libsbml::prelude::*;
 
 #[derive(Serialize, Deserialize, Debug)]
 struct MyAnnotation {

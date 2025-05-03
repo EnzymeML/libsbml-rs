@@ -10,7 +10,7 @@
 //! # Example
 //! ```no_run
 //! use serde::{Serialize, Deserialize};
-//! use sbml::prelude::*;
+//! use libsbml::prelude::*;
 //!
 //! #[derive(Serialize, Deserialize)]
 //! struct MyAnnotation {

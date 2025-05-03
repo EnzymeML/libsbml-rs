@@ -1,10 +1,11 @@
 [package]
-name = "sbml"
+name = "libsbml"
 version = "0.1.0"
 edition = "2021"
+repository = "https://github.com/enzymeml/libsbml"
 
 [lib]
-name = "sbml"
+name = "libsbml"
 path = "src/lib.rs"
 crate-type = ["staticlib", "rlib"]
 

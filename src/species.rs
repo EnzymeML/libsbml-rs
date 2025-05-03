@@ -178,7 +178,7 @@ impl FromPtr<sbmlcxx::Species> for Species<'_> {
 ///
 /// # Example
 /// ```no_run
-/// use sbml::prelude::*;
+/// use libsbml::prelude::*;
 ///
 /// let doc = SBMLDocument::new(3, 2);
 /// let model = Model::new(&doc, "test");

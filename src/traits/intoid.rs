@@ -6,7 +6,7 @@
 //!
 //! # Examples
 //! ```
-//! use sbml::traits::intoid::IntoId;
+//! use libsbml::traits::intoid::IntoId;
 //!
 //! let owned = String::from("species1");
 //! let str_ref = owned.into_id(); // Borrows from owned
