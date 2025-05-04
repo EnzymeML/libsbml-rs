@@ -23,7 +23,7 @@ Built as an ergonomic wrapper around the `libsbml` C++ library with type-safe Ru
 Currently available through Git:
 
 ```bash
-cargo install libsbml
+cargo add libsbml
 ```
 
 Please note, the C++ dependency `libsbml` is automatically installed using `cargo-vcpkg`. You dont need to link the library manually, but note that the `build.rs` script will install `cargo-vcpkg` if it is not found in your environment.
