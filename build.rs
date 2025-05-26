@@ -161,7 +161,7 @@ fn from_pkg_config(pkg_config: &str) -> Result<(Vec<PathBuf>, Vec<String>), Stri
         }
     }
 
-    let lib = pkg_config::probe_library(pkg_config)?;
+    let lib = pkg_config::probe_library(pkg_config).map_err(|e| e.to_string())?;
 
     for path in lib.include_paths.iter() {
         println!("cargo:include={}", path.to_str().unwrap());
