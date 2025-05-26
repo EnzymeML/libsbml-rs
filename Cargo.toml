@@ -19,11 +19,13 @@ cxx = "1.0.140"
 paste = "1.0.15"
 quick-xml = { version = "0.37.2", features = ["serialize"] }
 serde = { version = "1.0.217", features = ["derive"] }
+thiserror = "2.0.12"
 
 [build-dependencies]
 autocxx-build = "0.28.0"
 cmake = "0.1.54"
 miette = { version = "5", features = ["fancy"] }
+pkg-config = "0.3.32"
 vcpkg = "0.2.15"
 
 [dev-dependencies]
@@ -38,9 +40,13 @@ too-many-arguments = "allow"
 [package.metadata.vcpkg]
 git = "https://github.com/microsoft/vcpkg"
 rev = "ce613c41372b23b1f51333815feb3edd87ef8a8b"
-dependencies = ["libsbml[core,expat,zlib]"]
+dependencies = ["libsbml[core,expat,zlib,fbc]"]
 
 [package.metadata.vcpkg.target]
 x86_64-pc-windows-msvc = { dependencies = [
-    "libsbml[core,expat,zlib]",
+    "libsbml[core,expat,zlib,fbc]",
+], triplet = "x64-windows-static-md" }
+
+x86_64-pc-windows-gnu = { dependencies = [
+    "libsbml[core,expat,zlib,fbc]",
 ], triplet = "x64-windows-static-md" }
