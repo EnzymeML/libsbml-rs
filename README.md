@@ -189,6 +189,14 @@ The following table shows the current implementation status of SBML objects in t
 | ModelHistory             | ❌ Not yet implemented |
 | ModelCreator             | ❌ Not yet implemented |
 
+### FBC
+
+| SBML Object   | Status        |
+| ------------- | ------------- |
+| FluxObjective | ✅ Implemented |
+| FluxBound     | ✅ Implemented |
+| Objective     | ✅ Implemented |
+
 Future development priorities:
 
 1. Complete implementation of remaining SBML core objects
