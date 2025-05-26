@@ -161,10 +161,12 @@ fn from_pkg_config(pkg_config: &str) -> Result<(Vec<PathBuf>, Vec<String>), Stri
         }
     }
 
-    let lib = pkg_config::probe_library(pkg_config).unwrap();
+    let lib = pkg_config::probe_library(pkg_config)?;
+
     for path in lib.include_paths.iter() {
         println!("cargo:include={}", path.to_str().unwrap());
     }
+
     let mut cargo_metadata = Vec::new();
     for lib in lib.libs {
         cargo_metadata.push(format!("cargo:rustc-link-lib={}", lib));
