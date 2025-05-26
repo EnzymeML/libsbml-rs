@@ -18,7 +18,7 @@
 //!     value: f64
 //! }
 //!
-//! let doc = SBMLDocument::new(3, 2);
+//! let doc = SBMLDocument::default();
 //! let model = doc.create_model("example");
 //!
 //! // Set annotation using a struct
