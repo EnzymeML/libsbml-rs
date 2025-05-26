@@ -15,11 +15,10 @@ use cxx::let_cxx_string;
 use crate::{
     clone, inner, into_id,
     model::Model,
-    optional_property, pin_ptr, required_property,
+    optional_property, pin_ptr, required_property, sbase,
     sbmlcxx::{self},
     sbo_term,
-    traits::fromptr::FromPtr,
-    traits::intoid::IntoId,
+    traits::{fromptr::FromPtr, intoid::IntoId},
     upcast_annotation,
 };
 
@@ -33,6 +32,9 @@ pub struct Parameter<'a> {
 
 // Set the inner trait for the Parameter struct
 inner!(sbmlcxx::Parameter, Parameter<'a>);
+
+// Set the sbase trait for the Parameter struct
+sbase!(Parameter<'a>, sbmlcxx::Parameter);
 
 // Set the annotation trait for the Parameter struct
 upcast_annotation!(Parameter<'a>, sbmlcxx::Parameter, sbmlcxx::SBase);
@@ -85,7 +87,7 @@ impl<'a> Parameter<'a> {
         getUnits,
         setUnits,
         isSetUnits,
-        impl IntoId<'a>
+        impl IntoId
     );
 
     // Getter and setter for constant
@@ -174,7 +176,7 @@ impl<'a> ParameterBuilder<'a> {
     ///
     /// # Returns
     /// The builder instance for method chaining
-    pub fn units(self, units: impl IntoId<'a>) -> Self {
+    pub fn units(self, units: impl IntoId) -> Self {
         self.parameter.set_units(units.into_id());
         self
     }

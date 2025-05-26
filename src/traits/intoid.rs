@@ -15,34 +15,27 @@
 //! let str_ref = slice.into_id(); // Simply returns the slice
 //! ```
 
-/// Trait for converting a type into a string reference with appropriate lifetime
-///
-/// This trait provides a way to convert strings into references with proper
-/// lifetime management instead of leaking memory.
-pub trait IntoId<'a> {
-    /// Converts self into a string reference with appropriate lifetime
-    fn into_id(self) -> &'a str;
+/// Trait for converting a type into an owned string identifier
+pub trait IntoId {
+    /// Converts self into an owned string identifier
+    fn into_id(self) -> String;
 }
 
-impl<'a> IntoId<'a> for &'a String {
-    /// Converts a reference to String into a string slice
-    fn into_id(self) -> &'a str {
-        self.as_str()
-    }
-}
-
-impl<'a> IntoId<'a> for &'a str {
-    /// Simply returns the string slice with its existing lifetime
-    fn into_id(self) -> &'a str {
+impl IntoId for String {
+    fn into_id(self) -> String {
         self
     }
 }
 
-// Optional: Implementation for owned String that returns a reference to a newly created String
-// Note: This requires the caller to maintain the String while using the reference
-impl<'a> IntoId<'a> for &'a mut String {
-    fn into_id(self) -> &'a str {
-        self.as_str()
+impl IntoId for &str {
+    fn into_id(self) -> String {
+        self.to_string()
+    }
+}
+
+impl IntoId for &String {
+    fn into_id(self) -> String {
+        self.clone()
     }
 }
 

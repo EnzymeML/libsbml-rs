@@ -18,7 +18,7 @@ use crate::{
     modref::{ModifierSpeciesReference, ModifierSpeciesReferenceBuilder},
     optional_property, pin_ptr,
     prelude::{IntoId, KineticLaw},
-    required_property,
+    required_property, sbase,
     sbmlcxx::{self},
     sbo_term,
     speciesref::{SpeciesReference, SpeciesReferenceBuilder, SpeciesReferenceType},
@@ -40,6 +40,9 @@ pub struct Reaction<'a> {
 
 // Set the inner trait for the Reaction struct
 inner!(sbmlcxx::Reaction, Reaction<'a>);
+
+// Set the sbase trait for the Reaction struct
+sbase!(Reaction<'a>, sbmlcxx::Reaction);
 
 // Set the annotation trait for the Reaction struct
 upcast_annotation!(Reaction<'a>, sbmlcxx::Reaction, sbmlcxx::SBase);
@@ -115,11 +118,7 @@ impl<'a> Reaction<'a> {
     ///
     /// # Returns
     /// A reference-counted pointer to the new SpeciesReference
-    pub fn create_product(
-        &self,
-        sid: impl IntoId<'a>,
-        stoichiometry: f64,
-    ) -> Rc<SpeciesReference<'a>> {
+    pub fn create_product(&self, sid: impl IntoId, stoichiometry: f64) -> Rc<SpeciesReference<'a>> {
         let product = Rc::new(SpeciesReference::new(
             self,
             sid,
@@ -137,7 +136,7 @@ impl<'a> Reaction<'a> {
     ///
     /// # Returns
     /// A SpeciesReferenceBuilder for configuring and creating the product
-    pub fn build_product(&self, sid: impl IntoId<'a>) -> SpeciesReferenceBuilder<'a> {
+    pub fn build_product(&self, sid: impl IntoId) -> SpeciesReferenceBuilder<'a> {
         SpeciesReferenceBuilder::new(self, sid, SpeciesReferenceType::Product)
     }
 
@@ -174,7 +173,7 @@ impl<'a> Reaction<'a> {
     /// A reference-counted pointer to the new SpeciesReference
     pub fn create_reactant(
         &self,
-        sid: impl IntoId<'a>,
+        sid: impl IntoId,
         stoichiometry: f64,
     ) -> Rc<SpeciesReference<'a>> {
         let reactant = Rc::new(SpeciesReference::new(
@@ -194,7 +193,7 @@ impl<'a> Reaction<'a> {
     ///
     /// # Returns
     /// A SpeciesReferenceBuilder for configuring and creating the reactant
-    pub fn build_reactant(&self, sid: impl IntoId<'a>) -> SpeciesReferenceBuilder<'a> {
+    pub fn build_reactant(&self, sid: impl IntoId) -> SpeciesReferenceBuilder<'a> {
         SpeciesReferenceBuilder::new(self, sid, SpeciesReferenceType::Reactant)
     }
 
@@ -241,7 +240,7 @@ impl<'a> Reaction<'a> {
     ///
     /// # Returns
     /// A ModifierSpeciesReferenceBuilder for configuring and creating the modifier
-    pub fn build_modifier(&self, sid: impl IntoId<'a>) -> ModifierSpeciesReferenceBuilder<'a> {
+    pub fn build_modifier(&self, sid: impl IntoId) -> ModifierSpeciesReferenceBuilder<'a> {
         ModifierSpeciesReferenceBuilder::new(self, sid)
     }
     /// Returns a reference to the modifiers of this reaction.
@@ -411,7 +410,7 @@ impl<'a> ReactionBuilder<'a> {
     ///
     /// # Returns
     /// The builder instance for method chaining
-    pub fn product(self, sid: impl IntoId<'a>, stoichiometry: f64) -> Self {
+    pub fn product(self, sid: impl IntoId, stoichiometry: f64) -> Self {
         self.reaction.create_product(sid.into_id(), stoichiometry);
         self
     }
@@ -424,7 +423,7 @@ impl<'a> ReactionBuilder<'a> {
     ///
     /// # Returns
     /// The builder instance for method chaining
-    pub fn reactant(self, sid: impl IntoId<'a>, stoichiometry: f64) -> Self {
+    pub fn reactant(self, sid: impl IntoId, stoichiometry: f64) -> Self {
         self.reaction.create_reactant(sid.into_id(), stoichiometry);
         self
     }
@@ -436,8 +435,8 @@ impl<'a> ReactionBuilder<'a> {
     ///
     /// # Returns
     /// The builder instance for method chaining
-    pub fn modifier(self, sid: impl IntoId<'a>) -> Self {
-        self.reaction.create_modifier(sid.into_id());
+    pub fn modifier(self, sid: impl IntoId) -> Self {
+        self.reaction.create_modifier(&sid.into_id());
         self
     }
 
@@ -453,7 +452,7 @@ mod tests {
 
     #[test]
     fn test_reaction_new() {
-        let doc = SBMLDocument::new(3, 2);
+        let doc = SBMLDocument::default();
         let model = Model::new(&doc, "test");
         let reaction = Reaction::new(&model, "test");
 
@@ -466,7 +465,7 @@ mod tests {
 
     #[test]
     fn test_reaction_builder() {
-        let doc = SBMLDocument::new(3, 2);
+        let doc = SBMLDocument::default();
         let model = Model::new(&doc, "test");
         let reaction = ReactionBuilder::new(&model, "test").build();
         assert_eq!(reaction.id(), "test");
@@ -474,7 +473,7 @@ mod tests {
 
     #[test]
     fn test_reaction_builder_product() {
-        let doc = SBMLDocument::new(3, 2);
+        let doc = SBMLDocument::default();
         let model = Model::new(&doc, "test");
         let reaction = ReactionBuilder::new(&model, "test").build();
         let product = reaction.build_product("test").stoichiometry(1.0).build();
@@ -483,7 +482,7 @@ mod tests {
 
     #[test]
     fn test_reaction_builder_reactant() {
-        let doc = SBMLDocument::new(3, 2);
+        let doc = SBMLDocument::default();
         let model = Model::new(&doc, "test");
         let reaction = ReactionBuilder::new(&model, "test").build();
         let reactant = reaction.build_reactant("test").stoichiometry(1.0).build();
@@ -494,7 +493,7 @@ mod tests {
 
     #[test]
     fn test_reaction_builder_modifier() {
-        let doc = SBMLDocument::new(3, 2);
+        let doc = SBMLDocument::default();
         let model = Model::new(&doc, "test");
         let reaction = ReactionBuilder::new(&model, "test").build();
         let modifier = reaction.build_modifier("test").build();
@@ -504,7 +503,7 @@ mod tests {
 
     #[test]
     fn test_reaction_builder_build() {
-        let doc = SBMLDocument::new(3, 2);
+        let doc = SBMLDocument::default();
         let model = Model::new(&doc, "test");
         let reaction = ReactionBuilder::new(&model, "test")
             .name("test")
@@ -538,7 +537,7 @@ mod tests {
 
     #[test]
     fn test_reaction_builder_get_product() {
-        let doc = SBMLDocument::new(3, 2);
+        let doc = SBMLDocument::default();
         let model = Model::new(&doc, "test");
         let reaction = ReactionBuilder::new(&model, "test").build();
         reaction.create_product("test", 1.0);
@@ -549,7 +548,7 @@ mod tests {
 
     #[test]
     fn test_reaction_builder_get_product_not_found() {
-        let doc = SBMLDocument::new(3, 2);
+        let doc = SBMLDocument::default();
         let model = Model::new(&doc, "test");
         let reaction = ReactionBuilder::new(&model, "test").build();
         let product = reaction.get_product("test");
@@ -558,7 +557,7 @@ mod tests {
 
     #[test]
     fn test_reaction_builder_get_reactant() {
-        let doc = SBMLDocument::new(3, 2);
+        let doc = SBMLDocument::default();
         let model = Model::new(&doc, "test");
         let reaction = ReactionBuilder::new(&model, "test").build();
         reaction.create_reactant("test", 1.0);
@@ -569,7 +568,7 @@ mod tests {
 
     #[test]
     fn test_reaction_builder_get_reactant_not_found() {
-        let doc = SBMLDocument::new(3, 2);
+        let doc = SBMLDocument::default();
         let model = Model::new(&doc, "test");
         let reaction = ReactionBuilder::new(&model, "test").build();
         let reactant = reaction.get_reactant("test");
@@ -578,7 +577,7 @@ mod tests {
 
     #[test]
     fn test_reaction_builder_get_modifier() {
-        let doc = SBMLDocument::new(3, 2);
+        let doc = SBMLDocument::default();
         let model = Model::new(&doc, "test");
         let reaction = ReactionBuilder::new(&model, "test").build();
         reaction.create_modifier("test");
@@ -589,7 +588,7 @@ mod tests {
 
     #[test]
     fn test_reaction_builder_get_modifier_not_found() {
-        let doc = SBMLDocument::new(3, 2);
+        let doc = SBMLDocument::default();
         let model = Model::new(&doc, "test");
         let reaction = ReactionBuilder::new(&model, "test").build();
         let modifier = reaction.get_modifier("test");
@@ -598,7 +597,7 @@ mod tests {
 
     #[test]
     fn test_reaction_builder_get_products() {
-        let doc = SBMLDocument::new(3, 2);
+        let doc = SBMLDocument::default();
         let model = Model::new(&doc, "test");
         let reaction = ReactionBuilder::new(&model, "test").build();
 
@@ -610,7 +609,7 @@ mod tests {
 
     #[test]
     fn test_reaction_builder_get_reactants() {
-        let doc = SBMLDocument::new(3, 2);
+        let doc = SBMLDocument::default();
         let model = Model::new(&doc, "test");
         let reaction = ReactionBuilder::new(&model, "test").build();
         reaction.create_reactant("test", 1.0);
@@ -622,7 +621,7 @@ mod tests {
 
     #[test]
     fn test_reaction_builder_get_modifiers() {
-        let doc = SBMLDocument::new(3, 2);
+        let doc = SBMLDocument::default();
         let model = Model::new(&doc, "test");
         let reaction = ReactionBuilder::new(&model, "test").build();
         reaction.create_modifier("test");
@@ -633,7 +632,7 @@ mod tests {
 
     #[test]
     fn test_reaction_builder_kinetic_law() {
-        let doc = SBMLDocument::new(3, 2);
+        let doc = SBMLDocument::default();
         let model = Model::new(&doc, "test");
         let reaction = ReactionBuilder::new(&model, "test").build();
         let kinetic_law = reaction.create_kinetic_law("test");
@@ -643,7 +642,7 @@ mod tests {
 
     #[test]
     fn test_reaction_builder_kinetic_law_not_found() {
-        let doc = SBMLDocument::new(3, 2);
+        let doc = SBMLDocument::default();
         let model = Model::new(&doc, "test");
         let reaction = ReactionBuilder::new(&model, "test").build();
         let kinetic_law = reaction.kinetic_law();
@@ -652,7 +651,7 @@ mod tests {
 
     #[test]
     fn test_annotation() {
-        let doc = SBMLDocument::new(3, 2);
+        let doc = SBMLDocument::default();
         let model = Model::new(&doc, "test");
         let reaction = ReactionBuilder::new(&model, "test").build();
         reaction
@@ -674,7 +673,7 @@ mod tests {
         let annotation = TestAnnotation {
             test: "test".to_string(),
         };
-        let doc = SBMLDocument::new(3, 2);
+        let doc = SBMLDocument::default();
         let model = Model::new(&doc, "test");
         let reaction = ReactionBuilder::new(&model, "test").build();
         reaction

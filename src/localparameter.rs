@@ -22,6 +22,7 @@ use cxx::let_cxx_string;
 use crate::{
     clone, inner, into_id, pin_ptr,
     prelude::KineticLaw,
+    sbase,
     sbmlcxx::{self},
     sbo_term,
     traits::fromptr::FromPtr,
@@ -40,6 +41,9 @@ pub struct LocalParameter<'a> {
 
 // Set the inner trait for the LocalParameter struct
 inner!(sbmlcxx::LocalParameter, LocalParameter<'a>);
+
+// Set the sbase trait for the LocalParameter struct
+sbase!(LocalParameter<'a>, sbmlcxx::LocalParameter);
 
 // Set the annotation trait for the LocalParameter struct
 upcast_annotation!(LocalParameter<'a>, sbmlcxx::LocalParameter, sbmlcxx::SBase);

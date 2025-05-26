@@ -393,7 +393,7 @@ mod tests {
 
     #[test]
     fn test_unit_new() {
-        let doc = SBMLDocument::new(3, 2);
+        let doc = SBMLDocument::default();
         let model = doc.create_model("test");
         let unit_definition = model.build_unit_definition("test", "test").build();
         let unit = Unit::new(&unit_definition, UnitKind::Ampere);
@@ -410,7 +410,7 @@ mod tests {
 
     #[test]
     fn test_get_inner() {
-        let doc = SBMLDocument::new(3, 2);
+        let doc = SBMLDocument::default();
         let model = doc.create_model("test");
         let unit_definition = model.build_unit_definition("test", "test").build();
         let unit = Unit::new(&unit_definition, UnitKind::Ampere);
@@ -427,7 +427,7 @@ mod tests {
 
     #[test]
     fn test_unit_builder() {
-        let doc = SBMLDocument::new(3, 2);
+        let doc = SBMLDocument::default();
         let model = doc.create_model("test");
         let unit_definition = model.build_unit_definition("test", "test").build();
         let unit = UnitBuilder::new(&unit_definition, UnitKind::Ampere)

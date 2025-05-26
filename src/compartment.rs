@@ -12,8 +12,11 @@ use std::{cell::RefCell, pin::Pin, rc::Rc};
 use cxx::let_cxx_string;
 
 use crate::{
-    clone, inner, into_id, model::Model, optional_property, pin_ptr, required_property, sbmlcxx,
-    sbo_term, traits::fromptr::FromPtr, traits::intoid::IntoId, upcast_annotation,
+    clone, inner, into_id,
+    model::Model,
+    optional_property, pin_ptr, required_property, sbase, sbmlcxx, sbo_term,
+    traits::{fromptr::FromPtr, intoid::IntoId},
+    upcast_annotation,
 };
 
 /// A safe wrapper around the libSBML Compartment class.
@@ -28,6 +31,9 @@ pub struct Compartment<'a> {
 
 // Set the inner trait for the Compartment struct
 inner!(sbmlcxx::Compartment, Compartment<'a>);
+
+// Set the sbase trait for the Compartment struct
+sbase!(Compartment<'a>, sbmlcxx::Compartment);
 
 // Set the annotation trait for the Compartment struct
 upcast_annotation!(Compartment<'a>, sbmlcxx::Compartment, sbmlcxx::SBase);
@@ -84,7 +90,7 @@ impl<'a> Compartment<'a> {
         getUnits,
         setUnits,
         isSetUnits,
-        impl IntoId<'a>
+        impl IntoId
     );
 
     // Getter and setter methods for the size property
@@ -187,8 +193,8 @@ impl<'a> CompartmentBuilder<'a> {
     ///
     /// # Returns
     /// The builder instance for method chaining
-    pub fn unit(self, unit: impl IntoId<'a>) -> Self {
-        self.compartment.set_unit(unit);
+    pub fn unit(self, unit: impl IntoId) -> Self {
+        self.compartment.set_unit(unit.into_id());
         self
     }
 
@@ -300,7 +306,7 @@ mod tests {
 
     #[test]
     fn test_compartment_new() {
-        let doc = SBMLDocument::new(3, 2);
+        let doc = SBMLDocument::default();
         let model = Model::new(&doc, "test");
         let compartment = Compartment::new(&model, "test");
 
@@ -325,7 +331,7 @@ mod tests {
 
     #[test]
     fn test_compartment_builder() {
-        let doc = SBMLDocument::new(3, 2);
+        let doc = SBMLDocument::default();
         let model = Model::new(&doc, "test");
         let compartment = CompartmentBuilder::new(&model, "test")
             .name("test")
@@ -349,7 +355,7 @@ mod tests {
 
     #[test]
     fn test_compartment_annotation() {
-        let doc = SBMLDocument::new(3, 2);
+        let doc = SBMLDocument::default();
         let model = Model::new(&doc, "test");
         let compartment = CompartmentBuilder::new(&model, "test")
             .annotation("<test>test</test>")
@@ -376,7 +382,7 @@ mod tests {
             test: "test".to_string(),
         };
 
-        let doc = SBMLDocument::new(3, 2);
+        let doc = SBMLDocument::default();
         let model = Model::new(&doc, "test");
         let compartment = CompartmentBuilder::new(&model, "test")
             .annotation_serde(&annotation)

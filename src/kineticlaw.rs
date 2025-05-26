@@ -21,7 +21,7 @@ use cxx::let_cxx_string;
 use crate::{
     clone, inner, pin_ptr,
     prelude::{LocalParameter, LocalParameterBuilder, Reaction},
-    required_property, sbmlcxx, sbo_term,
+    required_property, sbase, sbmlcxx, sbo_term,
     traits::fromptr::FromPtr,
     upcast_annotation,
 };
@@ -41,6 +41,9 @@ pub struct KineticLaw<'a> {
 
 // Set the inner trait for the KineticLaw struct
 inner!(sbmlcxx::KineticLaw, KineticLaw<'a>);
+
+// Set the sbase trait for the KineticLaw struct
+sbase!(KineticLaw<'a>, sbmlcxx::KineticLaw);
 
 // Set the annotation trait for the KineticLaw struct
 upcast_annotation!(KineticLaw<'a>, sbmlcxx::KineticLaw, sbmlcxx::SBase);
@@ -180,7 +183,7 @@ mod tests {
 
     #[test]
     fn test_kinetic_law_new() {
-        let doc = SBMLDocument::new(3, 2);
+        let doc = SBMLDocument::default();
         let model = Model::new(&doc, "test");
         let reaction = Reaction::new(&model, "r1");
         let kinetic_law = KineticLaw::new(&reaction, "k1 * S1");
@@ -190,7 +193,7 @@ mod tests {
 
     #[test]
     fn test_kinetic_law_local_parameters() {
-        let doc = SBMLDocument::new(3, 2);
+        let doc = SBMLDocument::default();
         let model = Model::new(&doc, "test");
         let reaction = Reaction::new(&model, "r1");
         let kinetic_law = KineticLaw::new(&reaction, "k1 * S1");
@@ -203,7 +206,7 @@ mod tests {
 
     #[test]
     fn test_kinetic_law_build_local_parameter() {
-        let doc = SBMLDocument::new(3, 2);
+        let doc = SBMLDocument::default();
         let model = Model::new(&doc, "test");
         let reaction = Reaction::new(&model, "r1");
         let kinetic_law = KineticLaw::new(&reaction, "k1 * S1");
@@ -214,7 +217,7 @@ mod tests {
 
     #[test]
     fn test_set_formula() {
-        let doc = SBMLDocument::new(3, 2);
+        let doc = SBMLDocument::default();
         let model = Model::new(&doc, "test");
         let reaction = Reaction::new(&model, "r1");
         let kinetic_law = KineticLaw::new(&reaction, "k1 * S1");
@@ -224,7 +227,7 @@ mod tests {
 
     #[test]
     fn test_annotation() {
-        let doc = SBMLDocument::new(3, 2);
+        let doc = SBMLDocument::default();
         let model = Model::new(&doc, "test");
         let reaction = Reaction::new(&model, "r1");
         let kinetic_law = KineticLaw::new(&reaction, "k1 * S1");
@@ -247,7 +250,7 @@ mod tests {
             test: String,
         }
 
-        let doc = SBMLDocument::new(3, 2);
+        let doc = SBMLDocument::default();
         let model = Model::new(&doc, "test");
         let reaction = Reaction::new(&model, "r1");
         let kinetic_law = KineticLaw::new(&reaction, "k1 * S1");
@@ -267,7 +270,7 @@ mod tests {
 
     #[test]
     fn test_sbo_term() {
-        let doc = SBMLDocument::new(3, 2);
+        let doc = SBMLDocument::default();
         let model = Model::new(&doc, "test");
         let reaction = Reaction::new(&model, "r1");
         let kinetic_law = KineticLaw::new(&reaction, "k1 * S1");
@@ -279,7 +282,7 @@ mod tests {
 
     #[test]
     fn test_clone() {
-        let doc = SBMLDocument::new(3, 2);
+        let doc = SBMLDocument::default();
         let model = Model::new(&doc, "test");
         let reaction = Reaction::new(&model, "r1");
         let kinetic_law = KineticLaw::new(&reaction, "k1 * S1");
