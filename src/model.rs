@@ -15,12 +15,19 @@ use crate::{
     clone,
     collections::*,
     compartment::{Compartment, CompartmentBuilder},
+    errors::LibSBMLError,
+    fbc::{
+        fluxbound::FluxBound, fluxboundop::FluxBoundOperation, objective::Objective,
+        objectivetype::ObjectiveType,
+    },
     inner,
     parameter::{Parameter, ParameterBuilder},
     pin_ptr,
+    plugin::get_plugin,
     prelude::IntoId,
     reaction::{Reaction, ReactionBuilder},
     rule::{AssignmentRuleBuilder, RateRuleBuilder, Rule, RuleType},
+    sbase,
     sbmlcxx::{self},
     sbmldoc::SBMLDocument,
     sbo_term, set_collection_annotation,
@@ -58,10 +65,17 @@ pub struct Model<'a> {
     list_of_rate_rules: RefCell<Vec<Rc<Rule<'a>>>>,
     /// List of all AssignmentRules in the model
     list_of_assignment_rules: RefCell<Vec<Rc<Rule<'a>>>>,
+    /// List of all Objectives in the model
+    pub(crate) list_of_objectives: RefCell<Vec<Rc<Objective<'a>>>>,
+    /// List of all FluxBounds in the model
+    pub(crate) list_of_flux_bounds: RefCell<Vec<Rc<FluxBound<'a>>>>,
 }
 
 // Set the inner trait for the Model struct
 inner!(sbmlcxx::Model, Model<'a>);
+
+// Set the sbase trait for the Model struct
+sbase!(Model<'a>, sbmlcxx::Model);
 
 // Set the annotation trait for the Model struct
 upcast_annotation!(Model<'a>, sbmlcxx::Model, sbmlcxx::SBase);
@@ -76,7 +90,9 @@ clone!(
     list_of_reactions,
     list_of_parameters,
     list_of_rate_rules,
-    list_of_assignment_rules
+    list_of_assignment_rules,
+    list_of_objectives,
+    list_of_flux_bounds
 );
 
 impl<'a> Model<'a> {
@@ -101,6 +117,8 @@ impl<'a> Model<'a> {
             list_of_parameters: RefCell::new(Vec::new()),
             list_of_rate_rules: RefCell::new(Vec::new()),
             list_of_assignment_rules: RefCell::new(Vec::new()),
+            list_of_objectives: RefCell::new(Vec::new()),
+            list_of_flux_bounds: RefCell::new(Vec::new()),
         }
     }
 
@@ -419,7 +437,7 @@ impl<'a> Model<'a> {
     ///
     /// # Returns
     /// A new RateRule instance wrapped in an Rc
-    pub fn create_rate_rule(&self, variable: impl IntoId<'a>, formula: &str) -> Rc<Rule<'a>> {
+    pub fn create_rate_rule(&self, variable: impl IntoId, formula: &str) -> Rc<Rule<'a>> {
         let rate_rule = Rc::new(Rule::new_rate_rule(self, variable, formula));
         self.list_of_rate_rules
             .borrow_mut()
@@ -439,7 +457,7 @@ impl<'a> Model<'a> {
     ///
     /// # Returns
     /// A RateRuleBuilder instance that can be used to configure and create the RateRule
-    pub fn build_rate_rule(&self, variable: impl IntoId<'a>, formula: &str) -> RateRuleBuilder<'a> {
+    pub fn build_rate_rule(&self, variable: impl IntoId, formula: &str) -> RateRuleBuilder<'a> {
         RateRuleBuilder::new(self, variable, formula)
     }
 
@@ -474,7 +492,7 @@ impl<'a> Model<'a> {
     ///
     /// # Returns
     /// A new AssignmentRule instance wrapped in an Rc
-    pub fn create_assignment_rule(&self, variable: impl IntoId<'a>, formula: &str) -> Rc<Rule<'a>> {
+    pub fn create_assignment_rule(&self, variable: impl IntoId, formula: &str) -> Rc<Rule<'a>> {
         let assignment_rule = Rc::new(Rule::new_assignment_rule(self, variable, formula));
         self.list_of_assignment_rules
             .borrow_mut()
@@ -496,7 +514,7 @@ impl<'a> Model<'a> {
     /// A AssignmentRuleBuilder instance that can be used to configure and create the AssignmentRule
     pub fn build_assignment_rule(
         &self,
-        variable: impl IntoId<'a>,
+        variable: impl IntoId,
         formula: &str,
     ) -> AssignmentRuleBuilder<'a> {
         AssignmentRuleBuilder::new(self, variable, formula)
@@ -510,10 +528,10 @@ impl<'a> Model<'a> {
         self.list_of_assignment_rules.borrow().to_vec()
     }
 
-    /// Retrieves a assignment rule from the model by its identifier.
+    /// Retrieves an assignment rule from the model by its variable identifier.
     ///
     /// # Arguments
-    /// * `variable` - The variable to apply the assignment rule to
+    /// * `variable` - The variable identifier of the assignment rule to retrieve
     ///
     /// # Returns
     /// Some(`Rc<Rule>`) if found, None if not found
@@ -522,6 +540,94 @@ impl<'a> Model<'a> {
             .borrow()
             .iter()
             .find(|rule| (*rule).variable() == variable)
+            .map(Rc::clone)
+    }
+
+    /// Returns a vector of all objectives in the model.
+    ///
+    /// # Returns
+    /// A vector containing Rc references to all Objectives in the model
+    pub fn list_of_objectives(&self) -> Vec<Rc<Objective<'a>>> {
+        self.list_of_objectives.borrow().to_vec()
+    }
+
+    /// Creates a new Objective within this model.
+    ///
+    /// # Arguments
+    /// * `id` - The identifier for the new objective
+    /// * `obj_type` - The type of objective (maximize or minimize)
+    ///
+    /// # Returns
+    /// A new Objective instance wrapped in an Rc, or an error if creation fails
+    pub fn create_objective(
+        &self,
+        id: &str,
+        obj_type: impl Into<ObjectiveType>,
+    ) -> Result<Rc<Objective<'a>>, LibSBMLError> {
+        let objective = Rc::new(Objective::new(self, id, obj_type)?);
+        self.list_of_objectives
+            .borrow_mut()
+            .push(Rc::clone(&objective));
+        Ok(objective)
+    }
+
+    /// Retrieves an objective from the model by its identifier.
+    ///
+    /// # Arguments
+    /// * `id` - The identifier of the objective to retrieve
+    ///
+    /// # Returns
+    /// Some(`Rc<Objective>`) if found, None if not found
+    pub fn get_objective(&self, id: &str) -> Option<Rc<Objective<'a>>> {
+        self.list_of_objectives
+            .borrow()
+            .iter()
+            .find(|objective| (*objective).id() == id)
+            .map(Rc::clone)
+    }
+
+    /// Returns a vector of all flux bounds in the model.
+    ///
+    /// # Returns
+    /// A vector containing Rc references to all FluxBounds in the model
+    pub fn list_of_flux_bounds(&self) -> Vec<Rc<FluxBound<'a>>> {
+        self.list_of_flux_bounds.borrow().to_vec()
+    }
+
+    /// Creates a new FluxBound within this model.
+    ///
+    /// # Arguments
+    /// * `id` - The identifier for the new flux bound
+    /// * `reaction_id` - The identifier of the reaction this flux bound applies to
+    /// * `operation` - The flux bound operation (e.g., less than, greater than)
+    ///
+    /// # Returns
+    /// A new FluxBound instance wrapped in an Rc, or an error if creation fails
+    pub fn create_flux_bound(
+        &self,
+        id: &str,
+        reaction_id: impl IntoId,
+        operation: impl Into<FluxBoundOperation>,
+    ) -> Result<Rc<FluxBound<'a>>, LibSBMLError> {
+        let flux_bound = Rc::new(FluxBound::new(self, id, reaction_id, operation)?);
+        self.list_of_flux_bounds
+            .borrow_mut()
+            .push(Rc::clone(&flux_bound));
+        Ok(flux_bound)
+    }
+
+    /// Retrieves a flux bound from the model by its identifier.
+    ///
+    /// # Arguments
+    /// * `id` - The identifier of the flux bound to retrieve
+    ///
+    /// # Returns
+    /// Some(`Rc<FluxBound>`) if found, None if not found
+    pub fn get_flux_bound(&self, id: &str) -> Option<Rc<FluxBound<'a>>> {
+        self.list_of_flux_bounds
+            .borrow()
+            .iter()
+            .find(|flux_bound| (*flux_bound).id() == Some(id.to_string()))
             .map(Rc::clone)
     }
 
@@ -549,6 +655,8 @@ impl<'a> std::fmt::Debug for Model<'a> {
         ds.field("list_of_parameters", &self.list_of_parameters());
         ds.field("list_of_rate_rules", &self.list_of_rate_rules());
         ds.field("list_of_assignment_rules", &self.list_of_assignment_rules());
+        ds.field("list_of_objectives", &self.list_of_objectives());
+        ds.field("list_of_flux_bounds", &self.list_of_flux_bounds());
         ds.finish()
     }
 }
@@ -635,7 +743,7 @@ impl<'a> FromPtr<sbmlcxx::Model> for Model<'a> {
             }
         }
 
-        Self {
+        let model = Self {
             inner: model,
             list_of_species: RefCell::new(list_of_species),
             list_of_compartments: RefCell::new(list_of_compartments),
@@ -644,7 +752,38 @@ impl<'a> FromPtr<sbmlcxx::Model> for Model<'a> {
             list_of_parameters: RefCell::new(list_of_parameters),
             list_of_rate_rules: RefCell::new(list_of_rate_rules),
             list_of_assignment_rules: RefCell::new(list_of_assignment_rules),
+            list_of_objectives: RefCell::new(Vec::new()),
+            list_of_flux_bounds: RefCell::new(Vec::new()),
+        };
+
+        // Fetch all plugins
+        let fbc_plugin =
+            get_plugin::<sbmlcxx::FbcModelPlugin, Model<'a>, sbmlcxx::Model>(&model, "fbc");
+
+        if let Ok(mut fbc_plugin) = fbc_plugin {
+            let n_objectives = fbc_plugin.as_mut().getNumObjectives().0;
+            let list_of_objectives: Vec<_> = (0..n_objectives)
+                .map(|i| {
+                    let objective = fbc_plugin.as_mut().getObjective(i.into());
+                    let objective = Rc::new(Objective::from_ptr(objective));
+                    Rc::clone(&objective)
+                })
+                .collect();
+
+            let n_flux_bounds = fbc_plugin.as_mut().getNumFluxBounds().0;
+            let list_of_flux_bounds: Vec<_> = (0..n_flux_bounds)
+                .map(|i| {
+                    let flux_bound = fbc_plugin.as_mut().getFluxBound1(i.into());
+                    let flux_bound = Rc::new(FluxBound::from_ptr(flux_bound));
+                    Rc::clone(&flux_bound)
+                })
+                .collect();
+
+            model.list_of_objectives.replace(list_of_objectives);
+            model.list_of_flux_bounds.replace(list_of_flux_bounds);
         }
+
+        model
     }
 }
 
@@ -1282,5 +1421,364 @@ mod tests {
         let doc = SBMLDocument::default();
         let model = Model::new(&doc, "test");
         model.set_rate_rules_annotation_serde(&"invalid").unwrap();
+    }
+
+    // Flux Bounds Annotation Tests
+    #[test]
+    fn test_create_flux_bound() {
+        // FBC is enabled by default in the SBMLDocument
+        let doc = SBMLDocument::default();
+        let model = Model::new(&doc, "test");
+
+        model
+            .create_flux_bound("f1", "r1", FluxBoundOperation::Less)
+            .expect("Failed to create flux bound");
+        model
+            .create_flux_bound("f2", "r2", FluxBoundOperation::Greater)
+            .expect("Failed to create flux bound");
+
+        assert_eq!(model.list_of_flux_bounds().len(), 2);
+
+        let flux_bound = model
+            .get_flux_bound("f1")
+            .expect("Failed to get flux bound");
+        assert_eq!(flux_bound.reaction(), Some("r1".to_string()));
+        assert_eq!(flux_bound.operation(), FluxBoundOperation::Less);
+
+        let flux_bound = model
+            .get_flux_bound("f2")
+            .expect("Failed to get flux bound");
+        assert_eq!(flux_bound.reaction(), Some("r2".to_string()));
+        assert_eq!(flux_bound.operation(), FluxBoundOperation::Greater);
+    }
+
+    #[test]
+    fn test_create_flux_bound_invalid() {
+        let doc = SBMLDocument::default();
+        let model = Model::new(&doc, "test");
+
+        // Test creating a flux bound - this should succeed
+        model
+            .create_flux_bound("f1", "r1", FluxBoundOperation::Less)
+            .expect("Failed to create flux bound");
+
+        // Test getting the flux bound
+        let flux_bound = model
+            .get_flux_bound("f1")
+            .expect("Failed to get flux bound");
+        assert_eq!(flux_bound.id(), Some("f1".to_string()));
+        assert_eq!(flux_bound.reaction(), Some("r1".to_string()));
+        assert_eq!(flux_bound.operation(), FluxBoundOperation::Less);
+    }
+
+    // Additional Flux Bound Tests
+    #[test]
+    fn test_get_flux_bound_not_found() {
+        let doc = SBMLDocument::default();
+        let model = Model::new(&doc, "test");
+        let flux_bound = model.get_flux_bound("nonexistent");
+        assert!(flux_bound.is_none());
+    }
+
+    #[test]
+    fn test_list_of_flux_bounds() {
+        let doc = SBMLDocument::default();
+        let model = Model::new(&doc, "test");
+
+        model
+            .create_flux_bound("f1", "r1", FluxBoundOperation::Less)
+            .expect("Failed to create flux bound");
+        model
+            .create_flux_bound("f2", "r2", FluxBoundOperation::Greater)
+            .expect("Failed to create flux bound");
+
+        assert_eq!(model.list_of_flux_bounds().len(), 2);
+    }
+
+    #[test]
+    fn test_flux_bound_operations() {
+        let doc = SBMLDocument::default();
+        let model = Model::new(&doc, "test");
+
+        // Test all flux bound operations
+        let operations = [
+            FluxBoundOperation::Less,
+            FluxBoundOperation::Greater,
+            FluxBoundOperation::LessEqual,
+            FluxBoundOperation::GreaterEqual,
+            FluxBoundOperation::Equal,
+        ];
+
+        for (i, operation) in operations.iter().enumerate() {
+            let id = format!("f{}", i);
+            let reaction_id = format!("r{}", i);
+            model
+                .create_flux_bound(id.as_str(), &reaction_id, *operation)
+                .expect("Failed to create flux bound");
+
+            let flux_bound = model.get_flux_bound(&id).expect("Failed to get flux bound");
+            assert_eq!(flux_bound.operation(), *operation);
+        }
+    }
+
+    // Objective Tests
+    #[test]
+    fn test_create_objective() {
+        let doc = SBMLDocument::default();
+        let model = Model::new(&doc, "test");
+
+        let objective = model
+            .create_objective("obj1", ObjectiveType::Maximize)
+            .expect("Failed to create objective");
+
+        assert_eq!(objective.id(), "obj1");
+        assert_eq!(objective.obj_type(), ObjectiveType::Maximize);
+    }
+
+    #[test]
+    fn test_create_objective_minimize() {
+        let doc = SBMLDocument::default();
+        let model = Model::new(&doc, "test");
+
+        let objective = model
+            .create_objective("obj1", ObjectiveType::Minimize)
+            .expect("Failed to create objective");
+
+        assert_eq!(objective.id(), "obj1");
+        assert_eq!(objective.obj_type(), ObjectiveType::Minimize);
+    }
+
+    #[test]
+    fn test_get_objective() {
+        let doc = SBMLDocument::default();
+        let model = Model::new(&doc, "test");
+
+        model
+            .create_objective("obj1", ObjectiveType::Maximize)
+            .expect("Failed to create objective");
+
+        let objective = model
+            .get_objective("obj1")
+            .expect("Failed to get objective");
+        assert_eq!(objective.id(), "obj1");
+        assert_eq!(objective.obj_type(), ObjectiveType::Maximize);
+    }
+
+    #[test]
+    fn test_get_objective_not_found() {
+        let doc = SBMLDocument::default();
+        let model = Model::new(&doc, "test");
+        let objective = model.get_objective("nonexistent");
+        assert!(objective.is_none());
+    }
+
+    #[test]
+    fn test_list_of_objectives() {
+        let doc = SBMLDocument::default();
+        let model = Model::new(&doc, "test");
+
+        model
+            .create_objective("obj1", ObjectiveType::Maximize)
+            .expect("Failed to create objective");
+        model
+            .create_objective("obj2", ObjectiveType::Minimize)
+            .expect("Failed to create objective");
+
+        assert_eq!(model.list_of_objectives().len(), 2);
+    }
+
+    // Flux Objective Tests (testing the objective's flux objectives)
+    #[test]
+    fn test_create_flux_objective() {
+        let doc = SBMLDocument::default();
+        let model = Model::new(&doc, "test");
+
+        let objective = model
+            .create_objective("obj1", ObjectiveType::Maximize)
+            .expect("Failed to create objective");
+
+        let flux_objective = objective
+            .create_flux_objective("fo1", "r1", 1.0)
+            .expect("Failed to create flux objective");
+
+        assert_eq!(flux_objective.reaction(), Some("r1".to_string()));
+        assert_eq!(flux_objective.coefficient(), Some(1.0));
+    }
+
+    #[test]
+    fn test_flux_objective_list() {
+        let doc = SBMLDocument::default();
+        let model = Model::new(&doc, "test");
+
+        let objective = model
+            .create_objective("obj1", ObjectiveType::Maximize)
+            .expect("Failed to create objective");
+
+        objective
+            .create_flux_objective("fo1", "r1", 1.0)
+            .expect("Failed to create flux objective");
+        objective
+            .create_flux_objective("fo2", "r2", -0.5)
+            .expect("Failed to create flux objective");
+
+        assert_eq!(objective.flux_objectives().len(), 2);
+    }
+
+    #[test]
+    fn test_get_flux_objective() {
+        let doc = SBMLDocument::default();
+        let model = Model::new(&doc, "test");
+
+        // Create a reaction
+        let reaction = model.create_reaction("r1");
+
+        let objective = model
+            .create_objective("obj1", ObjectiveType::Maximize)
+            .expect("Failed to create objective");
+
+        objective
+            .create_flux_objective("fo1", &reaction, 1.0)
+            .expect("Failed to create flux objective");
+
+        let retrieved = objective
+            .get_flux_objective("fo1")
+            .expect("Failed to get flux objective");
+
+        assert_eq!(retrieved.id(), Some("fo1".to_string()));
+        assert_eq!(retrieved.coefficient(), Some(1.0));
+        assert_eq!(retrieved.reaction(), Some("r1".to_string()));
+    }
+
+    #[test]
+    fn test_get_flux_objective_not_found() {
+        let doc = SBMLDocument::default();
+        let model = Model::new(&doc, "test");
+
+        let objective = model
+            .create_objective("obj1", ObjectiveType::Maximize)
+            .expect("Failed to create objective");
+
+        let flux_objective = objective.get_flux_objective("nonexistent");
+        assert!(flux_objective.is_none());
+    }
+
+    // Test FBC integration with model
+    #[test]
+    fn test_fbc_integration() {
+        let doc = SBMLDocument::default();
+        let model = Model::new(&doc, "test");
+
+        // Create reactions first
+        let _reaction1 = model.create_reaction("r1");
+        let _reaction2 = model.create_reaction("r2");
+
+        // Create flux bounds
+        model
+            .create_flux_bound("fb1", "r1", FluxBoundOperation::GreaterEqual)
+            .expect("Failed to create flux bound");
+        model
+            .create_flux_bound("fb2", "r2", FluxBoundOperation::LessEqual)
+            .expect("Failed to create flux bound");
+
+        // Create objective
+        let objective = model
+            .create_objective("obj1", ObjectiveType::Maximize)
+            .expect("Failed to create objective");
+
+        // Create flux objectives
+        objective
+            .create_flux_objective("fo1", "r1", 1.0)
+            .expect("Failed to create flux objective");
+        objective
+            .create_flux_objective("fo2", "r2", -0.5)
+            .expect("Failed to create flux objective");
+
+        // Verify everything is created correctly
+        assert_eq!(model.list_of_reactions().len(), 2);
+        assert_eq!(model.list_of_flux_bounds().len(), 2);
+        assert_eq!(model.list_of_objectives().len(), 1);
+        assert_eq!(objective.flux_objectives().len(), 2);
+
+        // Test retrieval
+        let fb1 = model
+            .get_flux_bound("fb1")
+            .expect("Failed to get flux bound");
+        assert_eq!(fb1.reaction(), Some("r1".to_string()));
+        assert_eq!(fb1.operation(), FluxBoundOperation::GreaterEqual);
+
+        let obj = model
+            .get_objective("obj1")
+            .expect("Failed to get objective");
+        assert_eq!(obj.obj_type(), ObjectiveType::Maximize);
+    }
+
+    // Test flux bound value setting (if supported)
+    #[test]
+    fn test_flux_bound_properties() {
+        let doc = SBMLDocument::default();
+        let model = Model::new(&doc, "test");
+
+        let flux_bound = model
+            .create_flux_bound("fb1", "r1", FluxBoundOperation::LessEqual)
+            .expect("Failed to create flux bound");
+
+        // Test basic properties
+        assert_eq!(flux_bound.id(), Some("fb1".to_string()));
+        assert_eq!(flux_bound.reaction(), Some("r1".to_string()));
+        assert_eq!(flux_bound.operation(), FluxBoundOperation::LessEqual);
+
+        // Test setting new values
+        flux_bound.set_id("new_fb1");
+        flux_bound.set_reaction("new_r1");
+
+        assert_eq!(flux_bound.id(), Some("new_fb1".to_string()));
+        assert_eq!(flux_bound.reaction(), Some("new_r1".to_string()));
+    }
+
+    // Test flux objective properties
+    #[test]
+    fn test_flux_objective_properties() {
+        let doc = SBMLDocument::default();
+        let model = Model::new(&doc, "test");
+        let substrate = model.create_species("s1");
+        let product = model.create_species("s2");
+
+        let reaction = model.create_reaction("r1");
+        reaction.create_product(&product, 1.0);
+        reaction.create_reactant(&substrate, 1.0);
+
+        let objective = model
+            .create_objective("obj1", ObjectiveType::Maximize)
+            .expect("Failed to create objective");
+
+        let flux_objective = objective
+            .create_flux_objective("fo1", &reaction, 2.5)
+            .expect("Failed to create flux objective");
+
+        // Test basic properties
+        assert_eq!(flux_objective.reaction(), Some("r1".to_string()));
+        assert_eq!(flux_objective.coefficient(), Some(2.5));
+    }
+
+    // Test objective properties
+    #[test]
+    fn test_objective_properties() {
+        let doc = SBMLDocument::default();
+        let model = Model::new(&doc, "test");
+
+        let objective = model
+            .create_objective("obj1", ObjectiveType::Maximize)
+            .expect("Failed to create objective");
+
+        // Test basic properties
+        assert_eq!(objective.id(), "obj1");
+        assert_eq!(objective.obj_type(), ObjectiveType::Maximize);
+
+        // Test setting new values
+        objective.set_id("new_obj1");
+        objective.set_obj_type(ObjectiveType::Minimize);
+
+        assert_eq!(objective.id(), "new_obj1");
+        assert_eq!(objective.obj_type(), ObjectiveType::Minimize);
     }
 }

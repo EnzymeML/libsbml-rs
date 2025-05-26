@@ -11,6 +11,12 @@
 //! - Reading and writing SBML files with validation support
 //! - Memory-safe wrappers around the C++ library using autocxx
 //!
+//! ## Base Types
+//!
+//! - **SBase** (`sbase`): Base class for all SBML components
+//! - **SBasePlugin** (`sbaseplugin`): Plugin for SBase
+//! - **SBMLNamespaces** (`namespaces`): Namespaces for SBML models
+//!
 //! ## Core Components
 //!
 //! - **SBMLDocument** (`sbmldoc`): Root container for SBML models
@@ -26,7 +32,14 @@
 //! - **Rule** (`rule`): Mathematical expressions that define model behavior
 //! - **SpeciesReference** (`speciesref`): References to species as reactants or products
 //! - **ModifierSpeciesReference** (`modref`): Species references for catalysts and regulators
+//! - **FluxObjective** (`fluxobjective`): Objectives for flux balance analysis
 //!
+//! ## FBC Package
+//!
+//! - **Objective** (`objective`): Objectives for optimization
+//! - **ListOfObjectives** (`listofobjectives`): List of objectives
+//! - **ListOfFluxObjectives** (`listoffluxobjectives`): List of flux objectives
+//! - **FluxObjective** (`fluxobjective`): Objectives for flux balance analysis
 
 /// Traits providing common functionality across SBML components
 pub mod traits {
@@ -34,6 +47,7 @@ pub mod traits {
     pub mod fromptr;
     pub mod inner;
     pub mod intoid;
+    pub mod sbase;
 }
 
 /// Type casting and conversion utilities for SBML objects
@@ -48,6 +62,8 @@ pub mod localparameter;
 pub mod model;
 /// Modifier species references for catalysts and regulators
 pub mod modref;
+/// Namespaces for SBML models
+pub mod namespaces;
 /// Global parameters defining constant or variable model values
 pub mod parameter;
 /// Reactions describing biochemical transformations between species
@@ -65,8 +81,31 @@ pub mod unit;
 /// Unit definitions composing multiple base units
 pub mod unitdef;
 
+/// Packages for SBML models
+pub mod packages;
+/// Plugin fetcher
+pub mod plugin;
 /// Error handling for SBML models
 pub mod sbmlerror;
+
+/// FBC package types
+pub mod fbc {
+    pub use crate::fbc::fluxbound::FluxBound;
+    pub use crate::fbc::fluxboundop::FluxBoundOperation;
+    pub use crate::fbc::objective::Objective;
+    pub use crate::fbc::objectivetype::ObjectiveType;
+
+    /// Flux bound
+    pub mod fluxbound;
+    /// Flux bound operation types
+    pub mod fluxboundop;
+    /// A flux objective
+    pub mod fluxobjective;
+    /// A general objective
+    pub mod objective;
+    /// Objective types
+    pub mod objectivetype;
+}
 
 /// Helper macros for working with SBML components
 pub mod macros;
@@ -79,6 +118,9 @@ pub mod reader;
 
 /// Internal module containing the wrapper types for annotations
 pub(crate) mod wrapper;
+
+/// Error handling for SBML models
+pub mod errors;
 
 /// Internal module containing collections of SBML components
 pub(crate) mod collections {
@@ -104,6 +146,7 @@ pub use traits::annotation::Annotation;
 /// Prelude module providing convenient imports of commonly used types
 pub mod prelude {
     pub use crate::compartment::Compartment;
+    pub use crate::fbc::*;
     pub use crate::kineticlaw::*;
     pub use crate::localparameter::*;
     pub use crate::model::*;
@@ -133,10 +176,14 @@ pub(crate) mod sbmlcxx {
     include_cpp! {
         // Includes //
         #include "sbml/SBMLTypes.h"
+        #include "sbml/packages/fbc/common/FbcExtensionTypes.h"
         safety!(unsafe_ffi)
 
         // Base types
         generate!("SBase")
+        generate!("SBasePlugin")
+        generate!("SBMLNamespaces")
+        generate!("XMLNamespaces")
 
         // Root types
         generate!("SBMLDocument")
@@ -159,6 +206,16 @@ pub(crate) mod sbmlcxx {
         generate!("AssignmentRule")
         generate!("Rule")
         generate!("KineticLaw")
+
+        // FBC types
+        generate!("FbcModelPlugin")
+        generate!("ListOfFluxObjectives")
+        generate!("FluxObjective")
+        generate!("FluxBound")
+        generate!("Objective")
+        generate!("ListOfObjectives")
+        generate!("ObjectiveType_t")
+        generate!("FluxBoundOperation_t")
 
         // IO types
         generate!("SBMLWriter")
