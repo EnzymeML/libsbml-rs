@@ -22,6 +22,31 @@ macro_rules! pin_ptr {
     }};
 }
 
+/// Creates a pinned reference from a raw pointer.
+///
+/// This macro takes a raw pointer and type, and creates a pinned immutable reference
+/// to that type. It is used internally to safely work with C++ objects that must
+/// not be moved in memory.
+///
+/// # Arguments
+/// * `$name` - The raw pointer to convert
+/// * `$type` - The type to convert the pointer to
+///
+/// # Safety
+/// This macro uses unsafe code to create the reference and pin it. The caller must
+/// ensure that:
+/// - The pointer is valid and properly aligned
+/// - The pointer points to an initialized value of the specified type
+/// - The lifetime of the reference does not outlive the pointed-to data
+/// - The pointer is not mutable
+#[macro_export]
+macro_rules! pin_const_ptr {
+    ($name:ident, $type:ty) => {{
+        let ref_ptr: &$type = unsafe { &*$name };
+        unsafe { Pin::new_unchecked(ref_ptr) }
+    }};
+}
+
 /// Performs a safe upcast from one SBML type to another.
 ///
 /// This macro takes an SBML object and performs an upcast from a derived type to a base type.
@@ -268,9 +293,9 @@ macro_rules! sbo_term {
 #[macro_export]
 macro_rules! into_id {
     ($type:ty, $property:ident) => {
-        impl<'a> $crate::traits::intoid::IntoId<'a> for $type {
-            fn into_id(self) -> &'a str {
-                Box::leak(self.$property().into_boxed_str())
+        impl<'a> $crate::traits::intoid::IntoId for $type {
+            fn into_id(self) -> String {
+                self.$property().to_string()
             }
         }
     };
@@ -377,6 +402,29 @@ macro_rules! set_collection_annotation {
                 let collection = $collection_type::new(self);
                 collection.set_annotation_serde(annotation)?;
                 Ok(())
+            }
+        }
+    };
+}
+
+/// A macro to implement the SBase trait for a wrapper type.
+///
+/// This macro generates an implementation of the SBase trait for a wrapper type,
+/// allowing the wrapper type to be converted into an SBase.
+///
+/// # Arguments
+/// * `$type` - The Rust wrapper type (e.g. Species<'a>)
+/// * `$cxx_type` - The C++ type that is being wrapped (e.g. sbmlcxx::Species)
+///
+/// This will generate an implementation of the SBase trait for the wrapper type,
+/// allowing the wrapper type to be converted into an SBase.
+#[macro_export]
+macro_rules! sbase {
+    ($type:ty, $cxx_type:ty) => {
+        impl<'a> $crate::traits::sbase::SBase<'a, $cxx_type> for $type {
+            fn base(&self) -> Pin<&mut sbmlcxx::SBase> {
+                let mut inner = self.inner.borrow_mut();
+                $crate::upcast_pin!(inner, $cxx_type, sbmlcxx::SBase)
             }
         }
     };
