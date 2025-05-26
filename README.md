@@ -26,7 +26,15 @@ Currently available through Git:
 cargo add libsbml
 ```
 
-Please note, the C++ dependency `libsbml` is automatically installed using `cargo-vcpkg`. You dont need to link the library manually, but note that the `build.rs` script will install `cargo-vcpkg` if it is not found in your environment.
+Since this crate wraps the `libsbml` C++ library, you have two options for installation:
+
+1. Install `libsbml` via your OS package manager.
+2. Let this crate install `libsbml` via `cargo-vcpkg`
+
+In the latter case, the C++ dependency `libsbml` is automatically installed using `cargo-vcpkg`. You dont need to link the library manually, but note that the `build.rs` script will install `cargo-vcpkg` if it is not found in your environment. We generally recommend installing `libsbml` via your OS package manager, because the build time is significantly reduced.
+
+> [!NOTE]
+> The detection of libsbml is done via `pkg-config`, which is not available on all platforms. If you are using a platform that does not support `pkg-config`, the build will fall back to using `cargo-vcpkg`, which is supported on all platforms, but the build time is significantly increased.
 
 ### System Requirements
 
