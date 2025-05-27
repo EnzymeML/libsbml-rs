@@ -38,11 +38,14 @@ impl SBMLReader {
     ///
     /// # Returns
     /// An SBMLDocument instance containing the parsed model
-    pub fn from_xml_string(xml: &str) -> SBMLDocument {
+    pub fn from_xml_string(xml: &str) -> SBMLDocument<'static> {
         let reader = Self::new();
-        let_cxx_string!(xml = xml);
-        let ptr =
-            unsafe { UniquePtr::from_raw(reader.0.borrow_mut().as_mut().readSBMLFromString(&xml)) };
+        // Create an owned String to ensure the data persists
+        let owned_xml = xml.to_string();
+        let_cxx_string!(xml_cxx = owned_xml);
+        let ptr = unsafe {
+            UniquePtr::from_raw(reader.0.borrow_mut().as_mut().readSBMLFromString(&xml_cxx))
+        };
         SBMLDocument::from_unique_ptr(ptr)
     }
 }
@@ -55,6 +58,10 @@ impl Default for SBMLReader {
 
 #[cfg(test)]
 mod tests {
+    use std::path::PathBuf;
+
+    use crate::errors::LibSBMLError;
+
     use super::*;
 
     #[test]
@@ -88,7 +95,9 @@ mod tests {
 
     #[test]
     fn test_read_sbml_file_rules_only() {
-        let doc = SBMLReader::from_xml_string(include_str!("../tests/data/odes_example_test.xml"));
+        // This test uses an "external" function to ensure that returning an SBMLDocument
+        // from a function works as expected.
+        let doc = read_sbml_file(&PathBuf::from("tests/data/odes_example_test.xml")).unwrap();
 
         let model = doc.model().expect("Model not found");
 
@@ -119,5 +128,10 @@ mod tests {
         // There are 0 assignment rules
         let list_of_assignment_rules = model.list_of_assignment_rules();
         assert_eq!(list_of_assignment_rules.len(), 0);
+    }
+
+    fn read_sbml_file(path: &PathBuf) -> Result<SBMLDocument<'static>, LibSBMLError> {
+        let xml = std::fs::read_to_string(path).unwrap();
+        Ok(SBMLReader::from_xml_string(&xml))
     }
 }

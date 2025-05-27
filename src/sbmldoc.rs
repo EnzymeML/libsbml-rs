@@ -79,7 +79,7 @@ impl<'a> SBMLDocument<'a> {
     ///
     /// # Returns
     /// A new SBMLDocument instance
-    pub(crate) fn from_unique_ptr(ptr: UniquePtr<sbmlcxx::SBMLDocument>) -> Self {
+    pub(crate) fn from_unique_ptr(ptr: UniquePtr<sbmlcxx::SBMLDocument>) -> SBMLDocument<'static> {
         // Wrap the pointer in a RefCell
         let document = RefCell::new(ptr);
 
@@ -89,7 +89,7 @@ impl<'a> SBMLDocument<'a> {
             .as_mut()
             .map(|model| Rc::new(Model::from_ptr(model.getModel1())));
 
-        Self {
+        SBMLDocument {
             document,
             model: RefCell::new(model),
         }
