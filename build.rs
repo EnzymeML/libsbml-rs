@@ -31,15 +31,24 @@ fn main() -> Result<(), BuilderError> {
     println!("cargo:rerun-if-changed=submodules/zipper");
     println!("cargo:rerun-if-changed=cmake/libcombine_wrapper");
 
-    let (mut include_paths, cargo_metadata) =
-        if let Ok((paths, link_paths)) = from_pkg_config("libsbml") {
+    let (mut include_paths, cargo_metadata, lib_paths) =
+        if let Ok((paths, link_paths, lib_paths)) = from_pkg_config("libsbml") {
             // If libsbml is already installed, we don't need to do anything
             println!("cargo:warning=libsbml is already installed");
-            (paths, link_paths)
+            (paths, link_paths, lib_paths)
         } else {
             // If libsbml is not installed, we need to install it
             let libsbml = setup_vcpkg()?;
-            (libsbml.include_paths, libsbml.cargo_metadata.clone())
+            (
+                libsbml.include_paths,
+                libsbml.cargo_metadata.clone(),
+                libsbml
+                    .link_paths
+                    .clone()
+                    .iter()
+                    .map(|p| p.to_str().unwrap().to_string())
+                    .collect(),
+            )
         };
 
     // Configure autocxx to generate Rust bindings
@@ -62,7 +71,7 @@ fn main() -> Result<(), BuilderError> {
 
     let libcombine_include_path = if !std::path::Path::new(&combine_lib_path).exists() {
         println!("cargo:warning=Building libCombine (first time or after clean)");
-        build_libcombine()
+        build_libcombine(&include_paths, &lib_paths)
     } else {
         println!("cargo:warning=libCombine already exists, skipping build");
         println!("cargo:rustc-link-search=native={}/lib", out_dir);
@@ -185,7 +194,7 @@ fn get_vcpkg_dir() -> std::path::PathBuf {
 ///
 /// # Returns
 /// * `Result<(), String>` - Success or error result
-fn from_pkg_config(pkg_config: &str) -> Result<(Vec<PathBuf>, Vec<String>), String> {
+fn from_pkg_config(pkg_config: &str) -> Result<(Vec<PathBuf>, Vec<String>, Vec<String>), String> {
     if let Ok(use_vcpkg) = std::env::var("USE_VCPKG") {
         if use_vcpkg.to_lowercase() != "false" {
             return Err("USE_VCPKG is set, so we don't need to use pkg-config".to_string());
@@ -203,7 +212,12 @@ fn from_pkg_config(pkg_config: &str) -> Result<(Vec<PathBuf>, Vec<String>), Stri
         cargo_metadata.push(format!("cargo:rustc-link-lib={}", lib));
     }
 
-    Ok((lib.include_paths.clone(), cargo_metadata))
+    let mut link_paths = Vec::new();
+    for path in lib.link_paths.iter() {
+        link_paths.push(path.to_str().unwrap().to_string());
+    }
+
+    Ok((lib.include_paths.clone(), cargo_metadata, link_paths))
 }
 
 fn build_zipper() {
@@ -217,11 +231,15 @@ fn build_zipper() {
     println!("cargo:rustc-link-lib=z");
 }
 
-fn build_libcombine() -> PathBuf {
+fn build_libcombine(include_paths: &[PathBuf], lib_paths: &[String]) -> PathBuf {
     let mut config = cmake::Config::new("cmake/libcombine_wrapper");
 
     // Configure dependencies for libCombine
     let out_dir = std::env::var("OUT_DIR").unwrap();
+
+    // Point to the libsbml library we just built
+    config.define("LIBSBML_LIBRARY", lib_paths[0].clone());
+    config.define("LIBSBML_INCLUDE_DIR", include_paths[0].clone());
 
     // Point to the zipper library we just built
     config.define(
