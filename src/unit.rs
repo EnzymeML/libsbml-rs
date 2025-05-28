@@ -8,7 +8,7 @@
 //! This wrapper provides safe access to the underlying C++ libSBML Species class while
 //! maintaining Rust's safety guarantees through the use of RefCell and Pin.
 
-use std::{cell::RefCell, pin::Pin, rc::Rc, str::FromStr};
+use std::{cell::RefCell, fmt::Display, pin::Pin, rc::Rc, str::FromStr};
 
 use crate::{
     clone, inner, pin_ptr, required_property, sbmlcxx, sbo_term, traits::fromptr::FromPtr,
@@ -290,6 +290,50 @@ impl From<UnitKind> for sbmlcxx::UnitKind_t {
             UnitKind::Watt => sbmlcxx::UnitKind_t::UNIT_KIND_WATT,
             UnitKind::Weber => sbmlcxx::UnitKind_t::UNIT_KIND_WEBER,
             UnitKind::Invalid => sbmlcxx::UnitKind_t::UNIT_KIND_INVALID,
+        }
+    }
+}
+
+impl Display for UnitKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            UnitKind::Ampere => write!(f, "ampere"),
+            UnitKind::Avogadro => write!(f, "avogadro"),
+            UnitKind::Becquerel => write!(f, "becquerel"),
+            UnitKind::Candela => write!(f, "candela"),
+            UnitKind::Celsius => write!(f, "celsius"),
+            UnitKind::Coulomb => write!(f, "coulomb"),
+            UnitKind::Dimensionless => write!(f, "dimensionless"),
+            UnitKind::Farad => write!(f, "farad"),
+            UnitKind::Gram => write!(f, "gram"),
+            UnitKind::Gray => write!(f, "gray"),
+            UnitKind::Henry => write!(f, "henry"),
+            UnitKind::Hertz => write!(f, "hertz"),
+            UnitKind::Item => write!(f, "item"),
+            UnitKind::Joule => write!(f, "joule"),
+            UnitKind::Katal => write!(f, "katal"),
+            UnitKind::Kelvin => write!(f, "kelvin"),
+            UnitKind::Kilogram => write!(f, "kilogram"),
+            UnitKind::Liter => write!(f, "liter"),
+            UnitKind::Litre => write!(f, "litre"),
+            UnitKind::Lumen => write!(f, "lumen"),
+            UnitKind::Lux => write!(f, "lux"),
+            UnitKind::Meter => write!(f, "meter"),
+            UnitKind::Metre => write!(f, "metre"),
+            UnitKind::Mole => write!(f, "mole"),
+            UnitKind::Newton => write!(f, "newton"),
+            UnitKind::Ohm => write!(f, "ohm"),
+            UnitKind::Pascal => write!(f, "pascal"),
+            UnitKind::Radian => write!(f, "radian"),
+            UnitKind::Second => write!(f, "second"),
+            UnitKind::Siemens => write!(f, "siemens"),
+            UnitKind::Sievert => write!(f, "sievert"),
+            UnitKind::Steradian => write!(f, "steradian"),
+            UnitKind::Tesla => write!(f, "tesla"),
+            UnitKind::Volt => write!(f, "volt"),
+            UnitKind::Watt => write!(f, "watt"),
+            UnitKind::Weber => write!(f, "weber"),
+            UnitKind::Invalid => write!(f, "invalid"),
         }
     }
 }
