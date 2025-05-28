@@ -89,12 +89,8 @@ fn main() -> Result<(), BuilderError> {
     } else {
         println!("cargo:warning=libCombine already exists, skipping build");
         println!("cargo:rustc-link-search=native={}/lib", out_dir);
-        println!("cargo:rustc-link-lib=static=Combine-static");
         std::path::PathBuf::from(&out_dir).join("include")
     };
-
-    // Link libraries in the correct order (dependencies last) - critical for Linux
-    println!("cargo:rustc-link-lib=static=Zipper-static");
 
     include_paths.push(libcombine_include_path);
 
@@ -117,6 +113,10 @@ fn main() -> Result<(), BuilderError> {
         .compile("sbmlrs");
 
     link_lib(&cargo_metadata);
+
+    // Link libCombine dependencies (libSBML) - critical for Linux
+    println!("cargo:rustc-link-lib=static=Zipper-static");
+    println!("cargo:rustc-link-lib=static=Combine-static");
 
     // Add BCrypt for Windows build (needed by libxml2)
     if cfg!(target_os = "windows") {
@@ -243,7 +243,6 @@ fn build_zipper() {
         .build();
 
     println!("cargo:rustc-link-search=native={}/lib", dst.display());
-    // Don't link libraries here - linking order is handled in main()
 }
 
 fn build_libcombine(include_paths: &[PathBuf], lib_paths: &[String]) -> PathBuf {
@@ -292,7 +291,6 @@ fn build_libcombine(include_paths: &[PathBuf], lib_paths: &[String]) -> PathBuf 
     let dst = config.build();
 
     println!("cargo:rustc-link-search=native={}/lib", dst.display());
-    println!("cargo:rustc-link-lib=static=Combine-static");
 
     dst.join("include")
 }
