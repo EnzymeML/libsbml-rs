@@ -81,8 +81,7 @@ fn main() -> Result<(), BuilderError> {
     } else {
         println!("cargo:warning=Zipper library already exists, skipping build");
         println!("cargo:rustc-link-search=native={}/lib", out_dir);
-        println!("cargo:rustc-link-lib=static=Zipper-static");
-        println!("cargo:rustc-link-lib=z"); // zlib dependency
+        // Don't link zipper here - we'll do it after libCombine to ensure proper order
     }
 
     let libcombine_include_path = if !std::path::Path::new(&combine_lib_path).exists() {
@@ -94,6 +93,16 @@ fn main() -> Result<(), BuilderError> {
         println!("cargo:rustc-link-lib=static=Combine-static");
         std::path::PathBuf::from(&out_dir).join("include")
     };
+
+    // Link libraries in the correct order (dependencies last) - critical for Linux
+    println!("cargo:rustc-link-lib=static=Zipper-static");
+
+    // Platform-specific zlib linking
+    if cfg!(target_os = "windows") {
+        println!("cargo:rustc-link-lib=zlib");
+    } else {
+        println!("cargo:rustc-link-lib=z");
+    }
 
     include_paths.push(libcombine_include_path);
 
@@ -242,9 +251,7 @@ fn build_zipper() {
         .build();
 
     println!("cargo:rustc-link-search=native={}/lib", dst.display());
-    println!("cargo:rustc-link-lib=static=Zipper-static");
-    // CRITICAL: Add zlib dependency that zipper needs
-    println!("cargo:rustc-link-lib=z");
+    // Don't link libraries here - linking order is handled in main()
 }
 
 fn build_libcombine(include_paths: &[PathBuf], lib_paths: &[String]) -> PathBuf {
@@ -271,7 +278,7 @@ fn build_libcombine(include_paths: &[PathBuf], lib_paths: &[String]) -> PathBuf 
     } else if cfg!(target_os = "linux") {
         config.define("EXTRA_LIBS", "expat;z");
     } else if cfg!(target_os = "windows") {
-        config.define("EXTRA_LIBS", "expat;z");
+        config.define("EXTRA_LIBS", "expat;zlib");
     }
 
     // Disable unnecessary features - ESPECIALLY TESTS!
@@ -294,6 +301,7 @@ fn build_libcombine(include_paths: &[PathBuf], lib_paths: &[String]) -> PathBuf 
 
     println!("cargo:rustc-link-search=native={}/lib", dst.display());
     println!("cargo:rustc-link-lib=static=Combine-static");
+    // Dependencies (Zipper, zlib) are linked in main() for proper order
 
     dst.join("include")
 }
