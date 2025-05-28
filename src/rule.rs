@@ -15,7 +15,7 @@ use crate::{
     model::Model,
     pin_ptr,
     prelude::IntoId,
-    required_property,
+    required_property, sbase,
     sbmlcxx::{self},
     sbo_term,
     traits::fromptr::FromPtr,
@@ -42,6 +42,9 @@ pub struct Rule<'a> {
 // Set the inner trait for the Rule struct
 inner!(sbmlcxx::Rule, Rule<'a>);
 
+// Set the sbase trait for the Rule struct
+sbase!(Rule<'a>, sbmlcxx::Rule);
+
 // Set the annotation trait for the Rule struct
 upcast_annotation!(Rule<'a>, sbmlcxx::Rule, sbmlcxx::SBase);
 
@@ -57,7 +60,7 @@ impl<'a> Rule<'a> {
     ///
     /// # Returns
     /// A new Rule instance
-    pub fn new_rate_rule(model: &Model<'a>, variable: impl IntoId<'a>, formula: &str) -> Self {
+    pub fn new_rate_rule(model: &Model<'a>, variable: impl IntoId, formula: &str) -> Self {
         let rate_rule_ptr = model.inner().borrow_mut().as_mut().createRateRule();
         let mut rate_rule = pin_ptr!(rate_rule_ptr, sbmlcxx::RateRule);
         let mut rule = upcast_pin!(rate_rule, sbmlcxx::RateRule, sbmlcxx::Rule);
@@ -84,11 +87,7 @@ impl<'a> Rule<'a> {
     ///
     /// # Returns
     /// A new Rule instance
-    pub fn new_assignment_rule(
-        model: &Model<'a>,
-        variable: impl IntoId<'a>,
-        formula: &str,
-    ) -> Self {
+    pub fn new_assignment_rule(model: &Model<'a>, variable: impl IntoId, formula: &str) -> Self {
         let assignment_rule_ptr = model.inner().borrow_mut().as_mut().createAssignmentRule();
         let mut assignment_rule = pin_ptr!(assignment_rule_ptr, sbmlcxx::AssignmentRule);
         let mut rule = upcast_pin!(assignment_rule, sbmlcxx::AssignmentRule, sbmlcxx::Rule);
@@ -184,7 +183,7 @@ impl<'a> RateRuleBuilder<'a> {
     ///
     /// # Returns
     /// A new RateRuleBuilder instance
-    pub fn new(model: &Model<'a>, variable: impl IntoId<'a>, formula: &str) -> Self {
+    pub fn new(model: &Model<'a>, variable: impl IntoId, formula: &str) -> Self {
         let rate_rule = model.create_rate_rule(variable, formula);
         Self { rate_rule }
     }
@@ -252,7 +251,7 @@ impl<'a> AssignmentRuleBuilder<'a> {
     ///
     /// # Returns
     /// A new AssignmentRuleBuilder instance configured with the provided parameters
-    pub fn new(model: &Model<'a>, variable: impl IntoId<'a>, formula: &str) -> Self {
+    pub fn new(model: &Model<'a>, variable: impl IntoId, formula: &str) -> Self {
         let assignment_rule = model.create_assignment_rule(variable, formula);
         Self { assignment_rule }
     }
@@ -314,7 +313,7 @@ mod tests {
 
     #[test]
     fn test_rate_rule_new() {
-        let doc = SBMLDocument::new(3, 2);
+        let doc = SBMLDocument::default();
         let model = Model::new(&doc, "test");
         let rate_rule = Rule::new_rate_rule(&model, "s1", "s1 + s2");
         assert_eq!(rate_rule.variable(), "s1");
@@ -323,7 +322,7 @@ mod tests {
 
     #[test]
     fn test_rate_rule_builder() {
-        let doc = SBMLDocument::new(3, 2);
+        let doc = SBMLDocument::default();
         let model = Model::new(&doc, "test");
         let rate_rule = RateRuleBuilder::new(&model, "s1", "s1 + s2")
             .annotation("<test>test</test>")
@@ -347,7 +346,7 @@ mod tests {
             test: String,
         }
 
-        let doc = SBMLDocument::new(3, 2);
+        let doc = SBMLDocument::default();
         let model = Model::new(&doc, "test");
         let rate_rule = RateRuleBuilder::new(&model, "s1", "s1 + s2")
             .annotation_serde(&TestAnnotation {
@@ -369,7 +368,7 @@ mod tests {
             test: String,
         }
 
-        let doc = SBMLDocument::new(3, 2);
+        let doc = SBMLDocument::default();
         let model = Model::new(&doc, "test");
         let rate_rule = RateRuleBuilder::new(&model, "s1", "s1 + s2")
             .annotation_serde(&TestAnnotation {
@@ -387,7 +386,7 @@ mod tests {
 
     #[test]
     fn test_annotation() {
-        let doc = SBMLDocument::new(3, 2);
+        let doc = SBMLDocument::default();
         let model = Model::new(&doc, "test");
         let rate_rule = RateRuleBuilder::new(&model, "s1", "s1 + s2")
             .annotation("<test>test</test>")

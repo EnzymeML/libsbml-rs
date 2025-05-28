@@ -147,9 +147,18 @@ impl FromPtr<sbmlcxx::UnitDefinition> for UnitDefinition<'_> {
     /// A new UnitDefinition instance
     fn from_ptr(ptr: *mut sbmlcxx::UnitDefinition) -> Self {
         let unit_definition = pin_ptr!(ptr, sbmlcxx::UnitDefinition);
+        let unit_definition = RefCell::new(unit_definition);
+
+        let n_units = unit_definition.borrow().getNumUnits().0;
+        let units: Vec<_> = (0..n_units)
+            .map(|i| {
+                let unit = unit_definition.borrow_mut().as_mut().getUnit(i.into());
+                Rc::new(Unit::from_ptr(unit))
+            })
+            .collect();
         Self {
-            inner: RefCell::new(unit_definition),
-            units: RefCell::new(Vec::new()),
+            inner: unit_definition,
+            units: RefCell::new(units),
         }
     }
 }
@@ -226,7 +235,7 @@ mod tests {
 
     #[test]
     fn test_unit_definition_new() {
-        let doc = SBMLDocument::new(3, 2);
+        let doc = SBMLDocument::default();
         let model = Model::new(&doc, "test");
         let unit_definition = UnitDefinition::new(&model, "test", "test");
 
@@ -239,7 +248,7 @@ mod tests {
 
     #[test]
     fn test_unit_definition_builder() {
-        let doc = SBMLDocument::new(3, 2);
+        let doc = SBMLDocument::default();
         let model = Model::new(&doc, "test");
         let unit_definition = UnitDefinitionBuilder::new(&model, "test", "test").build();
         assert_eq!(unit_definition.id(), "test");
@@ -247,7 +256,7 @@ mod tests {
 
     #[test]
     fn test_unit_definition_add_unit() {
-        let doc = SBMLDocument::new(3, 2);
+        let doc = SBMLDocument::default();
         let model = Model::new(&doc, "test");
         let unit_definition = UnitDefinitionBuilder::new(&model, "test", "test").build();
         let unit = unit_definition.create_unit(UnitKind::Metre);
@@ -265,7 +274,7 @@ mod tests {
 
     #[test]
     fn test_unit_definition_builder_units() {
-        let doc = SBMLDocument::new(3, 2);
+        let doc = SBMLDocument::default();
         let model = Model::new(&doc, "test");
         let unit_definition = UnitDefinitionBuilder::new(&model, "test", "test")
             .unit(UnitKind::Metre, Some(1), Some(0), Some(1.0), Some(0.0))
@@ -279,7 +288,7 @@ mod tests {
 
     #[test]
     fn test_unit_definition_get_unit() {
-        let doc = SBMLDocument::new(3, 2);
+        let doc = SBMLDocument::default();
         let model = Model::new(&doc, "test");
         let unit_definition = model.create_unit_definition("test", "test");
         let unit = unit_definition.create_unit(UnitKind::Metre);
@@ -291,7 +300,7 @@ mod tests {
 
     #[test]
     fn test_unit_definition_get_unit_not_found() {
-        let doc = SBMLDocument::new(3, 2);
+        let doc = SBMLDocument::default();
         let model = Model::new(&doc, "test");
         let unit_definition = model.create_unit_definition("test", "test");
         let unit = unit_definition.get_unit(UnitKind::Metre);

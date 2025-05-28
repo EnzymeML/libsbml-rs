@@ -14,7 +14,7 @@ use crate::{
     clone, inner, pin_ptr,
     prelude::IntoId,
     reaction::Reaction,
-    required_property,
+    required_property, sbase,
     sbmlcxx::{self},
     sbo_term,
     traits::fromptr::FromPtr,
@@ -31,6 +31,9 @@ pub struct SpeciesReference<'a> {
 
 // Set the inner trait for the SpeciesReference struct
 inner!(sbmlcxx::SpeciesReference, SpeciesReference<'a>);
+
+// Set the sbase trait for the SpeciesReference struct
+sbase!(SpeciesReference<'a>, sbmlcxx::SpeciesReference);
 
 // Set the annotation trait for the SpeciesReference struct
 upcast_annotation!(
@@ -53,7 +56,7 @@ impl<'a> SpeciesReference<'a> {
     /// A new SpeciesReference instance
     pub(crate) fn new(
         reaction: &Reaction<'a>,
-        sid: impl IntoId<'a>,
+        sid: impl IntoId,
         ref_type: SpeciesReferenceType,
     ) -> Self {
         let species_reference_ptr = match ref_type {
@@ -171,11 +174,7 @@ impl<'a> SpeciesReferenceBuilder<'a> {
     ///
     /// # Returns
     /// A new SpeciesReferenceBuilder instance
-    pub fn new(
-        reaction: &Reaction<'a>,
-        sid: impl IntoId<'a>,
-        ref_type: SpeciesReferenceType,
-    ) -> Self {
+    pub fn new(reaction: &Reaction<'a>, sid: impl IntoId, ref_type: SpeciesReferenceType) -> Self {
         let species_reference = match ref_type {
             SpeciesReferenceType::Reactant => reaction.create_reactant(sid.into_id(), 1.0),
             SpeciesReferenceType::Product => reaction.create_product(sid.into_id(), 1.0),
@@ -256,7 +255,7 @@ mod tests {
     /// - The species ID is correctly set and retrievable
     #[test]
     fn test_create_species_reference() {
-        let doc = SBMLDocument::new(3, 2);
+        let doc = SBMLDocument::default();
         let model = doc.create_model("test_model");
         let reaction = model.create_reaction("test_reaction");
         let species_reference =
@@ -277,7 +276,7 @@ mod tests {
     /// without error using the Product reference type
     #[test]
     fn test_create_product_species_reference() {
-        let doc = SBMLDocument::new(3, 2);
+        let doc = SBMLDocument::default();
         let model = doc.create_model("test_model");
         let reaction = model.create_reaction("test_reaction");
         let species_reference =
@@ -300,7 +299,7 @@ mod tests {
     /// - The built species reference has the correct property values
     #[test]
     fn test_species_reference_builder() {
-        let doc = SBMLDocument::new(3, 2);
+        let doc = SBMLDocument::default();
         let model = doc.create_model("test_model");
         let reaction = model.create_reaction("test_reaction");
         let species_reference =
@@ -322,7 +321,7 @@ mod tests {
     /// - The annotation is wrapped in proper XML tags
     #[test]
     fn test_species_reference_builder_str_annotation() {
-        let doc = SBMLDocument::new(3, 2);
+        let doc = SBMLDocument::default();
         let model = doc.create_model("test_model");
         let reaction = model.create_reaction("test_reaction");
         let species_reference =
@@ -353,7 +352,7 @@ mod tests {
             test: String,
         }
 
-        let doc = SBMLDocument::new(3, 2);
+        let doc = SBMLDocument::default();
         let model = doc.create_model("test_model");
         let reaction = model.create_reaction("test_reaction");
         let annotation = TestAnnotation {

@@ -7,10 +7,20 @@
 
 use std::{cell::RefCell, rc::Rc};
 
-use autocxx::{c_uint, WithinUniquePtr};
-use cxx::UniquePtr;
+use autocxx::WithinUniquePtr;
+use cxx::{let_cxx_string, UniquePtr};
+use std::pin::Pin;
 
-use crate::{cast::upcast, model::Model, prelude::SBMLErrorLog, sbmlcxx, traits::fromptr::FromPtr};
+use crate::{
+    cast::upcast,
+    model::Model,
+    namespaces::SBMLNamespaces,
+    packages::{Package, PackageSpec},
+    pin_const_ptr,
+    prelude::SBMLErrorLog,
+    sbmlcxx,
+    traits::fromptr::FromPtr,
+};
 
 /// A wrapper around libSBML's SBMLDocument class that provides a safe Rust interface.
 ///
@@ -32,9 +42,26 @@ impl<'a> SBMLDocument<'a> {
     ///
     /// # Returns
     /// A new SBMLDocument instance
-    pub fn new(level: u32, version: u32) -> Self {
-        let document = sbmlcxx::SBMLDocument::new(c_uint::from(level), c_uint::from(version))
-            .within_unique_ptr();
+    pub fn new(level: u32, version: u32, packages: impl Into<Option<Vec<PackageSpec>>>) -> Self {
+        let namespaces = SBMLNamespaces::new(level, version);
+
+        // Add packages if provided
+        if let Some(packages) = packages.into() {
+            for package in packages {
+                namespaces.add_package(package);
+            }
+        }
+
+        let mut document =
+            unsafe { sbmlcxx::SBMLDocument::new1(namespaces.inner().borrow_mut().as_mut_ptr()) }
+                .within_unique_ptr();
+
+        // Enable FBC
+        if let Some(doc) = document.as_mut() {
+            let_cxx_string!(fbc = "fbc");
+            doc.setPackageRequired(&fbc, true);
+        }
+
         Self {
             document: RefCell::new(document),
             model: RefCell::new(None),
@@ -52,7 +79,7 @@ impl<'a> SBMLDocument<'a> {
     ///
     /// # Returns
     /// A new SBMLDocument instance
-    pub(crate) fn from_unique_ptr(ptr: UniquePtr<sbmlcxx::SBMLDocument>) -> Self {
+    pub(crate) fn from_unique_ptr(ptr: UniquePtr<sbmlcxx::SBMLDocument>) -> SBMLDocument<'static> {
         // Wrap the pointer in a RefCell
         let document = RefCell::new(ptr);
 
@@ -62,7 +89,7 @@ impl<'a> SBMLDocument<'a> {
             .as_mut()
             .map(|model| Rc::new(Model::from_ptr(model.getModel1())));
 
-        Self {
+        SBMLDocument {
             document,
             model: RefCell::new(model),
         }
@@ -91,6 +118,26 @@ impl<'a> SBMLDocument<'a> {
         };
 
         base.getVersion().0
+    }
+
+    /// Returns the number of plugins in the document.
+    pub fn plugins(&self) -> Vec<String> {
+        let base = unsafe {
+            upcast::<sbmlcxx::SBMLDocument, sbmlcxx::SBase>(self.document.borrow_mut().as_mut_ptr())
+        };
+
+        // Get the number of plugins
+        let n_plugins = base.getNumPlugins().0;
+
+        // Get the plugin names
+        let mut plugins = Vec::new();
+        for i in 0..n_plugins {
+            let plugin_ptr = base.getPlugin3(i.into());
+            let plugin = pin_const_ptr!(plugin_ptr, sbmlcxx::SBasePlugin);
+            plugins.push(plugin.getPackageName().to_string());
+        }
+
+        plugins
     }
 
     /// Creates a new Model within this document with the given ID.
@@ -167,8 +214,12 @@ impl<'a> std::fmt::Debug for SBMLDocument<'a> {
 }
 
 impl<'a> Default for SBMLDocument<'a> {
+    /// Creates a new SBMLDocument with the default SBML level and version, and FBC package.
+    ///
+    /// # Returns
+    /// A new SBMLDocument instance with the default SBML level and version, and FBC package.
     fn default() -> Self {
-        Self::new(3, 2)
+        Self::new(3, 2, vec![Package::Fbc(1).into()])
     }
 }
 
@@ -180,7 +231,7 @@ mod tests {
 
     #[test]
     fn test_sbmldoc_new() {
-        let doc = SBMLDocument::new(3, 2);
+        let doc = SBMLDocument::default();
         assert_eq!(doc.level(), 3);
         assert_eq!(doc.version(), 2);
     }
@@ -194,7 +245,7 @@ mod tests {
 
     #[test]
     fn test_sbmldoc_create_model() {
-        let doc = SBMLDocument::new(3, 2);
+        let doc = SBMLDocument::default();
         doc.create_model("test");
 
         let model = doc.model().expect("Model not found");
@@ -203,7 +254,7 @@ mod tests {
 
     #[test]
     fn test_sbmldoc_to_xml_string() {
-        let doc = SBMLDocument::new(3, 2);
+        let doc = SBMLDocument::default();
         doc.create_model("test");
 
         let xml_string = doc.to_xml_string();
@@ -219,7 +270,7 @@ mod tests {
 
     #[test]
     fn test_sbmldoc_check_consistency_invalid() {
-        let doc = SBMLDocument::new(3, 2);
+        let doc = SBMLDocument::default();
         let model = doc.create_model("model");
 
         // Lets add a species without a compartment
@@ -243,7 +294,7 @@ mod tests {
 
     #[test]
     fn test_sbmldoc_check_consistency_warning() {
-        let doc = SBMLDocument::new(3, 2);
+        let doc = SBMLDocument::default();
         let model = doc.create_model("model");
 
         // Lets create a parameter with nothing
@@ -259,5 +310,20 @@ mod tests {
 
         assert!(error_log.valid);
         assert_eq!(warnings, 4);
+    }
+
+    #[test]
+    fn test_sbmldoc_new_with_packages() {
+        let doc = SBMLDocument::new(3, 2, vec![Package::Fbc(1).into()]);
+        assert_eq!(doc.level(), 3);
+        assert_eq!(doc.version(), 2);
+        assert!(doc.plugins().contains(&"fbc".to_string()));
+    }
+
+    #[test]
+    fn test_sbmldoc_new_without_packages() {
+        let doc = SBMLDocument::new(3, 2, vec![]);
+        println!("{:?}", doc.plugins());
+        assert!(!doc.plugins().is_empty());
     }
 }

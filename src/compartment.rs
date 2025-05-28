@@ -12,8 +12,11 @@ use std::{cell::RefCell, pin::Pin, rc::Rc};
 use cxx::let_cxx_string;
 
 use crate::{
-    clone, inner, into_id, model::Model, optional_property, pin_ptr, required_property, sbmlcxx,
-    sbo_term, traits::fromptr::FromPtr, traits::intoid::IntoId, upcast_annotation,
+    clone, get_unit_definition, inner, into_id,
+    model::Model,
+    optional_property, pin_ptr, required_property, sbase, sbmlcxx, sbo_term,
+    traits::{fromptr::FromPtr, intoid::IntoId, sbase::SBase},
+    upcast_annotation,
 };
 
 /// A safe wrapper around the libSBML Compartment class.
@@ -28,6 +31,9 @@ pub struct Compartment<'a> {
 
 // Set the inner trait for the Compartment struct
 inner!(sbmlcxx::Compartment, Compartment<'a>);
+
+// Set the sbase trait for the Compartment struct
+sbase!(Compartment<'a>, sbmlcxx::Compartment);
 
 // Set the annotation trait for the Compartment struct
 upcast_annotation!(Compartment<'a>, sbmlcxx::Compartment, sbmlcxx::SBase);
@@ -60,6 +66,9 @@ impl<'a> Compartment<'a> {
         }
     }
 
+    // Gets the entire unit definition for the compartment.
+    get_unit_definition!(unit);
+
     // Getter and setter methods for the id property
     required_property!(Compartment<'a>, id, String, getId, setId);
 
@@ -84,7 +93,7 @@ impl<'a> Compartment<'a> {
         getUnits,
         setUnits,
         isSetUnits,
-        impl IntoId<'a>
+        impl IntoId
     );
 
     // Getter and setter methods for the size property
@@ -187,8 +196,8 @@ impl<'a> CompartmentBuilder<'a> {
     ///
     /// # Returns
     /// The builder instance for method chaining
-    pub fn unit(self, unit: impl IntoId<'a>) -> Self {
-        self.compartment.set_unit(unit);
+    pub fn unit(self, unit: impl IntoId) -> Self {
+        self.compartment.set_unit(unit.into_id());
         self
     }
 
@@ -300,7 +309,7 @@ mod tests {
 
     #[test]
     fn test_compartment_new() {
-        let doc = SBMLDocument::new(3, 2);
+        let doc = SBMLDocument::default();
         let model = Model::new(&doc, "test");
         let compartment = Compartment::new(&model, "test");
 
@@ -325,7 +334,7 @@ mod tests {
 
     #[test]
     fn test_compartment_builder() {
-        let doc = SBMLDocument::new(3, 2);
+        let doc = SBMLDocument::default();
         let model = Model::new(&doc, "test");
         let compartment = CompartmentBuilder::new(&model, "test")
             .name("test")
@@ -349,7 +358,7 @@ mod tests {
 
     #[test]
     fn test_compartment_annotation() {
-        let doc = SBMLDocument::new(3, 2);
+        let doc = SBMLDocument::default();
         let model = Model::new(&doc, "test");
         let compartment = CompartmentBuilder::new(&model, "test")
             .annotation("<test>test</test>")
@@ -376,7 +385,7 @@ mod tests {
             test: "test".to_string(),
         };
 
-        let doc = SBMLDocument::new(3, 2);
+        let doc = SBMLDocument::default();
         let model = Model::new(&doc, "test");
         let compartment = CompartmentBuilder::new(&model, "test")
             .annotation_serde(&annotation)
@@ -386,5 +395,31 @@ mod tests {
         let extracted: TestAnnotation = compartment.get_annotation_serde().unwrap();
 
         assert_eq!(extracted.test, "test");
+    }
+
+    #[test]
+    fn test_compartment_unit_definition() {
+        let doc = SBMLDocument::default();
+        let model = doc.create_model("test");
+        model
+            .build_unit_definition("ml", "milliliter")
+            .unit(UnitKind::Litre, Some(1), Some(-3), None, None)
+            .build();
+
+        let compartment = CompartmentBuilder::new(&model, "compartment")
+            .unit("ml")
+            .constant(true)
+            .build();
+
+        assert!(doc.check_consistency().valid);
+
+        let unit_definition = compartment.unit_definition().unwrap();
+        assert_eq!(unit_definition.id(), "ml");
+        assert_eq!(unit_definition.units().len(), 1);
+        assert_eq!(unit_definition.units()[0].kind(), UnitKind::Litre);
+        assert_eq!(unit_definition.units()[0].exponent(), 1);
+        assert_eq!(unit_definition.units()[0].scale(), -3);
+        assert_eq!(unit_definition.units()[0].multiplier(), 1.0);
+        assert_eq!(unit_definition.units()[0].offset(), 0.0);
     }
 }

@@ -8,7 +8,7 @@
 //! The script requires vcpkg to be properly configured to find the dependencies.
 //! Use `cargo install cargo-vcpkg && cargo vcpkg build` to install all dependencies.
 
-use std::process::Command;
+use std::{path::PathBuf, process::Command};
 
 use autocxx_build::BuilderError;
 
@@ -27,8 +27,16 @@ fn main() -> Result<(), BuilderError> {
     println!("cargo:rerun-if-changed=build.rs");
     println!("cargo:rerun-if-changed=src/lib.rs");
 
-    // Set up vcpkg and get required libraries
-    let libsbml = setup_vcpkg()?;
+    let (include_paths, cargo_metadata) =
+        if let Ok((paths, link_paths)) = from_pkg_config("libsbml") {
+            // If libsbml is already installed, we don't need to do anything
+            println!("cargo:warning=libsbml is already installed");
+            (paths, link_paths)
+        } else {
+            // If libsbml is not installed, we need to install it
+            let libsbml = setup_vcpkg()?;
+            (libsbml.include_paths, libsbml.cargo_metadata.clone())
+        };
 
     // Configure autocxx to generate Rust bindings
     let rs_file = "src/lib.rs";
@@ -37,17 +45,21 @@ fn main() -> Result<(), BuilderError> {
     let mut b = autocxx_build::Builder::new(
         rs_file,
         std::iter::once(".")
-            .chain(libsbml.include_paths.iter().map(|p| p.to_str().unwrap()))
+            .chain(include_paths.iter().map(|p| p.to_str().unwrap()))
             .collect::<Vec<_>>(),
     )
     .build()?;
 
+    // Ensure correct Clang args are used
+    println!("cargo:rustc-env=BINDGEN_EXTRA_CLANG_ARGS=-D_GNU_SOURCE");
+
     // Ensure C++17 is used for compilation and disable warnings
     b.flag_if_supported("-std=c++17")
+        .flag_if_supported("-std=gnu++17")
         .flag_if_supported("-w") // Disable all warnings
         .compile("sbmlrs");
 
-    link_lib(&libsbml.cargo_metadata);
+    link_lib(&cargo_metadata);
 
     // Add BCrypt for Windows build (needed by libxml2)
     if cfg!(target_os = "windows") {
@@ -87,7 +99,9 @@ fn setup_vcpkg() -> Result<vcpkg::Library, BuilderError> {
     let target_dir = get_vcpkg_dir();
 
     // Create the vcpkg directory if it doesn't exist
-    std::fs::create_dir_all(&target_dir).expect("Failed to create vcpkg directory");
+    if !target_dir.exists() {
+        std::fs::create_dir_all(&target_dir).expect("Failed to create vcpkg directory");
+    }
 
     // Set VCPKG_ROOT environment variable for the cargo vcpkg build command
     std::env::set_var("VCPKG_ROOT", &target_dir);
@@ -131,4 +145,32 @@ fn get_vcpkg_dir() -> std::path::PathBuf {
 
     // When publishing, we need to install dependencies in the temporary package dir
     std::path::Path::new(&manifest_dir).join("target/vcpkg")
+}
+
+/// Helper function to process and print pkg-config metadata for linking libraries
+///
+/// # Arguments
+/// * `pkg_config` - A string containing the pkg-config name of the library
+///
+/// # Returns
+/// * `Result<(), String>` - Success or error result
+fn from_pkg_config(pkg_config: &str) -> Result<(Vec<PathBuf>, Vec<String>), String> {
+    if let Ok(use_vcpkg) = std::env::var("USE_VCPKG") {
+        if use_vcpkg.to_lowercase() != "false" {
+            return Err("USE_VCPKG is set, so we don't need to use pkg-config".to_string());
+        }
+    }
+
+    let lib = pkg_config::probe_library(pkg_config).map_err(|e| e.to_string())?;
+
+    for path in lib.include_paths.iter() {
+        println!("cargo:include={}", path.to_str().unwrap());
+    }
+
+    let mut cargo_metadata = Vec::new();
+    for lib in lib.libs {
+        cargo_metadata.push(format!("cargo:rustc-link-lib={}", lib));
+    }
+
+    Ok((lib.include_paths.clone(), cargo_metadata))
 }

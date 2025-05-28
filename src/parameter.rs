@@ -13,13 +13,12 @@ use std::{cell::RefCell, pin::Pin, rc::Rc};
 use cxx::let_cxx_string;
 
 use crate::{
-    clone, inner, into_id,
+    clone, get_unit_definition, inner, into_id,
     model::Model,
-    optional_property, pin_ptr, required_property,
+    optional_property, pin_ptr, required_property, sbase,
     sbmlcxx::{self},
     sbo_term,
-    traits::fromptr::FromPtr,
-    traits::intoid::IntoId,
+    traits::{fromptr::FromPtr, intoid::IntoId, sbase::SBase},
     upcast_annotation,
 };
 
@@ -33,6 +32,9 @@ pub struct Parameter<'a> {
 
 // Set the inner trait for the Parameter struct
 inner!(sbmlcxx::Parameter, Parameter<'a>);
+
+// Set the sbase trait for the Parameter struct
+sbase!(Parameter<'a>, sbmlcxx::Parameter);
 
 // Set the annotation trait for the Parameter struct
 upcast_annotation!(Parameter<'a>, sbmlcxx::Parameter, sbmlcxx::SBase);
@@ -68,6 +70,9 @@ impl<'a> Parameter<'a> {
         }
     }
 
+    // Gets the unit definition for the parameter
+    get_unit_definition!(units);
+
     // Getter and setter for id
     required_property!(Parameter<'a>, id, String, getId, setId);
 
@@ -85,7 +90,7 @@ impl<'a> Parameter<'a> {
         getUnits,
         setUnits,
         isSetUnits,
-        impl IntoId<'a>
+        impl IntoId
     );
 
     // Getter and setter for constant
@@ -174,7 +179,7 @@ impl<'a> ParameterBuilder<'a> {
     ///
     /// # Returns
     /// The builder instance for method chaining
-    pub fn units(self, units: impl IntoId<'a>) -> Self {
+    pub fn units(self, units: impl IntoId) -> Self {
         self.parameter.set_units(units.into_id());
         self
     }
@@ -234,7 +239,7 @@ mod tests {
     use serde::{Deserialize, Serialize};
 
     use super::*;
-    use crate::{model::Model, sbmldoc::SBMLDocument};
+    use crate::{model::Model, sbmldoc::SBMLDocument, unit::UnitKind};
 
     #[test]
     fn test_parameter_creation() {
@@ -336,5 +341,56 @@ mod tests {
             .get_annotation_serde()
             .expect("Failed to get annotation");
         assert_eq!(extracted.test, "test");
+    }
+
+    #[test]
+    fn test_parameter_unit_definition() {
+        let doc = SBMLDocument::default();
+        let model = doc.create_model("test");
+
+        // Create the unit definition
+        model
+            .build_unit_definition("ml", "milliliter")
+            .unit(UnitKind::Litre, Some(-1), Some(-3), None, None)
+            .build();
+
+        model
+            .build_unit_definition("M", "Molar")
+            .unit(UnitKind::Mole, Some(1), Some(1), None, None)
+            .unit(UnitKind::Litre, Some(-1), Some(1), None, None)
+            .build();
+
+        model
+            .build_compartment("compartment")
+            .unit("ml")
+            .constant(true)
+            .build();
+
+        let parameter = model.build_parameter("parameter").units("M").build();
+
+        let valid = doc.check_consistency();
+
+        if !valid.valid {
+            println!("{:#?}", valid.errors);
+            panic!("Invalid SBML document");
+        }
+
+        let unit_definition = parameter.unit_definition().unwrap();
+        assert_eq!(unit_definition.id(), "M");
+        assert_eq!(unit_definition.units().len(), 2);
+
+        // Mole
+        assert_eq!(unit_definition.units()[0].kind(), UnitKind::Mole);
+        assert_eq!(unit_definition.units()[0].exponent(), 1);
+        assert_eq!(unit_definition.units()[0].scale(), 1);
+        assert_eq!(unit_definition.units()[0].multiplier(), 1.0);
+        assert_eq!(unit_definition.units()[0].offset(), 0.0);
+
+        // Litre
+        assert_eq!(unit_definition.units()[1].kind(), UnitKind::Litre);
+        assert_eq!(unit_definition.units()[1].exponent(), -1);
+        assert_eq!(unit_definition.units()[1].scale(), 1);
+        assert_eq!(unit_definition.units()[1].multiplier(), 1.0);
+        assert_eq!(unit_definition.units()[1].offset(), 0.0);
     }
 }
