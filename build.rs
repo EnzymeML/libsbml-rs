@@ -84,6 +84,13 @@ fn main() -> Result<(), BuilderError> {
         // Don't link zipper here - we'll do it after libCombine to ensure proper order
     }
 
+    // Platform-specific zlib linking
+    if cfg!(target_os = "windows") {
+        println!("cargo:rustc-link-lib=zlib");
+    } else {
+        println!("cargo:rustc-link-lib=z");
+    }
+
     let libcombine_include_path = if !std::path::Path::new(&combine_lib_path).exists() {
         println!("cargo:warning=Building libCombine (first time or after clean)");
         build_libcombine(&include_paths, &lib_paths)
@@ -96,13 +103,6 @@ fn main() -> Result<(), BuilderError> {
 
     // Link libraries in the correct order (dependencies last) - critical for Linux
     println!("cargo:rustc-link-lib=static=Zipper-static");
-
-    // Platform-specific zlib linking
-    if cfg!(target_os = "windows") {
-        println!("cargo:rustc-link-lib=zlib");
-    } else {
-        println!("cargo:rustc-link-lib=z");
-    }
 
     include_paths.push(libcombine_include_path);
 
