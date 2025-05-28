@@ -386,7 +386,7 @@ macro_rules! set_collection_annotation {
             ///
             /// # Returns
             /// Result containing the deserialized type or a deserialization error
-            pub fn [<get_ $collection_name _annotation_serde>]<T: for<'de> Deserialize<'de>>(&'a self) -> Result<T, Box<dyn Error>> {
+            pub fn [<get_ $collection_name _annotation_serde>]<T: for<'de> Deserialize<'de>>(&'a self) -> Result<T, quick_xml::DeError> {
                 let collection = $collection_type::new(self);
                 Ok(collection.get_annotation_serde()?)
             }
