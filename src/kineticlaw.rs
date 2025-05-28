@@ -9,7 +9,6 @@
 //! - Mathematical formulas (e.g., "k * S1 * S2")
 //! - Local parameters specific to the reaction
 //! - References to global parameters and species
-//! - Units of measurement for the rate
 //!
 //! This wrapper provides safe access to the underlying C++ libSBML KineticLaw class while
 //! maintaining Rust's safety guarantees through the use of RefCell and Pin.
