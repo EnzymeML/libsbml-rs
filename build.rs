@@ -267,11 +267,11 @@ fn build_libcombine(include_paths: &[PathBuf], lib_paths: &[String]) -> PathBuf 
 
     // Set XML libraries that libSBML uses
     if cfg!(target_os = "macos") {
-        config.define("EXTRA_LIBS", "xml2;z;iconv");
+        config.define("EXTRA_LIBS", "expat;z;iconv");
     } else if cfg!(target_os = "linux") {
-        config.define("EXTRA_LIBS", "xml2;bz2;z");
+        config.define("EXTRA_LIBS", "expat;z");
     } else if cfg!(target_os = "windows") {
-        config.define("EXTRA_LIBS", "xml2;z");
+        config.define("EXTRA_LIBS", "expat;z");
     }
 
     // Disable unnecessary features - ESPECIALLY TESTS!
