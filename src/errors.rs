@@ -4,4 +4,6 @@ pub enum LibSBMLError {
     PluginNotFound(String),
     #[error("Invalid argument: {0}")]
     InvalidArgument(String),
+    #[error("Combine archive error: {0}")]
+    CombineArchiveError(String),
 }

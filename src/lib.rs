@@ -107,6 +107,9 @@ pub mod fbc {
     pub mod objectivetype;
 }
 
+/// Combine package types
+pub mod combine;
+
 /// Helper macros for working with SBML components
 pub mod macros;
 
@@ -176,6 +179,9 @@ pub(crate) mod sbmlcxx {
     include_cpp! {
         // Includes //
         #include "sbml/SBMLTypes.h"
+        #include "combine/combinearchive.h"
+        #include "combine/knownformats.h"
+        #include "omex/CaTypes.h"
         #include "sbml/packages/fbc/common/FbcExtensionTypes.h"
         safety!(unsafe_ffi)
 
@@ -235,6 +241,11 @@ pub(crate) mod sbmlcxx {
         generate!("ListOfSpecies")
         generate!("ListOfReactions")
         generate!("ListOfUnitDefinitions")
+
+        // Combine types
+        generate!("CombineArchive")
+        generate!("CaContent")
+        generate!("KnownFormats")
     }
 
     pub use ffi::*;
