@@ -147,9 +147,18 @@ impl FromPtr<sbmlcxx::UnitDefinition> for UnitDefinition<'_> {
     /// A new UnitDefinition instance
     fn from_ptr(ptr: *mut sbmlcxx::UnitDefinition) -> Self {
         let unit_definition = pin_ptr!(ptr, sbmlcxx::UnitDefinition);
+        let unit_definition = RefCell::new(unit_definition);
+
+        let n_units = unit_definition.borrow().getNumUnits().0;
+        let units: Vec<_> = (0..n_units)
+            .map(|i| {
+                let unit = unit_definition.borrow_mut().as_mut().getUnit(i.into());
+                Rc::new(Unit::from_ptr(unit))
+            })
+            .collect();
         Self {
-            inner: RefCell::new(unit_definition),
-            units: RefCell::new(Vec::new()),
+            inner: unit_definition,
+            units: RefCell::new(units),
         }
     }
 }
