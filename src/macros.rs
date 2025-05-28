@@ -429,3 +429,27 @@ macro_rules! sbase {
         }
     };
 }
+
+/// A macro to implement derived unit definition methods for a type.
+///
+/// This macro generates methods for accessing the derived unit definition for a type
+/// that supports this functionality in libSBML.
+///
+/// # Arguments
+/// * `$type` - The Rust wrapper type (e.g. Compartment<'a>)
+/// * `$cxx_type` - The C++ type that is being wrapped (e.g. sbmlcxx::Compartment)
+#[macro_export]
+macro_rules! get_unit_definition {
+    ($property:ident) => {
+        pub fn unit_definition(&self) -> Option<Rc<$crate::unitdef::UnitDefinition<'a>>> {
+            let model_ptr = self.base().getModel();
+            let model = Model::from_ptr(model_ptr as *mut $crate::sbmlcxx::Model);
+
+            if let Some(unit) = self.$property() {
+                model.get_unit_definition(&unit)
+            } else {
+                None
+            }
+        }
+    };
+}

@@ -12,10 +12,10 @@ use std::{cell::RefCell, pin::Pin, rc::Rc};
 use cxx::let_cxx_string;
 
 use crate::{
-    clone, inner, into_id,
+    clone, get_unit_definition, inner, into_id,
     model::Model,
     optional_property, pin_ptr, required_property, sbase, sbmlcxx, sbo_term,
-    traits::{fromptr::FromPtr, intoid::IntoId},
+    traits::{fromptr::FromPtr, intoid::IntoId, sbase::SBase},
     upcast_annotation,
 };
 
@@ -65,6 +65,9 @@ impl<'a> Compartment<'a> {
             inner: RefCell::new(compartment),
         }
     }
+
+    // Gets the entire unit definition for the compartment.
+    get_unit_definition!(unit);
 
     // Getter and setter methods for the id property
     required_property!(Compartment<'a>, id, String, getId, setId);
@@ -392,5 +395,31 @@ mod tests {
         let extracted: TestAnnotation = compartment.get_annotation_serde().unwrap();
 
         assert_eq!(extracted.test, "test");
+    }
+
+    #[test]
+    fn test_compartment_unit_definition() {
+        let doc = SBMLDocument::default();
+        let model = doc.create_model("test");
+        model
+            .build_unit_definition("ml", "milliliter")
+            .unit(UnitKind::Litre, Some(1), Some(-3), None, None)
+            .build();
+
+        let compartment = CompartmentBuilder::new(&model, "compartment")
+            .unit("ml")
+            .constant(true)
+            .build();
+
+        assert!(doc.check_consistency().valid);
+
+        let unit_definition = compartment.unit_definition().unwrap();
+        assert_eq!(unit_definition.id(), "ml");
+        assert_eq!(unit_definition.units().len(), 1);
+        assert_eq!(unit_definition.units()[0].kind(), UnitKind::Litre);
+        assert_eq!(unit_definition.units()[0].exponent(), 1);
+        assert_eq!(unit_definition.units()[0].scale(), -3);
+        assert_eq!(unit_definition.units()[0].multiplier(), 1.0);
+        assert_eq!(unit_definition.units()[0].offset(), 0.0);
     }
 }
