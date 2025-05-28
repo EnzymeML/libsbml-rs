@@ -81,14 +81,6 @@ fn main() -> Result<(), BuilderError> {
     } else {
         println!("cargo:warning=Zipper library already exists, skipping build");
         println!("cargo:rustc-link-search=native={}/lib", out_dir);
-        // Don't link zipper here - we'll do it after libCombine to ensure proper order
-    }
-
-    // Platform-specific zlib linking
-    if cfg!(target_os = "windows") {
-        println!("cargo:rustc-link-lib=zlib");
-    } else {
-        println!("cargo:rustc-link-lib=z");
     }
 
     let libcombine_include_path = if !std::path::Path::new(&combine_lib_path).exists() {
@@ -301,7 +293,6 @@ fn build_libcombine(include_paths: &[PathBuf], lib_paths: &[String]) -> PathBuf 
 
     println!("cargo:rustc-link-search=native={}/lib", dst.display());
     println!("cargo:rustc-link-lib=static=Combine-static");
-    // Dependencies (Zipper, zlib) are linked in main() for proper order
 
     dst.join("include")
 }
