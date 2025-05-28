@@ -43,7 +43,7 @@ macro_rules! pin_ptr {
 macro_rules! pin_const_ptr {
     ($name:ident, $type:ty) => {{
         let ref_ptr: &$type = unsafe { &*$name };
-        unsafe { Pin::new_unchecked(ref_ptr) }
+        unsafe { std::pin::Pin::new_unchecked(ref_ptr) }
     }};
 }
 

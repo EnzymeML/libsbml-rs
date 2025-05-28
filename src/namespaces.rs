@@ -1,4 +1,3 @@
-use std::pin::Pin;
 use std::{cell::RefCell, collections::HashMap};
 
 use autocxx::WithinUniquePtr;

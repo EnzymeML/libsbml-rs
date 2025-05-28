@@ -9,7 +9,6 @@ use std::{cell::RefCell, rc::Rc};
 
 use autocxx::WithinUniquePtr;
 use cxx::{let_cxx_string, UniquePtr};
-use std::pin::Pin;
 
 use crate::{
     cast::upcast,
