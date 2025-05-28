@@ -1,12 +1,28 @@
-//! Build script for SBML Rust bindings
+//! Build script for SBML, libCombine and related Rust bindings
 //!
-//! This script handles:
-//! 1. Finding the required libraries (libxml2 and libSBML) using vcpkg
-//! 2. Generating Rust bindings to the C++ code using autocxx
-//! 3. Configuring the build environment and linking
+//! This script handles the complete build process for Rust bindings to SBML and libCombine:
 //!
-//! The script requires vcpkg to be properly configured to find the dependencies.
-//! Use `cargo install cargo-vcpkg && cargo vcpkg build` to install all dependencies.
+//! 1. Dependency Management:
+//!    - Installs cargo-vcpkg if not already installed
+//!    - Configures vcpkg to install C++ dependencies (libxml2, libSBML, etc.)
+//!    - Alternatively uses pkg-config if system libraries are available
+//!
+//! 2. Library Building:
+//!    - Compiles the Zipper library (needed for OMEX archives)
+//!    - Builds libCombine with proper configuration for the current platform
+//!    - Ensures all dependencies are properly linked
+//!
+//! 3. Rust Binding Generation:
+//!    - Uses autocxx to generate Rust bindings to the C++ libraries
+//!    - Configures include paths and compiler flags
+//!    - Handles platform-specific requirements (Windows, macOS, Linux)
+//!
+//! 4. Optimization:
+//!    - Implements smart rebuilding to avoid unnecessary compilation
+//!    - Checks if libraries already exist before rebuilding
+//!
+//! The script supports multiple platforms and handles the complexities of
+//! cross-platform C++ library building and linking.
 
 use std::{path::PathBuf, process::Command};
 
@@ -236,9 +252,10 @@ fn build_libcombine(include_paths: &[PathBuf], lib_paths: &[String]) -> PathBuf 
 
     // Configure dependencies for libCombine
     let out_dir = std::env::var("OUT_DIR").unwrap();
+    let libsbml_lib = find_libsbml_lib_file(&lib_paths[0]).expect("Failed to find libsbml library");
 
     // Point to the libsbml library we just built
-    config.define("LIBSBML_LIBRARY", lib_paths[0].clone());
+    config.define("LIBSBML_LIBRARY", libsbml_lib.to_str().unwrap());
     config.define("LIBSBML_INCLUDE_DIR", include_paths[0].clone());
 
     // Point to the zipper library we just built
@@ -279,4 +296,25 @@ fn build_libcombine(include_paths: &[PathBuf], lib_paths: &[String]) -> PathBuf 
     println!("cargo:rustc-link-lib=static=Combine-static");
 
     dst.join("include")
+}
+
+fn find_libsbml_lib_file(lib_path: &str) -> Result<PathBuf, String> {
+    // Get all files in the lib directory that contain "sbml"
+    let entries = std::fs::read_dir(&lib_path)
+        .unwrap_or_else(|_| panic!("Failed to read directory: {}", lib_path))
+        .filter_map(|entry| entry.ok())
+        .map(|entry| entry.path())
+        .filter(|path| {
+            path.file_name()
+                .and_then(|name| name.to_str())
+                .map(|name| name.to_lowercase().contains("sbml"))
+                .unwrap_or(false)
+        })
+        .collect::<Vec<_>>();
+
+    // Return the first match or fall back to the default
+    entries
+        .first()
+        .cloned()
+        .ok_or_else(|| format!("No libsbml library found in {}", lib_path))
 }
