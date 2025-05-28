@@ -1,0 +1,6 @@
+[submodule "submodules/libCombine"]
+	path = submodules/libCombine
+	url = https://github.com/sbmlteam/libCombine.git
+[submodule "submodules/zipper"]
+	path = submodules/zipper
+	url = https://github.com/fbergmann/zipper.git
