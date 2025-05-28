@@ -27,7 +27,11 @@ fn main() -> Result<(), BuilderError> {
     println!("cargo:rerun-if-changed=build.rs");
     println!("cargo:rerun-if-changed=src/lib.rs");
 
-    let (include_paths, cargo_metadata) =
+    // Add rerun conditions for C++ dependencies to avoid unnecessary rebuilds
+    println!("cargo:rerun-if-changed=submodules/zipper");
+    println!("cargo:rerun-if-changed=cmake/libcombine_wrapper");
+
+    let (mut include_paths, cargo_metadata) =
         if let Ok((paths, link_paths)) = from_pkg_config("libsbml") {
             // If libsbml is already installed, we don't need to do anything
             println!("cargo:warning=libsbml is already installed");
@@ -40,6 +44,33 @@ fn main() -> Result<(), BuilderError> {
 
     // Configure autocxx to generate Rust bindings
     let rs_file = "src/lib.rs";
+
+    // Only build C++ libraries if they haven't been built yet or if sources changed
+    let out_dir = std::env::var("OUT_DIR").unwrap();
+    let zipper_lib_path = format!("{}/lib/libZipper-static.a", out_dir);
+    let combine_lib_path = format!("{}/lib/libCombine-static.a", out_dir);
+
+    if !std::path::Path::new(&zipper_lib_path).exists() {
+        println!("cargo:warning=Building zipper library (first time or after clean)");
+        build_zipper();
+    } else {
+        println!("cargo:warning=Zipper library already exists, skipping build");
+        println!("cargo:rustc-link-search=native={}/lib", out_dir);
+        println!("cargo:rustc-link-lib=static=Zipper-static");
+        println!("cargo:rustc-link-lib=z"); // zlib dependency
+    }
+
+    let libcombine_include_path = if !std::path::Path::new(&combine_lib_path).exists() {
+        println!("cargo:warning=Building libCombine (first time or after clean)");
+        build_libcombine()
+    } else {
+        println!("cargo:warning=libCombine already exists, skipping build");
+        println!("cargo:rustc-link-search=native={}/lib", out_dir);
+        println!("cargo:rustc-link-lib=static=Combine-static");
+        std::path::PathBuf::from(&out_dir).join("include")
+    };
+
+    include_paths.push(libcombine_include_path);
 
     // Build the C++ wrapper code and bindings
     let mut b = autocxx_build::Builder::new(
@@ -173,4 +204,61 @@ fn from_pkg_config(pkg_config: &str) -> Result<(Vec<PathBuf>, Vec<String>), Stri
     }
 
     Ok((lib.include_paths.clone(), cargo_metadata))
+}
+
+fn build_zipper() {
+    let dst = cmake::Config::new("./submodules/zipper")
+        .define("BUILD_TEST", "OFF") // Disable tests
+        .build();
+
+    println!("cargo:rustc-link-search=native={}/lib", dst.display());
+    println!("cargo:rustc-link-lib=static=Zipper-static");
+    // CRITICAL: Add zlib dependency that zipper needs
+    println!("cargo:rustc-link-lib=z");
+}
+
+fn build_libcombine() -> PathBuf {
+    let mut config = cmake::Config::new("cmake/libcombine_wrapper");
+
+    // Configure dependencies for libCombine
+    let out_dir = std::env::var("OUT_DIR").unwrap();
+
+    // Point to the zipper library we just built
+    config.define(
+        "ZIPPER_LIBRARY",
+        format!("{}/lib/libZipper-static.a", out_dir),
+    );
+    config.define("ZIPPER_INCLUDE_DIR", format!("{}/include", out_dir));
+
+    // Set XML libraries that libSBML uses
+    if cfg!(target_os = "macos") {
+        config.define("EXTRA_LIBS", "xml2;z;iconv");
+    } else if cfg!(target_os = "linux") {
+        config.define("EXTRA_LIBS", "xml2;bz2;z");
+    } else if cfg!(target_os = "windows") {
+        config.define("EXTRA_LIBS", "xml2;z");
+    }
+
+    // Disable unnecessary features - ESPECIALLY TESTS!
+    config.define("WITH_EXAMPLES", "OFF");
+    config.define("WITH_CHECK", "OFF");
+    config.define("WITH_DOXYGEN", "OFF");
+    config.define("LIBCOMBINE_SKIP_SHARED_LIBRARY", "ON");
+
+    // Disable all language bindings
+    config.define("WITH_CSHARP", "OFF");
+    config.define("WITH_JAVA", "OFF");
+    config.define("WITH_PYTHON", "OFF");
+    config.define("WITH_PERL", "OFF");
+    config.define("WITH_RUBY", "OFF");
+    config.define("WITH_R", "OFF");
+    config.define("WITH_OCTAVE", "OFF");
+    config.define("WITH_MATLAB", "OFF");
+
+    let dst = config.build();
+
+    println!("cargo:rustc-link-search=native={}/lib", dst.display());
+    println!("cargo:rustc-link-lib=static=Combine-static");
+
+    dst.join("include")
 }
