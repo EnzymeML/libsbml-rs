@@ -102,6 +102,7 @@ fn main() -> Result<(), BuilderError> {
     if !std::path::Path::new(&zipper_lib_path).exists() {
         println!("cargo:warning=Building zipper library (first time or after clean)");
         build_zipper(&zlib_include, &zlib_library);
+        println!("cargo:rustc-link-search=native={}/lib", out_dir);
     } else {
         println!("cargo:warning=Zipper library already exists, skipping build");
         println!("cargo:rustc-link-search=native={}/lib", out_dir);
