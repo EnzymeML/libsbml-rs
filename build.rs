@@ -277,6 +277,9 @@ fn build_libcombine(
 ) -> PathBuf {
     let mut config = cmake::Config::new("cmake/libcombine_wrapper");
 
+    println!("cargo:warning=zlib_include: {:?}", zlib_include);
+    println!("cargo:warning=zlib_library: {:?}", zlib_library);
+
     // Configure dependencies for libCombine
     let out_dir = std::env::var("OUT_DIR").unwrap();
     let libsbml_lib = find_libsbml_lib_file(&lib_paths[0]).expect("Failed to find libsbml library");
