@@ -265,6 +265,11 @@ fn build_zipper(zlib_include: &Option<String>, zlib_library: &Option<String>) {
     let mut config = cmake::Config::new("./submodules/zipper");
     config.define("BUILD_TEST", "OFF");
 
+    // Define WIN32 macro on Windows to ensure proper conditional compilation
+    if cfg!(target_os = "windows") {
+        config.define("EXTRA_DEFS", "WIN32");
+    }
+
     if let Some(zlib_include) = zlib_include {
         config.define("ZLIB_INCLUDE_DIR", zlib_include);
     }
