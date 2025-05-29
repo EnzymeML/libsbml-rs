@@ -67,54 +67,53 @@ fn main() -> Result<(), BuilderError> {
             )
         };
 
-    let (zlib_include, zlib_library) = if cfg!(target_os = "windows") {
+    // Detect zlib and expat consistently across platforms when using vcpkg
+    let (zlib_include, zlib_library, expat_include, expat_library) = if let Ok((_, _, _)) =
+        from_pkg_config("libsbml")
+    {
+        // If using system libraries, don't override anything
+        println!("cargo:warning=Using system libraries via pkg-config");
+        (None, None, None, None)
+    } else {
+        // Using vcpkg, so find both zlib and expat
+        println!("cargo:warning=Using vcpkg libraries");
         let target_dir = get_vcpkg_dir();
+
+        // Find zlib
         let zlib = vcpkg::Config::new()
-            .vcpkg_root(target_dir)
-            .find_package("zlib")
-            .expect("Failed to find zlib. Use `cargo install cargo-vcpkg && cargo vcpkg build` to install all dependencies.");
+                .vcpkg_root(target_dir.clone())
+                .find_package("zlib")
+                .expect("Failed to find zlib. Use `cargo install cargo-vcpkg && cargo vcpkg build` to install all dependencies.");
         link_lib(&zlib.cargo_metadata);
-        let include_path = zlib
+        let zlib_include_path = zlib
             .include_paths
             .first()
             .expect("Failed to find zlib include path");
-        let lib = zlib
+        let zlib_lib = zlib
             .found_libs
             .first()
             .expect("Failed to find zlib library");
 
-        (
-            Some(include_path.to_str().unwrap().to_string()),
-            Some(lib.to_str().unwrap().to_string()),
-        )
-    } else {
-        (None, None)
-    };
-
-    // Add expat detection for all platforms when using vcpkg
-    let (expat_include, expat_library) = if let Ok((_, _, _)) = from_pkg_config("libsbml") {
-        // If using system libraries, don't override expat
-        (None, None)
-    } else {
-        // Using vcpkg, so find expat
-        let target_dir = get_vcpkg_dir();
+        // Find expat
         let expat = vcpkg::Config::new()
-            .vcpkg_root(target_dir)
-            .find_package("expat")
-            .expect("Failed to find expat. Use `cargo install cargo-vcpkg && cargo vcpkg build` to install all dependencies.");
+                .vcpkg_root(target_dir)
+                .find_package("expat")
+                .expect("Failed to find expat. Use `cargo install cargo-vcpkg && cargo vcpkg build` to install all dependencies.");
         link_lib(&expat.cargo_metadata);
-        let include_path = expat
+        let expat_include_path = expat
             .include_paths
             .first()
             .expect("Failed to find expat include path");
-        let lib = expat
+        let expat_lib = expat
             .found_libs
             .first()
             .expect("Failed to find expat library");
 
         (
-            Some(include_path.to_str().unwrap().to_string()),
-            Some(lib.to_str().unwrap().to_string()),
+            Some(zlib_include_path.to_str().unwrap().to_string()),
+            Some(zlib_lib.to_str().unwrap().to_string()),
+            Some(expat_include_path.to_str().unwrap().to_string()),
+            Some(expat_lib.to_str().unwrap().to_string()),
         )
     };
 
@@ -123,13 +122,20 @@ fn main() -> Result<(), BuilderError> {
 
     // Only build C++ libraries if they haven't been built yet or if sources changed
     let out_dir = std::env::var("OUT_DIR").unwrap();
-    let zipper_lib_path = format!("{}/lib/libZipper-static.a", out_dir);
-    let combine_lib_path = format!("{}/lib/libCombine-static.a", out_dir);
+
+    // Use platform-appropriate file extensions
+    let (zipper_lib_name, combine_lib_name) = if cfg!(target_os = "windows") {
+        ("Zipper-static.lib", "Combine-static.lib")
+    } else {
+        ("libZipper-static.a", "libCombine-static.a")
+    };
+
+    let zipper_lib_path = format!("{}/lib/{}", out_dir, zipper_lib_name);
+    let combine_lib_path = format!("{}/lib/{}", out_dir, combine_lib_name);
 
     if !std::path::Path::new(&zipper_lib_path).exists() {
         println!("cargo:warning=Building zipper library (first time or after clean)");
         build_zipper(&zlib_include, &zlib_library);
-        println!("cargo:rustc-link-search=native={}/lib", out_dir);
     } else {
         println!("cargo:warning=Zipper library already exists, skipping build");
         println!("cargo:rustc-link-search=native={}/lib", out_dir);
