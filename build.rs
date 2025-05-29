@@ -67,6 +67,16 @@ fn main() -> Result<(), BuilderError> {
             )
         };
 
+    if cfg!(target_os = "windows") {
+        let target_dir = get_vcpkg_dir();
+        let zlib = vcpkg::Config::new()
+            .vcpkg_root(target_dir)
+            .find_package("zlib")
+            .expect("Failed to find zlib. Use `cargo install cargo-vcpkg && cargo vcpkg build` to install all dependencies.");
+
+        link_lib(&zlib.cargo_metadata);
+    }
+
     // Configure autocxx to generate Rust bindings
     let rs_file = "src/lib.rs";
 
