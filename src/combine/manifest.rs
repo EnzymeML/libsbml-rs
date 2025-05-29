@@ -11,7 +11,7 @@
 
 use std::{fmt::Display, str::FromStr};
 
-use quick_xml::SeError;
+use quick_xml::{se::Serializer, SeError};
 use serde::{Deserialize, Serialize};
 
 use super::error::CombineArchiveError;
@@ -116,7 +116,11 @@ impl OmexManifest {
     /// * `Ok(String)` - The serialized XML string
     /// * `Err(SeError)` - Error during serialization
     pub fn to_xml(&self) -> Result<String, SeError> {
-        quick_xml::se::to_string(self)
+        let mut buffer = String::new();
+        let mut ser = Serializer::new(&mut buffer);
+        ser.indent(' ', 4);
+        self.serialize(ser)?;
+        Ok(buffer)
     }
 
     /// Deserialize the manifest from XML string
