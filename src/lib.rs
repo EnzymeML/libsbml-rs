@@ -145,6 +145,7 @@ pub use traits::annotation::Annotation;
 
 /// Prelude module providing convenient imports of commonly used types
 pub mod prelude {
+    pub use crate::combine::combinearchive::*;
     pub use crate::compartment::Compartment;
     pub use crate::fbc::*;
     pub use crate::kineticlaw::*;
