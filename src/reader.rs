@@ -38,7 +38,7 @@ impl SBMLReader {
     ///
     /// # Returns
     /// An SBMLDocument instance containing the parsed model
-    pub fn from_xml_string(xml: &str) -> SBMLDocument<'static> {
+    pub fn from_xml_string(xml: &str) -> SBMLDocument {
         let reader = Self::new();
         // Create an owned String to ensure the data persists
         let owned_xml = xml.to_string();
@@ -130,7 +130,7 @@ mod tests {
         assert_eq!(list_of_assignment_rules.len(), 0);
     }
 
-    fn read_sbml_file(path: &PathBuf) -> Result<SBMLDocument<'static>, LibSBMLError> {
+    fn read_sbml_file(path: &PathBuf) -> Result<SBMLDocument, LibSBMLError> {
         let xml = std::fs::read_to_string(path).unwrap();
         Ok(SBMLReader::from_xml_string(&xml))
     }

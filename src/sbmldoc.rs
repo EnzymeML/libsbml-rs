@@ -26,14 +26,12 @@ use crate::{
 ///
 /// The SBMLDocument is the top-level container for an SBML model and associated data.
 /// It maintains the SBML level and version, and contains a single optional Model.
-pub struct SBMLDocument<'a> {
+pub struct SBMLDocument {
     /// The underlying libSBML document, wrapped in RefCell to allow interior mutability
     document: RefCell<UniquePtr<sbmlcxx::SBMLDocument>>,
-    /// The optional Model contained in this document
-    model: RefCell<Option<Rc<Model<'a>>>>,
 }
 
-impl<'a> SBMLDocument<'a> {
+impl SBMLDocument {
     /// Creates a new SBMLDocument with the specified SBML level and version.
     ///
     /// # Arguments
@@ -64,7 +62,6 @@ impl<'a> SBMLDocument<'a> {
 
         Self {
             document: RefCell::new(document),
-            model: RefCell::new(None),
         }
     }
 
@@ -79,20 +76,11 @@ impl<'a> SBMLDocument<'a> {
     ///
     /// # Returns
     /// A new SBMLDocument instance
-    pub(crate) fn from_unique_ptr(ptr: UniquePtr<sbmlcxx::SBMLDocument>) -> SBMLDocument<'static> {
+    pub(crate) fn from_unique_ptr(ptr: UniquePtr<sbmlcxx::SBMLDocument>) -> SBMLDocument {
         // Wrap the pointer in a RefCell
         let document = RefCell::new(ptr);
 
-        // Grab the model from the document
-        let model = document
-            .borrow_mut()
-            .as_mut()
-            .map(|model| Rc::new(Model::from_ptr(model.getModel1())));
-
-        SBMLDocument {
-            document,
-            model: RefCell::new(model),
-        }
+        SBMLDocument { document }
     }
 
     /// Returns a reference to the underlying libSBML document.
@@ -147,15 +135,22 @@ impl<'a> SBMLDocument<'a> {
     ///
     /// # Returns
     /// A reference to the newly created Model
-    pub fn create_model(&self, id: &str) -> Rc<Model<'a>> {
-        let model = Rc::new(Model::new(self, id));
-        self.model.borrow_mut().replace(Rc::clone(&model));
-        model
+    pub fn create_model<'a>(&'a self, id: &str) -> Rc<Model<'a>> {
+        Rc::new(Model::new(self, id))
     }
 
     /// Returns a reference to the Model if one exists.
-    pub fn model(&self) -> Option<Rc<Model<'a>>> {
-        self.model.borrow().as_ref().map(Rc::clone)
+    pub fn model<'a>(&'a self) -> Option<Rc<Model<'a>>> {
+        // Check if a model exists in the document
+        let has_model = self.document.borrow_mut().as_mut()?.getModel1().is_null() == false;
+
+        if has_model {
+            Some(Rc::new(Model::from_ptr(
+                self.document.borrow_mut().as_mut()?.getModel1(),
+            )))
+        } else {
+            None
+        }
     }
 
     /// Converts the SBML document to an XML string representation.
@@ -203,7 +198,7 @@ impl<'a> SBMLDocument<'a> {
     }
 }
 
-impl<'a> std::fmt::Debug for SBMLDocument<'a> {
+impl std::fmt::Debug for SBMLDocument {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut ds = f.debug_struct("SBMLDocument");
         ds.field("level", &self.level());
@@ -213,7 +208,7 @@ impl<'a> std::fmt::Debug for SBMLDocument<'a> {
     }
 }
 
-impl<'a> Default for SBMLDocument<'a> {
+impl Default for SBMLDocument {
     /// Creates a new SBMLDocument with the default SBML level and version, and FBC package.
     ///
     /// # Returns
@@ -325,5 +320,24 @@ mod tests {
         let doc = SBMLDocument::new(3, 2, vec![]);
         println!("{:?}", doc.plugins());
         assert!(!doc.plugins().is_empty());
+    }
+
+    #[test]
+    fn test_sbmldoc_lifetime_changes() {
+        // Test that we can create a document and model without lifetime issues
+        let doc = SBMLDocument::default();
+        let model = doc.create_model("test_model");
+
+        // Test that we can create species and other components
+        let species = model.create_species("test_species");
+        assert_eq!(species.id(), "test_species");
+
+        // Test that we can get the model back
+        let retrieved_model = doc.model().expect("Model should exist");
+        assert_eq!(retrieved_model.id(), "test_model");
+
+        // Test that the document doesn't have lifetime parameters
+        let _xml = doc.to_xml_string();
+        assert!(!_xml.is_empty());
     }
 }
