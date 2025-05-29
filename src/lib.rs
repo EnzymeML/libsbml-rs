@@ -168,9 +168,10 @@ pub mod prelude {
 
 pub mod combine {
     pub use crate::combine::combinearchive::*;
+    pub use crate::combine::manifest::KnownFormats;
     pub mod combinearchive;
     pub mod error;
-    mod manifest;
+    pub mod manifest;
 }
 
 /// Internal module containing the raw FFI bindings to libSBML.
