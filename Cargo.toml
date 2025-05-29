@@ -46,10 +46,8 @@ dependencies = ["libsbml[core,expat,zlib,fbc]"]
 [package.metadata.vcpkg.target]
 x86_64-pc-windows-msvc = { dependencies = [
     "libsbml[core,expat,zlib,fbc]",
-    "zlib",
 ], triplet = "x64-windows-static-md" }
 
 x86_64-pc-windows-gnu = { dependencies = [
     "libsbml[core,expat,zlib,fbc]",
-    "zlib",
 ], triplet = "x64-windows-static-md" }
