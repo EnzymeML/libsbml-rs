@@ -142,7 +142,7 @@ impl SBMLDocument {
     /// Returns a reference to the Model if one exists.
     pub fn model<'a>(&'a self) -> Option<Rc<Model<'a>>> {
         // Check if a model exists in the document
-        let has_model = self.document.borrow_mut().as_mut()?.getModel1().is_null() == false;
+        let has_model = self.document.borrow_mut().as_mut()?.isSetModel();
 
         if has_model {
             Some(Rc::new(Model::from_ptr(
