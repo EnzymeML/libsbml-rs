@@ -101,7 +101,7 @@ impl OmexManifest {
         }
 
         self.content.push(Content {
-            location: location.into(),
+            location,
             format: format.into(),
             master,
         });
@@ -172,6 +172,7 @@ impl Content {
 ///
 /// This enum provides a type-safe way to work with well-known format identifiers.
 #[derive(Debug, Clone, PartialEq)]
+#[allow(clippy::upper_case_acronyms)]
 pub enum KnownFormats {
     /// Systems Biology Markup Language (SBML)
     SBML,
@@ -266,7 +267,7 @@ mod tests {
             .unwrap();
 
         assert_eq!(manifest.content.len(), 4);
-        assert_eq!(manifest.content[2].master, true);
+        assert!(manifest.content[2].master);
         assert_eq!(manifest.content[0].location, ".");
     }
 
@@ -327,7 +328,7 @@ mod tests {
             manifest.xmlns,
             "http://identifiers.org/combine.specifications/omex-manifest"
         );
-        assert_eq!(manifest.content[2].master, true);
+        assert!(manifest.content[2].master);
         assert_eq!(manifest.content[2].location, "./model.xml");
     }
 
@@ -394,7 +395,7 @@ mod tests {
         );
 
         assert_eq!(manifest.content[0].location, "./sbml.xml");
-        assert_eq!(manifest.content[0].master, false);
+        assert!(!manifest.content[0].master);
 
         manifest
             .add_entry("./sedml.xml", KnownFormats::SEDML, false)
@@ -404,7 +405,7 @@ mod tests {
             "http://identifiers.org/combine.specifications/sed"
         );
         assert_eq!(manifest.content[1].location, "./sedml.xml");
-        assert_eq!(manifest.content[1].master, false);
+        assert!(!manifest.content[1].master);
 
         manifest
             .add_entry("./sbgn.xml", KnownFormats::SBGN, false)
@@ -414,7 +415,7 @@ mod tests {
             "http://identifiers.org/combine.specifications/sbgn"
         );
         assert_eq!(manifest.content[2].location, "./sbgn.xml");
-        assert_eq!(manifest.content[2].master, false);
+        assert!(!manifest.content[2].master);
     }
 
     #[test]

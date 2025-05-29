@@ -516,7 +516,7 @@ mod tests {
     #[test]
     fn test_open_archive_to_sbml() {
         let archive_path = Path::new("tests/data/test.omex");
-        let mut archive = CombineArchive::open(&archive_path).unwrap();
+        let mut archive = CombineArchive::open(archive_path).unwrap();
 
         // Get the master SBML file
         let master = archive.master().unwrap();
