@@ -184,6 +184,10 @@ pub enum KnownFormats {
     SEDML,
     /// Systems Biology Graphical Notation (SBGN)
     SBGN,
+    /// Tab-separated values (TSV)
+    TSV,
+    /// Comma-separated values (CSV)
+    CSV,
 }
 
 impl FromStr for KnownFormats {
@@ -208,6 +212,10 @@ impl FromStr for KnownFormats {
                 Ok(KnownFormats::SEDML)
             }
             "http://identifiers.org/combine.specifications/sbgn" | "sbgn" => Ok(KnownFormats::SBGN),
+            "https://purl.org/NET/mediatypes/text/tab-separated-values" | "tsv" => {
+                Ok(KnownFormats::TSV)
+            }
+            "https://purl.org/NET/mediatypes/text/csv" | "csv" => Ok(KnownFormats::CSV),
             _ => Err(format!("Unknown format: {}", s)),
         }
     }
@@ -229,6 +237,11 @@ impl Display for KnownFormats {
                 write!(f, "http://identifiers.org/combine.specifications/sed")
             }
             KnownFormats::SBGN => write!(f, "http://identifiers.org/combine.specifications/sbgn"),
+            KnownFormats::TSV => write!(
+                f,
+                "https://purl.org/NET/mediatypes/text/tab-separated-values"
+            ),
+            KnownFormats::CSV => write!(f, "https://purl.org/NET/mediatypes/text/csv"),
         }
     }
 }
