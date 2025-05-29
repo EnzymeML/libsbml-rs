@@ -91,6 +91,33 @@ fn main() -> Result<(), BuilderError> {
         (None, None)
     };
 
+    // Add expat detection for all platforms when using vcpkg
+    let (expat_include, expat_library) = if let Ok((_, _, _)) = from_pkg_config("libsbml") {
+        // If using system libraries, don't override expat
+        (None, None)
+    } else {
+        // Using vcpkg, so find expat
+        let target_dir = get_vcpkg_dir();
+        let expat = vcpkg::Config::new()
+            .vcpkg_root(target_dir)
+            .find_package("expat")
+            .expect("Failed to find expat. Use `cargo install cargo-vcpkg && cargo vcpkg build` to install all dependencies.");
+        link_lib(&expat.cargo_metadata);
+        let include_path = expat
+            .include_paths
+            .first()
+            .expect("Failed to find expat include path");
+        let lib = expat
+            .found_libs
+            .first()
+            .expect("Failed to find expat library");
+
+        (
+            Some(include_path.to_str().unwrap().to_string()),
+            Some(lib.to_str().unwrap().to_string()),
+        )
+    };
+
     // Configure autocxx to generate Rust bindings
     let rs_file = "src/lib.rs";
 
@@ -110,7 +137,14 @@ fn main() -> Result<(), BuilderError> {
 
     let libcombine_include_path = if !std::path::Path::new(&combine_lib_path).exists() {
         println!("cargo:warning=Building libCombine (first time or after clean)");
-        build_libcombine(&include_paths, &lib_paths, &zlib_include, &zlib_library)
+        build_libcombine(
+            &include_paths,
+            &lib_paths,
+            &zlib_include,
+            &zlib_library,
+            &expat_include,
+            &expat_library,
+        )
     } else {
         println!("cargo:warning=libCombine already exists, skipping build");
         println!("cargo:rustc-link-search=native={}/lib", out_dir);
@@ -288,11 +322,15 @@ fn build_libcombine(
     lib_paths: &[String],
     zlib_include: &Option<String>,
     zlib_library: &Option<String>,
+    expat_include: &Option<String>,
+    expat_library: &Option<String>,
 ) -> PathBuf {
     let mut config = cmake::Config::new("cmake/libcombine_wrapper");
 
     println!("cargo:warning=zlib_include: {:?}", zlib_include);
     println!("cargo:warning=zlib_library: {:?}", zlib_library);
+    println!("cargo:warning=expat_include: {:?}", expat_include);
+    println!("cargo:warning=expat_library: {:?}", expat_library);
 
     // Configure dependencies for libCombine
     let out_dir = std::env::var("OUT_DIR").unwrap();
@@ -308,6 +346,14 @@ fn build_libcombine(
     }
     if let Some(zlib_library) = zlib_library {
         config.define("ZLIB_LIBRARY", zlib_library);
+    }
+
+    // Point to the expat library from vcpkg
+    if let Some(expat_include) = expat_include {
+        config.define("EXPAT_INCLUDE_DIR", expat_include);
+    }
+    if let Some(expat_library) = expat_library {
+        config.define("EXPAT_LIBRARY", expat_library);
     }
 
     // Point to the zipper library we just built
