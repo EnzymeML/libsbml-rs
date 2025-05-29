@@ -523,14 +523,18 @@ mod tests {
         let xml_string = master.as_string().unwrap();
 
         let expected_path = Path::new("tests/data/expected_omex_content.xml");
-        let expected_content = fs::read_to_string(expected_path).unwrap();
+        let expected_content = fs::read_to_string(expected_path)
+            .unwrap()
+            .replace("\r\n", "\n");
         assert_eq!(xml_string, expected_content);
 
         // Check the CSV content
         let csv_entry = archive.entry("./data.tsv").unwrap();
         let csv_string = csv_entry.as_string().unwrap();
         let expected_csv_path = Path::new("tests/data/expected_omex_data.tsv");
-        let expected_csv_content = fs::read_to_string(expected_csv_path).unwrap();
+        let expected_csv_content = fs::read_to_string(expected_csv_path)
+            .unwrap()
+            .replace("\r\n", "\n");
         assert_eq!(csv_string, expected_csv_content);
     }
 
