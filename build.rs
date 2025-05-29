@@ -101,7 +101,7 @@ fn main() -> Result<(), BuilderError> {
 
     if !std::path::Path::new(&zipper_lib_path).exists() {
         println!("cargo:warning=Building zipper library (first time or after clean)");
-        build_zipper();
+        build_zipper(&zlib_include, &zlib_library);
     } else {
         println!("cargo:warning=Zipper library already exists, skipping build");
         println!("cargo:rustc-link-search=native={}/lib", out_dir);
@@ -261,10 +261,18 @@ fn from_pkg_config(pkg_config: &str) -> Result<(Vec<PathBuf>, Vec<String>, Vec<S
     Ok((lib.include_paths.clone(), cargo_metadata, link_paths))
 }
 
-fn build_zipper() {
-    let dst = cmake::Config::new("./submodules/zipper")
-        .define("BUILD_TEST", "OFF") // Disable tests
-        .build();
+fn build_zipper(zlib_include: &Option<String>, zlib_library: &Option<String>) {
+    let mut config = cmake::Config::new("./submodules/zipper");
+    config.define("BUILD_TEST", "OFF");
+
+    if let Some(zlib_include) = zlib_include {
+        config.define("ZLIB_INCLUDE_DIR", zlib_include);
+    }
+    if let Some(zlib_library) = zlib_library {
+        config.define("ZLIB_LIBRARY", zlib_library);
+    }
+
+    let dst = config.build();
 
     println!("cargo:rustc-link-search=native={}/lib", dst.display());
 }
