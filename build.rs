@@ -310,8 +310,9 @@ fn build_libcombine(
     }
 
     // Point to the zipper library we just built
-    let zipper_lib = find_zipper_lib_file(&out_dir.join("lib").to_str().unwrap())
-        .expect("Failed to find zipper library");
+    let lib_dir = std::path::Path::new(&out_dir).join("lib");
+    let zipper_lib =
+        find_zipper_lib_file(lib_dir.to_str().unwrap()).expect("Failed to find zipper library");
     println!("cargo:warning=zipper_lib: {:?}", zipper_lib);
     config.define("ZIPPER_LIBRARY", zipper_lib.to_str().unwrap());
     config.define("ZIPPER_INCLUDE_DIR", format!("{}/include", out_dir));
