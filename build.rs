@@ -67,15 +67,29 @@ fn main() -> Result<(), BuilderError> {
             )
         };
 
-    if cfg!(target_os = "windows") {
+    let (zlib_include, zlib_library) = if cfg!(target_os = "windows") {
         let target_dir = get_vcpkg_dir();
         let zlib = vcpkg::Config::new()
             .vcpkg_root(target_dir)
             .find_package("zlib")
             .expect("Failed to find zlib. Use `cargo install cargo-vcpkg && cargo vcpkg build` to install all dependencies.");
-
         link_lib(&zlib.cargo_metadata);
-    }
+        let include_path = zlib
+            .include_paths
+            .first()
+            .expect("Failed to find zlib include path");
+        let lib = zlib
+            .found_libs
+            .first()
+            .expect("Failed to find zlib library");
+
+        (
+            Some(include_path.to_str().unwrap().to_string()),
+            Some(lib.to_str().unwrap().to_string()),
+        )
+    } else {
+        (None, None)
+    };
 
     // Configure autocxx to generate Rust bindings
     let rs_file = "src/lib.rs";
@@ -95,7 +109,7 @@ fn main() -> Result<(), BuilderError> {
 
     let libcombine_include_path = if !std::path::Path::new(&combine_lib_path).exists() {
         println!("cargo:warning=Building libCombine (first time or after clean)");
-        build_libcombine(&include_paths, &lib_paths)
+        build_libcombine(&include_paths, &lib_paths, &zlib_include, &zlib_library)
     } else {
         println!("cargo:warning=libCombine already exists, skipping build");
         println!("cargo:rustc-link-search=native={}/lib", out_dir);
@@ -255,7 +269,12 @@ fn build_zipper() {
     println!("cargo:rustc-link-search=native={}/lib", dst.display());
 }
 
-fn build_libcombine(include_paths: &[PathBuf], lib_paths: &[String]) -> PathBuf {
+fn build_libcombine(
+    include_paths: &[PathBuf],
+    lib_paths: &[String],
+    zlib_include: &Option<String>,
+    zlib_library: &Option<String>,
+) -> PathBuf {
     let mut config = cmake::Config::new("cmake/libcombine_wrapper");
 
     // Configure dependencies for libCombine
@@ -265,6 +284,14 @@ fn build_libcombine(include_paths: &[PathBuf], lib_paths: &[String]) -> PathBuf 
     // Point to the libsbml library we just built
     config.define("LIBSBML_LIBRARY", libsbml_lib.to_str().unwrap());
     config.define("LIBSBML_INCLUDE_DIR", include_paths[0].clone());
+
+    // Point to the zlib library we just built
+    if let Some(zlib_include) = zlib_include {
+        config.define("ZLIB_INCLUDE_DIR", zlib_include);
+    }
+    if let Some(zlib_library) = zlib_library {
+        config.define("ZLIB_LIBRARY", zlib_library);
+    }
 
     // Point to the zipper library we just built
     config.define(
