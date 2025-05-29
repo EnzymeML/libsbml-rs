@@ -165,6 +165,13 @@ pub mod prelude {
     pub use crate::unitdef::*;
 }
 
+pub mod combine {
+    pub use crate::combine::combinearchive::*;
+    pub mod combinearchive;
+    pub mod error;
+    mod manifest;
+}
+
 /// Internal module containing the raw FFI bindings to libSBML.
 ///
 /// This module uses autocxx to generate safe Rust bindings to the C++ libSBML classes.
