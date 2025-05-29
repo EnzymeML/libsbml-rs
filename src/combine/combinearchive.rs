@@ -273,6 +273,38 @@ impl CombineArchive {
         Err(CombineArchiveError::FileNotFound(location.to_string()))
     }
 
+    /// Retrieves an entry from the archive by format.
+    ///
+    /// This method returns the first entry with the specified format.
+    ///
+    /// # Arguments
+    ///
+    /// * `format` - Format identifier for the file
+    ///
+    /// # Returns
+    ///
+    /// Returns an `Entry` for the first entry with the specified format, or an error
+    /// if no entry with the specified format is found.
+    ///
+    /// # Errors
+    ///
+    /// * `CombineArchiveError::FileNotFound` - If no entry with the specified format is found
+    pub fn entry_by_format(
+        &mut self,
+        format: impl Into<String>,
+    ) -> Result<Entry, CombineArchiveError> {
+        let format = format.into();
+        let location = self
+            .manifest
+            .content
+            .iter()
+            .find(|c| c.format == format)
+            .ok_or(CombineArchiveError::FileNotFound(format.to_string()))?
+            .location
+            .clone();
+        self.entry(&location)
+    }
+
     /// Retrieves the master file of the archive.
     ///
     /// The master file is the primary file in a COMBINE Archive, typically
@@ -496,6 +528,8 @@ impl Entry {
 
 #[cfg(test)]
 mod tests {
+    use crate::combine::KnownFormats;
+
     use super::*;
     use std::fs;
     use tempfile::TempDir;
@@ -1178,5 +1212,21 @@ mod tests {
         assert_eq!(data.as_string().unwrap(), "{\"data\": [1,2,3]}");
         assert_eq!(data.content.format, "application/json");
         assert!(!data.content.master);
+    }
+
+    #[test]
+    fn test_entry_by_format() {
+        let mut archive = CombineArchive::new();
+        archive
+            .add_entry(
+                "./model.xml",
+                KnownFormats::SBML,
+                true,
+                b"<model>v1</model>".as_slice(),
+            )
+            .unwrap();
+
+        let entry = archive.entry_by_format(KnownFormats::SBML).unwrap();
+        assert_eq!(entry.as_string().unwrap(), "<model>v1</model>");
     }
 }
