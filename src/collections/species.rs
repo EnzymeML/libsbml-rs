@@ -25,3 +25,50 @@ impl<'a> ListOfSpecies<'a> {
 // Derive the inner type from the ListOfSpecies type
 inner!(sbmlcxx::ListOfSpecies, ListOfSpecies<'a>);
 upcast_annotation!(ListOfSpecies<'a>, sbmlcxx::ListOfSpecies, sbmlcxx::SBase);
+
+#[cfg(test)]
+mod tests {
+    use serde::{Deserialize, Serialize};
+
+    use crate::sbmldoc::SBMLDocument;
+
+    #[test]
+    fn test_list_of_species_annotation_serde() {
+        let doc = SBMLDocument::default();
+        let model = doc.create_model("test");
+
+        #[derive(Serialize, Deserialize)]
+        struct TestAnnotation {
+            test: String,
+        }
+
+        let annotation = TestAnnotation {
+            test: "Test".to_string(),
+        };
+
+        model.set_species_annotation_serde(&annotation).unwrap();
+
+        let annotation: TestAnnotation = model.get_species_annotation_serde().unwrap();
+        assert_eq!(annotation.test, "Test");
+    }
+
+    #[test]
+    fn test_list_of_species_annotation() {
+        let doc = SBMLDocument::default();
+        let model = doc.create_model("test");
+
+        let annotation = "<test>Test</test>";
+        model
+            .set_species_annotation(annotation)
+            .expect("Failed to set annotation");
+
+        let annotation = model.get_species_annotation();
+        assert_eq!(
+            annotation
+                .replace("\n", "")
+                .replace("\r", "")
+                .replace(" ", ""),
+            "<annotation><test>Test</test></annotation>"
+        );
+    }
+}
