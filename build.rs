@@ -310,10 +310,9 @@ fn build_libcombine(
     }
 
     // Point to the zipper library we just built
-    config.define(
-        "ZIPPER_LIBRARY",
-        format!("{}/lib/libZipper-static.a", out_dir),
-    );
+    let zipper_lib = find_zipper_lib_file(&out_dir).expect("Failed to find zipper library");
+    println!("cargo:warning=zipper_lib: {:?}", zipper_lib);
+    config.define("ZIPPER_LIBRARY", zipper_lib.to_str().unwrap());
     config.define("ZIPPER_INCLUDE_DIR", format!("{}/include", out_dir));
 
     // Set XML libraries that libSBML uses
@@ -367,4 +366,25 @@ fn find_libsbml_lib_file(lib_path: &str) -> Result<PathBuf, String> {
         .first()
         .cloned()
         .ok_or_else(|| format!("No libsbml library found in {}", lib_path))
+}
+
+fn find_zipper_lib_file(lib_path: &str) -> Result<PathBuf, String> {
+    // Get all files in the lib directory that contain "zipper"
+    let entries = std::fs::read_dir(&lib_path)
+        .unwrap_or_else(|_| panic!("Failed to read directory: {}", lib_path))
+        .filter_map(|entry| entry.ok())
+        .map(|entry| entry.path())
+        .filter(|path| {
+            path.file_name()
+                .and_then(|name| name.to_str())
+                .map(|name| name.to_lowercase().contains("zipper"))
+                .unwrap_or(false)
+        })
+        .collect::<Vec<_>>();
+
+    // Return the first match or fall back to the default
+    entries
+        .first()
+        .cloned()
+        .ok_or_else(|| format!("No zipper library found in {}", lib_path))
 }
