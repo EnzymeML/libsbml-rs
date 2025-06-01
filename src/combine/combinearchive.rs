@@ -49,9 +49,37 @@ impl CombineArchive {
     ///
     /// The archive will have an empty manifest and no associated file path.
     /// Use [`add_entry`](Self::add_entry) or [`add_file`](Self::add_file) to add content.
+    ///
+    /// # Mandatory Entries
+    ///
+    /// Every COMBINE Archive automatically includes two mandatory entries:
+    /// - Archive self-reference at location "." with format "http://identifiers.org/combine.specifications/omex"
+    /// - Manifest reference at location "./manifest.xml" with format "http://identifiers.org/combine.specifications/omex-manifest"
+    ///
+    /// These entries are added automatically and cannot be removed.
     pub fn new() -> Self {
+        let mut manifest = OmexManifest::new();
+
+        // Add mandatory entries
+        // Note: We ignore the error here because we know these entries don't exist yet
+        manifest
+            .add_entry(
+                ".",
+                "http://identifiers.org/combine.specifications/omex",
+                false,
+            )
+            .expect("Failed to add mandatory archive entry");
+
+        manifest
+            .add_entry(
+                "./manifest.xml",
+                "http://identifiers.org/combine.specifications/omex-manifest",
+                false,
+            )
+            .expect("Failed to add mandatory manifest entry");
+
         Self {
-            manifest: OmexManifest::new(),
+            manifest,
             path: None,
             original_zip: None,
             pending_entries: HashMap::new(),
@@ -78,13 +106,41 @@ impl CombineArchive {
     ///
     /// * `CombineArchiveError::Io` - If the file cannot be read
     /// * `CombineArchiveError::Zip` - If the file is not a valid ZIP archive
-    /// * `CombineArchiveError::Manifest` - If the manifest.xml is missing or invalid
+    /// * `CombineArchiveError::ManifestFileMissing` - If the manifest.xml file is missing
+    /// * `CombineArchiveError::Manifest` - If the manifest.xml is invalid
+    ///
+    /// # Mandatory Entries
+    ///
+    /// If the opened archive doesn't contain the archive self-reference entry (for backwards compatibility),
+    /// it will be automatically added:
+    /// - Archive self-reference at location "."
+    ///
+    /// The manifest reference at "./manifest.xml" must exist in the archive or an error will be thrown.
     pub fn open<P: AsRef<Path>>(path: P) -> Result<Self, CombineArchiveError> {
         let path_buf = path.as_ref().to_path_buf();
         let zip_data = std::fs::read(&path_buf)?;
 
-        // Extract and parse the manifest
-        let manifest = Self::extract_manifest(&zip_data)?;
+        // Extract and parse the manifest - this will fail if manifest.xml doesn't exist
+        let mut manifest = Self::extract_manifest(&zip_data)?;
+
+        // Ensure archive self-reference entry is present (for backwards compatibility)
+        // The manifest.xml entry should already be present in the manifest since we read it from the file
+        if !manifest.has_location(".") {
+            manifest.add_entry(
+                ".",
+                "http://identifiers.org/combine.specifications/omex",
+                false,
+            )?;
+        }
+
+        // Ensure manifest entry is present in the manifest content (for backwards compatibility)
+        if !manifest.has_location("./manifest.xml") {
+            manifest.add_entry(
+                "./manifest.xml",
+                "http://identifiers.org/combine.specifications/omex-manifest",
+                false,
+            )?;
+        }
 
         Ok(Self {
             manifest,
@@ -200,11 +256,28 @@ impl CombineArchive {
     ///
     /// * `location` - Location of the entry to remove (e.g., "./model.xml")
     ///
+    /// # Errors
+    ///
+    /// * `CombineArchiveError::CannotRemoveMandatoryEntry` - If attempting to remove mandatory entries
+    ///
+    /// # Mandatory Entries
+    ///
+    /// The following entries cannot be removed as they are mandatory for OMEX archives:
+    /// - "." (archive self-reference)
+    /// - "./manifest.xml" (manifest reference)
+    ///
     /// # Note
     ///
     /// Removing the master file will leave the archive without a master file,
     /// which may make it invalid according to the COMBINE specification.
     pub fn remove_entry(&mut self, location: &str) -> Result<(), CombineArchiveError> {
+        // Check if trying to remove mandatory entries
+        if location == "." || location == "./manifest.xml" {
+            return Err(CombineArchiveError::CannotRemoveMandatoryEntry(
+                location.to_string(),
+            ));
+        }
+
         let zip_location = location.replace("./", "");
 
         // Remove from manifest
@@ -425,10 +498,21 @@ impl CombineArchive {
     /// Extracts and parses the manifest from ZIP data.
     fn extract_manifest(zip_data: &[u8]) -> Result<OmexManifest, CombineArchiveError> {
         let mut archive = ZipArchive::new(Cursor::new(zip_data))?;
+
+        // Check if manifest.xml exists in the archive
         let mut manifest_buf = Vec::new();
-        archive
-            .by_name("manifest.xml")?
-            .read_to_end(&mut manifest_buf)?;
+        match archive.by_name("manifest.xml") {
+            Ok(mut file) => {
+                file.read_to_end(&mut manifest_buf)?;
+            }
+            Err(zip::result::ZipError::FileNotFound) => {
+                return Err(CombineArchiveError::ManifestFileMissing);
+            }
+            Err(e) => {
+                return Err(CombineArchiveError::Zip(e));
+            }
+        }
+
         let manifest = OmexManifest::from_xml(&String::from_utf8(manifest_buf).unwrap())?;
         Ok(manifest)
     }
@@ -541,10 +625,13 @@ mod tests {
     #[test]
     fn test_new_archive_creation() {
         let archive = CombineArchive::new();
-        assert_eq!(archive.list_entries().len(), 0);
+        assert_eq!(archive.list_entries().len(), 2);
         assert!(!archive.has_entry("./test.xml"));
         assert!(archive.path.is_none());
         assert!(!archive.needs_rebuild);
+
+        assert!(archive.has_entry("."));
+        assert!(archive.has_entry("./manifest.xml"));
     }
 
     #[test]
@@ -585,7 +672,7 @@ mod tests {
             )
             .unwrap();
 
-        assert_eq!(archive.list_entries().len(), 1);
+        assert_eq!(archive.list_entries().len(), 3);
         assert!(archive.has_entry("./model.xml"));
         assert!(archive.needs_rebuild);
 
@@ -625,7 +712,7 @@ mod tests {
             )
             .unwrap();
 
-        assert_eq!(archive.list_entries().len(), 3);
+        assert_eq!(archive.list_entries().len(), 5);
         assert!(archive.has_entry("./model.xml"));
         assert!(archive.has_entry("./data.csv"));
         assert!(archive.has_entry("./script.py"));
@@ -683,7 +770,7 @@ mod tests {
 
         // Load from disk
         let mut loaded_archive = CombineArchive::open(&archive_path).unwrap();
-        assert_eq!(loaded_archive.list_entries().len(), 2);
+        assert_eq!(loaded_archive.list_entries().len(), 4);
         assert!(loaded_archive.has_entry("./model.xml"));
         assert!(loaded_archive.has_entry("./data.csv"));
 
@@ -732,11 +819,11 @@ mod tests {
 
         // Load and mutate
         let mut loaded_archive = CombineArchive::open(&archive_path).unwrap();
-        assert_eq!(loaded_archive.list_entries().len(), 3);
+        assert_eq!(loaded_archive.list_entries().len(), 5);
 
         // Remove an entry
         loaded_archive.remove_entry("./data1.csv").unwrap();
-        assert_eq!(loaded_archive.list_entries().len(), 2);
+        assert_eq!(loaded_archive.list_entries().len(), 4);
         assert!(!loaded_archive.has_entry("./data1.csv"));
         assert!(loaded_archive.has_entry("./data2.csv"));
 
@@ -749,7 +836,7 @@ mod tests {
                 b"print('new script')".as_slice(),
             )
             .unwrap();
-        assert_eq!(loaded_archive.list_entries().len(), 3);
+        assert_eq!(loaded_archive.list_entries().len(), 5);
         assert!(loaded_archive.has_entry("./script.py"));
 
         // Modify existing entry (overwrite)
@@ -767,7 +854,7 @@ mod tests {
 
         // Reload and verify mutations
         let mut final_archive = CombineArchive::open(&archive_path).unwrap();
-        assert_eq!(final_archive.list_entries().len(), 3);
+        assert_eq!(final_archive.list_entries().len(), 5);
         assert!(!final_archive.has_entry("./data1.csv"));
         assert!(final_archive.has_entry("./data2.csv"));
         assert!(final_archive.has_entry("./script.py"));
@@ -840,7 +927,7 @@ mod tests {
         let mut final_archive = CombineArchive::open(&archive_path).unwrap();
 
         // Verify final state
-        assert_eq!(final_archive.list_entries().len(), 5); // 1,3,5 + new1,new2
+        assert_eq!(final_archive.list_entries().len(), 7);
         assert!(final_archive.has_entry("./file1.txt"));
         assert!(!final_archive.has_entry("./file2.txt"));
         assert!(final_archive.has_entry("./file3.txt"));
@@ -926,6 +1013,12 @@ mod tests {
 
         // Test opening non-existent file
         assert!(CombineArchive::open("./nonexistent.omex").is_err());
+
+        // Test opening invalid ZIP file
+        let temp_dir = create_test_dir();
+        let invalid_file = temp_dir.path().join("invalid.omex");
+        std::fs::write(&invalid_file, b"not a zip file").unwrap();
+        assert!(CombineArchive::open(&invalid_file).is_err());
     }
 
     #[test]
@@ -984,7 +1077,7 @@ mod tests {
         // Should have updated content
         let entry = archive.entry("./test.txt").unwrap();
         assert_eq!(entry.as_string().unwrap(), "updated");
-        assert_eq!(archive.list_entries().len(), 1); // Should not duplicate
+        assert_eq!(archive.list_entries().len(), 3);
     }
 
     #[test]
@@ -1030,7 +1123,7 @@ mod tests {
 
         // Load and verify all entries
         let mut loaded = CombineArchive::open(&archive_path).unwrap();
-        assert_eq!(loaded.list_entries().len(), 100);
+        assert_eq!(loaded.list_entries().len(), 102);
 
         // Verify random entries
         for i in [0, 25, 50, 75, 99] {
@@ -1046,12 +1139,12 @@ mod tests {
             loaded.remove_entry(&format!("./file{:03}.txt", i)).unwrap();
         }
 
-        assert_eq!(loaded.list_entries().len(), 50);
+        assert_eq!(loaded.list_entries().len(), 52);
         loaded.save_changes().unwrap();
 
         // Reload and verify
         let final_archive = CombineArchive::open(&archive_path).unwrap();
-        assert_eq!(final_archive.list_entries().len(), 50);
+        assert_eq!(final_archive.list_entries().len(), 52);
     }
 
     #[test]
@@ -1068,7 +1161,7 @@ mod tests {
             )
             .unwrap();
 
-        assert_eq!(archive.list_entries().len(), 1);
+        assert_eq!(archive.list_entries().len(), 3);
         let entry = archive.entry("./test.txt").unwrap();
         assert_eq!(entry.as_string().unwrap(), "original content");
 
@@ -1082,8 +1175,8 @@ mod tests {
             )
             .unwrap();
 
-        // Should still have only one entry
-        assert_eq!(archive.list_entries().len(), 1);
+        // Should still have same number of entries
+        assert_eq!(archive.list_entries().len(), 3);
         let entry = archive.entry("./test.txt").unwrap();
         assert_eq!(entry.as_string().unwrap(), "updated content");
         assert_eq!(entry.content.format, "text/plain");
@@ -1104,7 +1197,7 @@ mod tests {
             )
             .unwrap();
 
-        assert_eq!(archive.list_entries().len(), 1);
+        assert_eq!(archive.list_entries().len(), 3);
 
         // Update with different format - should replace manifest entry
         archive
@@ -1116,8 +1209,8 @@ mod tests {
             )
             .unwrap();
 
-        // Should still have only one entry but with new format
-        assert_eq!(archive.list_entries().len(), 1);
+        // Should still have same number of entries but with new format
+        assert_eq!(archive.list_entries().len(), 3);
         let entry = archive.entry("./test.txt").unwrap();
         assert_eq!(entry.as_string().unwrap(), "{\"updated\": true}");
         assert_eq!(entry.content.format, "application/json");
@@ -1133,7 +1226,7 @@ mod tests {
             .add_entry("./test.txt", "text/plain", false, b"content".as_slice())
             .unwrap();
 
-        assert_eq!(archive.list_entries().len(), 1);
+        assert_eq!(archive.list_entries().len(), 3);
         assert!(!archive.entry("./test.txt").unwrap().content.master);
 
         // Update with same format but different master flag
@@ -1146,8 +1239,8 @@ mod tests {
             )
             .unwrap();
 
-        // Should still have only one entry but now as master
-        assert_eq!(archive.list_entries().len(), 1);
+        // Should still have same number of entries but now as master
+        assert_eq!(archive.list_entries().len(), 3);
         let entry = archive.entry("./test.txt").unwrap();
         assert_eq!(entry.as_string().unwrap(), "master content");
         assert_eq!(entry.content.format, "text/plain");
@@ -1201,7 +1294,7 @@ mod tests {
 
         // Reload and verify
         let mut final_archive = CombineArchive::open(&archive_path).unwrap();
-        assert_eq!(final_archive.list_entries().len(), 2);
+        assert_eq!(final_archive.list_entries().len(), 4);
 
         let model = final_archive.entry("./model.xml").unwrap();
         assert_eq!(model.as_string().unwrap(), "<model>v2</model>");
@@ -1228,5 +1321,292 @@ mod tests {
 
         let entry = archive.entry_by_format(KnownFormats::SBML).unwrap();
         assert_eq!(entry.as_string().unwrap(), "<model>v1</model>");
+    }
+
+    #[test]
+    fn test_mandatory_entries_present_in_new_archive() {
+        let archive = CombineArchive::new();
+
+        // Check that mandatory entries are present
+        assert!(archive.has_entry("."));
+        assert!(archive.has_entry("./manifest.xml"));
+
+        // Check their formats
+        let entries = archive.list_entries();
+        let archive_entry = entries.iter().find(|e| e.location == ".").unwrap();
+        let manifest_entry = entries
+            .iter()
+            .find(|e| e.location == "./manifest.xml")
+            .unwrap();
+
+        assert_eq!(
+            archive_entry.format,
+            "http://identifiers.org/combine.specifications/omex"
+        );
+        assert_eq!(
+            manifest_entry.format,
+            "http://identifiers.org/combine.specifications/omex-manifest"
+        );
+
+        // Check they are not master files
+        assert!(!archive_entry.master);
+        assert!(!manifest_entry.master);
+
+        // Total should be exactly 2 entries
+        assert_eq!(archive.list_entries().len(), 2);
+    }
+
+    #[test]
+    fn test_mandatory_entries_cannot_be_removed() {
+        let mut archive = CombineArchive::new();
+
+        // Try to remove the archive self-reference
+        let result = archive.remove_entry(".");
+        assert!(matches!(
+            result,
+            Err(CombineArchiveError::CannotRemoveMandatoryEntry(_))
+        ));
+        if let Err(CombineArchiveError::CannotRemoveMandatoryEntry(location)) = result {
+            assert_eq!(location, ".");
+        }
+
+        // Try to remove the manifest reference
+        let result = archive.remove_entry("./manifest.xml");
+        assert!(matches!(
+            result,
+            Err(CombineArchiveError::CannotRemoveMandatoryEntry(_))
+        ));
+        if let Err(CombineArchiveError::CannotRemoveMandatoryEntry(location)) = result {
+            assert_eq!(location, "./manifest.xml");
+        }
+
+        // Entries should still be present
+        assert!(archive.has_entry("."));
+        assert!(archive.has_entry("./manifest.xml"));
+        assert_eq!(archive.list_entries().len(), 2);
+    }
+
+    #[test]
+    fn test_mandatory_entries_persist_after_save_and_load() {
+        let temp_dir = create_test_dir();
+        let archive_path = temp_dir.path().join("mandatory_test.omex");
+
+        // Create archive with user entry
+        let mut archive = CombineArchive::new();
+        archive
+            .add_entry(
+                "./user_file.txt",
+                "text/plain",
+                true,
+                b"user content".as_slice(),
+            )
+            .unwrap();
+
+        // Save to disk
+        archive.save(&archive_path).unwrap();
+
+        // Load and verify mandatory entries are still present
+        let loaded_archive = CombineArchive::open(&archive_path).unwrap();
+        assert!(loaded_archive.has_entry("."));
+        assert!(loaded_archive.has_entry("./manifest.xml"));
+        assert!(loaded_archive.has_entry("./user_file.txt"));
+        assert_eq!(loaded_archive.list_entries().len(), 3); // 2 mandatory + 1 user
+    }
+
+    #[test]
+    fn test_mandatory_entries_added_to_legacy_archives() {
+        // This test simulates opening an archive that was created before mandatory entries were implemented
+        // We can't easily test this with real data, but we test the logic in the open method
+        let temp_dir = create_test_dir();
+        let archive_path = temp_dir.path().join("legacy_test.omex");
+
+        // Create an archive manually with minimal manifest (simulating legacy archive)
+        let mut minimal_archive = CombineArchive {
+            manifest: OmexManifest::new(), // Start with truly empty manifest
+            path: None,
+            original_zip: None,
+            pending_entries: HashMap::new(),
+            removed_entries: std::collections::HashSet::new(),
+            needs_rebuild: false,
+        };
+
+        // Add only a user file (no mandatory entries)
+        minimal_archive
+            .manifest
+            .add_entry("./legacy_file.txt", "text/plain", true)
+            .unwrap();
+        minimal_archive
+            .pending_entries
+            .insert("legacy_file.txt".to_string(), b"legacy content".to_vec());
+
+        // Save this minimal archive
+        minimal_archive.save(&archive_path).unwrap();
+
+        // Now open it - the open method should add the missing mandatory entries
+        let loaded_archive = CombineArchive::open(&archive_path).unwrap();
+        assert!(loaded_archive.has_entry("."));
+        assert!(loaded_archive.has_entry("./manifest.xml"));
+        assert!(loaded_archive.has_entry("./legacy_file.txt"));
+        assert_eq!(loaded_archive.list_entries().len(), 3); // 2 mandatory + 1 legacy
+    }
+
+    #[test]
+    fn test_mandatory_entries_can_be_overwritten_but_not_removed() {
+        let mut archive = CombineArchive::new();
+
+        // Verify initial state
+        assert_eq!(archive.list_entries().len(), 2);
+        assert!(archive.has_entry("."));
+        assert!(archive.has_entry("./manifest.xml"));
+
+        // Try to overwrite the mandatory entries with different formats (should succeed)
+        archive
+            .add_entry(
+                ".",
+                "some-other-format",
+                false,
+                b"different data".as_slice(),
+            )
+            .unwrap();
+        archive
+            .add_entry(
+                "./manifest.xml",
+                "another-format",
+                false,
+                b"other data".as_slice(),
+            )
+            .unwrap();
+
+        // Should still have exactly 2 entries but with updated formats
+        assert_eq!(archive.list_entries().len(), 2);
+        assert!(archive.has_entry("."));
+        assert!(archive.has_entry("./manifest.xml"));
+
+        // Check that formats were actually updated
+        let entries = archive.list_entries();
+        let archive_entry = entries.iter().find(|e| e.location == ".").unwrap();
+        let manifest_entry = entries
+            .iter()
+            .find(|e| e.location == "./manifest.xml")
+            .unwrap();
+
+        assert_eq!(archive_entry.format, "some-other-format");
+        assert_eq!(manifest_entry.format, "another-format");
+
+        // But they cannot be removed
+        let result = archive.remove_entry(".");
+        assert!(matches!(
+            result,
+            Err(CombineArchiveError::CannotRemoveMandatoryEntry(_))
+        ));
+
+        let result = archive.remove_entry("./manifest.xml");
+        assert!(matches!(
+            result,
+            Err(CombineArchiveError::CannotRemoveMandatoryEntry(_))
+        ));
+
+        // Entries should still be present
+        assert!(archive.has_entry("."));
+        assert!(archive.has_entry("./manifest.xml"));
+        assert_eq!(archive.list_entries().len(), 2);
+    }
+
+    #[test]
+    fn test_mandatory_entries_with_user_content() {
+        let mut archive = CombineArchive::new();
+
+        // Add various user entries
+        archive
+            .add_entry(
+                "./model.sbml",
+                KnownFormats::SBML,
+                true,
+                b"<sbml/>".as_slice(),
+            )
+            .unwrap();
+        archive
+            .add_entry(
+                "./simulation.sedml",
+                KnownFormats::SEDML,
+                false,
+                b"<sedML/>".as_slice(),
+            )
+            .unwrap();
+        archive
+            .add_entry("./data.csv", "text/csv", false, b"x,y\n1,2".as_slice())
+            .unwrap();
+
+        // Should have 2 mandatory + 3 user = 5 total
+        assert_eq!(archive.list_entries().len(), 5);
+
+        // Mandatory entries should still be there
+        assert!(archive.has_entry("."));
+        assert!(archive.has_entry("./manifest.xml"));
+
+        // User entries should be there
+        assert!(archive.has_entry("./model.sbml"));
+        assert!(archive.has_entry("./simulation.sedml"));
+        assert!(archive.has_entry("./data.csv"));
+
+        // Remove user entries
+        archive.remove_entry("./model.sbml").unwrap();
+        archive.remove_entry("./simulation.sedml").unwrap();
+        archive.remove_entry("./data.csv").unwrap();
+
+        // Should only have mandatory entries left
+        assert_eq!(archive.list_entries().len(), 2);
+        assert!(archive.has_entry("."));
+        assert!(archive.has_entry("./manifest.xml"));
+    }
+
+    #[test]
+    fn test_to_bytes_includes_mandatory_entries() {
+        let mut archive = CombineArchive::new();
+        archive
+            .add_entry("./test.txt", "text/plain", true, b"test".as_slice())
+            .unwrap();
+
+        let bytes = archive.to_bytes().unwrap();
+        assert!(!bytes.is_empty());
+
+        // Write to file and read back to verify mandatory entries are included
+        let temp_dir = create_test_dir();
+        let temp_path = temp_dir.path().join("from_bytes_mandatory.omex");
+        std::fs::write(&temp_path, &bytes).unwrap();
+
+        let loaded = CombineArchive::open(&temp_path).unwrap();
+        assert!(loaded.has_entry("."));
+        assert!(loaded.has_entry("./manifest.xml"));
+        assert!(loaded.has_entry("./test.txt"));
+        assert_eq!(loaded.list_entries().len(), 3);
+    }
+
+    #[test]
+    fn test_open_archive_without_manifest_file() {
+        use std::io::Write;
+        use zip::{write::SimpleFileOptions, ZipWriter};
+
+        let temp_dir = create_test_dir();
+        let invalid_archive_path = temp_dir.path().join("invalid.omex");
+
+        // Create a ZIP file without manifest.xml
+        let file = std::fs::File::create(&invalid_archive_path).unwrap();
+        let mut writer = ZipWriter::new(file);
+        let options = SimpleFileOptions::default();
+
+        // Add some other file but no manifest.xml
+        writer.start_file("some_file.txt", options).unwrap();
+        writer
+            .write_all(b"This is not a valid OMEX archive")
+            .unwrap();
+        writer.finish().unwrap();
+
+        // Try to open it - should fail with ManifestFileMissing error
+        let result = CombineArchive::open(&invalid_archive_path);
+        assert!(matches!(
+            result,
+            Err(CombineArchiveError::ManifestFileMissing)
+        ));
     }
 }

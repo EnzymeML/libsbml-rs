@@ -32,4 +32,12 @@ pub enum CombineArchiveError {
     /// Attempted to save changes but no file path is available
     #[error("No file path specified for saving")]
     NoPath,
+
+    /// Attempted to remove a mandatory entry that must always be present
+    #[error("Cannot remove mandatory entry: {0}")]
+    CannotRemoveMandatoryEntry(String),
+
+    /// The manifest.xml file is missing from the archive
+    #[error("Manifest file (manifest.xml) is missing from the archive")]
+    ManifestFileMissing,
 }
