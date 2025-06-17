@@ -364,9 +364,9 @@ macro_rules! set_collection_annotation {
             ///
             /// # Returns
             /// Result indicating success or containing an error if the annotation is invalid
-            pub fn [<set_ $collection_name _annotation>](&'a self, annotation: &str) -> Result<(), Box<dyn Error>> {
+            pub fn [<set_ $collection_name _annotation>](&'a self, annotation: &str) -> Result<(), quick_xml::SeError> {
                 let collection = $collection_type::new(self);
-                collection.set_annotation(annotation)?;
+                collection.set_annotation(annotation).map_err(|e| SeError::Custom(e.to_string()))?;
                 Ok(())
             }
 
