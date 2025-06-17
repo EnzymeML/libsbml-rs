@@ -364,9 +364,9 @@ macro_rules! set_collection_annotation {
             ///
             /// # Returns
             /// Result indicating success or containing an error if the annotation is invalid
-            pub fn [<set_ $collection_name _annotation>](&'a self, annotation: &str) -> Result<(), quick_xml::SeError> {
+            pub fn [<set_ $collection_name _annotation>](&'a self, annotation: &str) -> Result<(), Box<dyn Error>> {
                 let collection = $collection_type::new(self);
-                collection.set_annotation(annotation).map_err(|e| SeError::Custom(e.to_string()))?;
+                collection.set_annotation(annotation)?;
                 Ok(())
             }
 
@@ -398,9 +398,9 @@ macro_rules! set_collection_annotation {
             ///
             /// # Returns
             /// Result indicating success or containing a serialization error
-            pub fn [<set_ $collection_name _annotation_serde>]<T: Serialize>(&'a self, annotation: &T) -> Result<(), Box<dyn Error>> {
+            pub fn [<set_ $collection_name _annotation_serde>]<T: Serialize>(&'a self, annotation: &T) -> Result<(), quick_xml::SeError> {
                 let collection = $collection_type::new(self);
-                collection.set_annotation_serde(annotation)?;
+                collection.set_annotation_serde(annotation).map_err(|e| SeError::Custom(e.to_string()))?;
                 Ok(())
             }
         }
