@@ -1101,6 +1101,26 @@ mod tests {
     }
 
     #[test]
+    fn test_get_complex_annotation() {
+        #[derive(Serialize, Deserialize)]
+        #[serde(rename = "customAnnotation")]
+        struct TestAnnotation {
+            test: String,
+        }
+
+        let doc = SBMLDocument::default();
+        let model = Model::new(&doc, "test");
+        model
+            .set_annotation(
+                "<customAnnotation><test>test</test></customAnnotation><test2>test2</test2>",
+            )
+            .unwrap();
+
+        let annotation: TestAnnotation = model.get_annotation_serde().unwrap();
+        assert_eq!(annotation.test, "test");
+    }
+
+    #[test]
     fn test_set_annotation_serde() {
         #[derive(Serialize, Deserialize)]
         struct TestAnnotation {
