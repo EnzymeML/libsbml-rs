@@ -5,7 +5,7 @@
 //! computational models in systems biology. An SBMLDocument is the root container
 //! for all SBML content.
 
-use std::{cell::RefCell, rc::Rc};
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use autocxx::WithinUniquePtr;
 use cxx::{let_cxx_string, UniquePtr};
@@ -16,7 +16,7 @@ use crate::{
     model::Model,
     namespaces::SBMLNamespaces,
     packages::{Package, PackageSpec},
-    pin_const_ptr,
+    pin_const_ptr, pin_ptr,
     prelude::SBMLErrorLog,
     sbmlcxx,
     traits::fromptr::FromPtr,
@@ -88,6 +88,73 @@ impl SBMLDocument {
     /// This is primarily for internal use by other parts of the API.
     pub(crate) fn inner(&self) -> &RefCell<UniquePtr<sbmlcxx::SBMLDocument>> {
         &self.document
+    }
+
+    /// Returns the XML namespaces defined in this SBML document.
+    ///
+    /// This method retrieves all namespace prefix-URI pairs that are defined
+    /// in the document's XML namespace declarations. This includes the core
+    /// SBML namespace as well as any package extension namespaces.
+    ///
+    /// # Returns
+    /// A HashMap where keys are namespace prefixes and values are namespace URIs.
+    /// An empty prefix string represents the default namespace.
+    pub fn namespaces(&self) -> HashMap<String, String> {
+        let ns_ptr = self.inner().borrow_mut().getNamespaces();
+        let namespaces = pin_ptr!(ns_ptr, sbmlcxx::XMLNamespaces);
+
+        let mut ns_map = HashMap::new();
+        let num_namespaces = namespaces.getNumNamespaces().into();
+        for i in 0..num_namespaces {
+            let prefix = namespaces.getPrefix(i.into());
+            let uri = namespaces.getURI(i.into());
+            ns_map.insert(prefix.to_string(), uri.to_string());
+        }
+
+        ns_map
+    }
+
+    /// Adds a namespace declaration to this SBML document.
+    ///
+    /// This method adds a new XML namespace prefix-URI pair to the document's
+    /// namespace declarations. This is useful when working with SBML package
+    /// extensions that require specific namespace declarations.
+    ///
+    /// # Arguments
+    /// * `prefix` - The namespace prefix to associate with the URI
+    /// * `uri` - The namespace URI to be declared
+    pub fn add_namespace(&self, prefix: &str, uri: &str) {
+        let ns_ptr = self.inner().borrow_mut().getNamespaces();
+        let mut namespaces = pin_ptr!(ns_ptr, sbmlcxx::XMLNamespaces);
+
+        let_cxx_string!(uri = uri);
+        namespaces.as_mut().add(&uri, prefix);
+    }
+
+    /// Removes a namespace declaration from this SBML document.
+    ///
+    /// This method removes an XML namespace prefix-URI pair from the document's
+    /// namespace declarations. This is useful when you need to clean up or modify
+    /// the namespace declarations in an SBML document.
+    ///
+    /// # Arguments
+    /// * `prefix` - The namespace prefix to remove from the document
+    ///
+    /// # Returns
+    /// Result indicating success or containing an error message if the removal failed
+    pub fn remove_namespace(&self, prefix: &str) -> Result<(), String> {
+        let ns_ptr = self.inner().borrow_mut().getNamespaces();
+        let mut namespaces = pin_ptr!(ns_ptr, sbmlcxx::XMLNamespaces);
+
+        let_cxx_string!(prefix_cpp = prefix);
+        let res = namespaces.as_mut().remove1(&prefix_cpp);
+
+        match res.0 {
+            n if n < 0 => Err(format!(
+                "The namespace '{prefix}' could not be removed. The prefix may not be present."
+            )),
+            _ => Ok(()),
+        }
     }
 
     /// Returns the SBML level of the document.
@@ -339,5 +406,46 @@ mod tests {
         // Test that the document doesn't have lifetime parameters
         let _xml = doc.to_xml_string();
         assert!(!_xml.is_empty());
+    }
+
+    #[test]
+    fn test_retrieve_namespaces() {
+        let doc = SBMLDocument::default();
+        assert!(!doc.namespaces().is_empty());
+        assert!(doc.namespaces().contains_key(""));
+        assert!(doc.namespaces().contains_key("fbc"));
+    }
+
+    #[test]
+    fn test_add_namespace() {
+        let doc = SBMLDocument::default();
+        doc.add_namespace("enzymeml", "https://www.enzymeml.org/version2");
+
+        // Check if the ns has been added
+        let namespaces = doc.namespaces();
+        assert!(namespaces.contains_key("enzymeml"));
+        assert_eq!(namespaces["enzymeml"], "https://www.enzymeml.org/version2");
+    }
+
+    #[test]
+    fn test_remove_namespace() {
+        let doc = SBMLDocument::default();
+        doc.add_namespace("enzymeml", "https://www.enzymeml.org/version2");
+
+        doc.remove_namespace("enzymeml")
+            .expect("Could not remove namespace");
+
+        // Check if the ns has been removed
+        let namespaces = doc.namespaces();
+        assert!(!namespaces.contains_key("enzymeml"));
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_remove_namespace_non_existent() {
+        let doc = SBMLDocument::default();
+
+        doc.remove_namespace("enzymeml")
+            .expect("Could not remove namespace");
     }
 }
