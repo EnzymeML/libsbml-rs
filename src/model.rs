@@ -739,7 +739,7 @@ impl<'a> FromPtr<sbmlcxx::Model> for Model<'a> {
             match rule.rule_type() {
                 Ok(RuleType::RateRule) => list_of_rate_rules.push(Rc::clone(&rule)),
                 Ok(RuleType::AssignmentRule) => list_of_assignment_rules.push(Rc::clone(&rule)),
-                Err(e) => println!("{}", e),
+                Err(e) => println!("{e}"),
             }
         }
 
@@ -1510,8 +1510,8 @@ mod tests {
         ];
 
         for (i, operation) in operations.iter().enumerate() {
-            let id = format!("f{}", i);
-            let reaction_id = format!("r{}", i);
+            let id = format!("f{i}");
+            let reaction_id = format!("r{i}");
             model
                 .create_flux_bound(id.as_str(), &reaction_id, *operation)
                 .expect("Failed to create flux bound");

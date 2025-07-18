@@ -216,7 +216,7 @@ impl FromStr for KnownFormats {
                 Ok(KnownFormats::TSV)
             }
             "https://purl.org/NET/mediatypes/text/csv" | "csv" => Ok(KnownFormats::CSV),
-            _ => Err(format!("Unknown format: {}", s)),
+            _ => Err(format!("Unknown format: {s}")),
         }
     }
 }

@@ -54,8 +54,7 @@ impl FromStr for ObjectiveType {
             "maximize" => Ok(ObjectiveType::Maximize),
             "minimize" => Ok(ObjectiveType::Minimize),
             _ => Err(LibSBMLError::InvalidArgument(format!(
-                "Invalid objective type: {}. Only 'maximize' and 'minimize' are supported.",
-                s
+                "Invalid objective type: {s}. Only 'maximize' and 'minimize' are supported."
             ))),
         }
     }

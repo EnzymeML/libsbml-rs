@@ -878,10 +878,10 @@ mod tests {
         for i in 1..=5 {
             archive
                 .add_entry(
-                    format!("./file{}.txt", i),
+                    format!("./file{i}.txt"),
                     "text/plain",
                     i == 1, // First file is master
-                    format!("Content of file {}", i).as_bytes(),
+                    format!("Content of file {i}").as_bytes(),
                 )
                 .unwrap();
         }
@@ -1111,10 +1111,10 @@ mod tests {
         for i in 0..100 {
             archive
                 .add_entry(
-                    format!("./file{:03}.txt", i),
+                    format!("./file{i:03}.txt"),
                     "text/plain",
                     i == 0, // First file is master
-                    format!("Content of file number {}", i).as_bytes(),
+                    format!("Content of file number {i}").as_bytes(),
                 )
                 .unwrap();
         }
@@ -1127,16 +1127,16 @@ mod tests {
 
         // Verify random entries
         for i in [0, 25, 50, 75, 99] {
-            let entry = loaded.entry(&format!("./file{:03}.txt", i)).unwrap();
+            let entry = loaded.entry(&format!("./file{i:03}.txt")).unwrap();
             assert_eq!(
                 entry.as_string().unwrap(),
-                format!("Content of file number {}", i)
+                format!("Content of file number {i}")
             );
         }
 
         // Remove half the entries
         for i in (0..100).step_by(2) {
-            loaded.remove_entry(&format!("./file{:03}.txt", i)).unwrap();
+            loaded.remove_entry(&format!("./file{i:03}.txt")).unwrap();
         }
 
         assert_eq!(loaded.list_entries().len(), 52);

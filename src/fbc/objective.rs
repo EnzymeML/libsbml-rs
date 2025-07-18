@@ -315,7 +315,7 @@ mod tests {
             .create_flux_objective("fo1", "reaction1", 2.5)
             .expect("Failed to create flux objective");
 
-        let debug_string = format!("{:?}", objective);
+        let debug_string = format!("{objective:?}");
         assert!(debug_string.contains("Objective"));
         assert!(debug_string.contains("debug_obj"));
         assert!(debug_string.contains("Minimize"));

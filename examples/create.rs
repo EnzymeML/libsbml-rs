@@ -56,7 +56,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let sbml_string = doc.to_xml_string();
 
     // Print the SBML string
-    println!("{}", sbml_string);
+    println!("{sbml_string}");
 
     // Save as a string to a file
     std::fs::write("./model.xml", &sbml_string).expect("Failed to write file");
