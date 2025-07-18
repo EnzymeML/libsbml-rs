@@ -25,3 +25,50 @@ impl<'a> ListOfRules<'a> {
 // Derive the inner type from the ListOfRules type
 inner!(sbmlcxx::ListOfRules, ListOfRules<'a>);
 upcast_annotation!(ListOfRules<'a>, sbmlcxx::ListOfRules, sbmlcxx::SBase);
+
+#[cfg(test)]
+mod tests {
+    use serde::{Deserialize, Serialize};
+
+    use crate::sbmldoc::SBMLDocument;
+
+    #[test]
+    fn test_list_of_rules_annotation_serde() {
+        let doc = SBMLDocument::default();
+        let model = doc.create_model("test");
+
+        #[derive(Serialize, Deserialize)]
+        struct TestAnnotation {
+            test: String,
+        }
+
+        let annotation = TestAnnotation {
+            test: "Test".to_string(),
+        };
+
+        model.set_rate_rules_annotation_serde(&annotation).unwrap();
+
+        let annotation: TestAnnotation = model.get_rate_rules_annotation_serde().unwrap();
+        assert_eq!(annotation.test, "Test");
+    }
+
+    #[test]
+    fn test_list_of_rules_annotation() {
+        let doc = SBMLDocument::default();
+        let model = doc.create_model("test");
+
+        let annotation = "<test>Test</test>";
+        model
+            .set_rate_rules_annotation(annotation)
+            .expect("Failed to set annotation");
+
+        let annotation = model.get_rate_rules_annotation();
+        assert_eq!(
+            annotation
+                .replace("\n", "")
+                .replace("\r", "")
+                .replace(" ", ""),
+            "<annotation><test>Test</test></annotation>"
+        );
+    }
+}

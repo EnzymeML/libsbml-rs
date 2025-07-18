@@ -93,8 +93,7 @@ impl FromStr for FluxBoundOperation {
             "equal" | "eq" => Ok(FluxBoundOperation::Equal),
             "unknown" => Ok(FluxBoundOperation::Unknown),
             _ => Err(LibSBMLError::InvalidArgument(format!(
-                "Invalid flux bound operation: {}. Only 'less_equal', 'greater_equal', 'less', 'greater', 'equal', and 'unknown' are supported.",
-                s
+                "Invalid flux bound operation: {s}. Only 'less_equal', 'greater_equal', 'less', 'greater', 'equal', and 'unknown' are supported."
             ))),
         }
     }

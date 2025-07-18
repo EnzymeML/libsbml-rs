@@ -33,3 +33,52 @@ upcast_annotation!(
     sbmlcxx::ListOfUnitDefinitions,
     sbmlcxx::SBase
 );
+
+#[cfg(test)]
+mod tests {
+    use serde::{Deserialize, Serialize};
+
+    use crate::sbmldoc::SBMLDocument;
+
+    #[test]
+    fn test_list_of_unitdefs_annotation_serde() {
+        let doc = SBMLDocument::default();
+        let model = doc.create_model("test");
+
+        #[derive(Serialize, Deserialize)]
+        struct TestAnnotation {
+            test: String,
+        }
+
+        let annotation = TestAnnotation {
+            test: "Test".to_string(),
+        };
+
+        model
+            .set_unit_definitions_annotation_serde(&annotation)
+            .unwrap();
+
+        let annotation: TestAnnotation = model.get_unit_definitions_annotation_serde().unwrap();
+        assert_eq!(annotation.test, "Test");
+    }
+
+    #[test]
+    fn test_list_of_unitdefs_annotation() {
+        let doc = SBMLDocument::default();
+        let model = doc.create_model("test");
+
+        let annotation = "<test>Test</test>";
+        model
+            .set_unit_definitions_annotation(annotation)
+            .expect("Failed to set annotation");
+
+        let annotation = model.get_unit_definitions_annotation();
+        assert_eq!(
+            annotation
+                .replace("\n", "")
+                .replace("\r", "")
+                .replace(" ", ""),
+            "<annotation><test>Test</test></annotation>"
+        );
+    }
+}

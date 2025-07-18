@@ -165,8 +165,8 @@ mod tests {
         let coefficients = [0.0, 1.0, -1.0, 2.5, -0.5, 100.0, -100.0];
 
         for (i, coefficient) in coefficients.iter().enumerate() {
-            let id = format!("fo{}", i);
-            let reaction_id = format!("reaction{}", i);
+            let id = format!("fo{i}");
+            let reaction_id = format!("reaction{i}");
 
             let flux_objective = FluxObjective::new(&objective, &id, &reaction_id, *coefficient)
                 .expect("Failed to create flux objective");
@@ -269,7 +269,7 @@ mod tests {
         let flux_objective = FluxObjective::new(&objective, "debug_test", "debug_reaction", 2.5)
             .expect("Failed to create flux objective");
 
-        let debug_string = format!("{:?}", flux_objective);
+        let debug_string = format!("{flux_objective:?}");
         assert!(debug_string.contains("FluxObjective"));
         assert!(debug_string.contains("debug_test"));
         assert!(debug_string.contains("debug_reaction"));

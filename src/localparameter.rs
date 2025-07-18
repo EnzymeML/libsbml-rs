@@ -20,12 +20,12 @@ use std::{cell::RefCell, pin::Pin, rc::Rc};
 use cxx::let_cxx_string;
 
 use crate::{
-    clone, inner, into_id, pin_ptr,
+    clone, get_unit_definition, inner, into_id, pin_ptr,
     prelude::KineticLaw,
     sbase,
     sbmlcxx::{self},
     sbo_term,
-    traits::fromptr::FromPtr,
+    traits::{fromptr::FromPtr, sbase::SBase},
     upcast, upcast_annotation, upcast_optional_property, upcast_pin, upcast_required_property,
 };
 
@@ -84,6 +84,9 @@ impl<'a> LocalParameter<'a> {
             inner: RefCell::new(local_parameter),
         }
     }
+
+    // Gets the unit definition for the local parameter
+    get_unit_definition!(units);
 
     // Getter and setter for id
     upcast_required_property!(
@@ -281,7 +284,7 @@ mod tests {
     use serde::{Deserialize, Serialize};
 
     use super::*;
-    use crate::{model::Model, prelude::Reaction, sbmldoc::SBMLDocument};
+    use crate::{model::Model, prelude::Reaction, sbmldoc::SBMLDocument, unit::UnitKind};
 
     #[test]
     fn test_parameter_creation() {
@@ -391,5 +394,66 @@ mod tests {
             .get_annotation_serde()
             .expect("Failed to get annotation");
         assert_eq!(extracted.test, "test");
+    }
+
+    #[test]
+    fn test_local_parameter_unit_definition() {
+        let doc = SBMLDocument::default();
+        let model = doc.create_model("test");
+
+        // Create the unit definition
+        model
+            .build_unit_definition("ml", "milliliter")
+            .unit(UnitKind::Litre, Some(-1), Some(-3), None, None)
+            .build();
+
+        model
+            .build_unit_definition("M", "Molar")
+            .unit(UnitKind::Mole, Some(1), Some(1), None, None)
+            .unit(UnitKind::Litre, Some(-1), Some(1), None, None)
+            .build();
+
+        model
+            .build_compartment("compartment")
+            .unit("ml")
+            .constant(true)
+            .build();
+
+        let substrate = model.build_species("substrate").build();
+        let product = model.build_species("product").build();
+
+        let reaction = model
+            .build_reaction("reaction")
+            .reactant(&substrate, 1.0)
+            .product(&product, 1.0)
+            .build();
+
+        let kinetic_law = reaction.create_kinetic_law("k1 * substrate");
+        let local_parameter = kinetic_law.build_local_parameter("k1").units("M").build();
+
+        let valid = doc.check_consistency();
+
+        if !valid.valid {
+            println!("{:#?}", valid.errors);
+            panic!("Invalid SBML document");
+        }
+
+        let unit_definition = local_parameter.unit_definition().unwrap();
+        assert_eq!(unit_definition.id(), "M");
+        assert_eq!(unit_definition.units().len(), 2);
+
+        // Mole
+        assert_eq!(unit_definition.units()[0].kind(), UnitKind::Mole);
+        assert_eq!(unit_definition.units()[0].exponent(), 1);
+        assert_eq!(unit_definition.units()[0].scale(), 1);
+        assert_eq!(unit_definition.units()[0].multiplier(), 1.0);
+        assert_eq!(unit_definition.units()[0].offset(), 0.0);
+
+        // Litre
+        assert_eq!(unit_definition.units()[1].kind(), UnitKind::Litre);
+        assert_eq!(unit_definition.units()[1].exponent(), -1);
+        assert_eq!(unit_definition.units()[1].scale(), 1);
+        assert_eq!(unit_definition.units()[1].multiplier(), 1.0);
+        assert_eq!(unit_definition.units()[1].offset(), 0.0);
     }
 }

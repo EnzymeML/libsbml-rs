@@ -126,7 +126,7 @@ fn setup_vcpkg() -> Result<vcpkg::Library, BuilderError> {
 /// * `cargo_metadata` - A slice of strings containing cargo metadata directives
 fn link_lib(cargo_metadata: &[String]) {
     for metadata in cargo_metadata {
-        println!("{}", metadata);
+        println!("{metadata}");
     }
 }
 
@@ -169,7 +169,7 @@ fn from_pkg_config(pkg_config: &str) -> Result<(Vec<PathBuf>, Vec<String>), Stri
 
     let mut cargo_metadata = Vec::new();
     for lib in lib.libs {
-        cargo_metadata.push(format!("cargo:rustc-link-lib={}", lib));
+        cargo_metadata.push(format!("cargo:rustc-link-lib={lib}"));
     }
 
     Ok((lib.include_paths.clone(), cargo_metadata))

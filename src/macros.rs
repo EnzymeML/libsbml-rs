@@ -398,9 +398,9 @@ macro_rules! set_collection_annotation {
             ///
             /// # Returns
             /// Result indicating success or containing a serialization error
-            pub fn [<set_ $collection_name _annotation_serde>]<T: Serialize>(&'a self, annotation: &T) -> Result<(), Box<dyn Error>> {
+            pub fn [<set_ $collection_name _annotation_serde>]<T: Serialize>(&'a self, annotation: &T) -> Result<(), quick_xml::SeError> {
                 let collection = $collection_type::new(self);
-                collection.set_annotation_serde(annotation)?;
+                collection.set_annotation_serde(annotation).map_err(|e| SeError::Custom(e.to_string()))?;
                 Ok(())
             }
         }
@@ -443,7 +443,7 @@ macro_rules! get_unit_definition {
     ($property:ident) => {
         pub fn unit_definition(&self) -> Option<Rc<$crate::unitdef::UnitDefinition<'a>>> {
             let model_ptr = self.base().getModel();
-            let model = Model::from_ptr(model_ptr as *mut $crate::sbmlcxx::Model);
+            let model = $crate::model::Model::from_ptr(model_ptr as *mut $crate::sbmlcxx::Model);
 
             if let Some(unit) = self.$property() {
                 model.get_unit_definition(&unit)

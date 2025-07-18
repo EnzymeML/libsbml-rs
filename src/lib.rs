@@ -145,6 +145,7 @@ pub use traits::annotation::Annotation;
 
 /// Prelude module providing convenient imports of commonly used types
 pub mod prelude {
+    pub use crate::combine::combinearchive::*;
     pub use crate::compartment::Compartment;
     pub use crate::fbc::*;
     pub use crate::kineticlaw::*;
@@ -163,6 +164,14 @@ pub mod prelude {
     pub use crate::traits::intoid::*;
     pub use crate::unit::*;
     pub use crate::unitdef::*;
+}
+
+pub mod combine {
+    pub use crate::combine::combinearchive::*;
+    pub use crate::combine::manifest::KnownFormats;
+    pub mod combinearchive;
+    pub mod error;
+    pub mod manifest;
 }
 
 /// Internal module containing the raw FFI bindings to libSBML.

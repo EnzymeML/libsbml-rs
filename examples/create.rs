@@ -1,4 +1,4 @@
-use sbml::{prelude::*, unit::UnitKind};
+use sbml::{combine::KnownFormats, prelude::*, unit::UnitKind};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let doc = SBMLDocument::default();
@@ -56,7 +56,24 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let sbml_string = doc.to_xml_string();
 
     // Print the SBML string
-    println!("{}", sbml_string);
+    println!("{sbml_string}");
+
+    // Save as a string to a file
+    std::fs::write("./model.xml", &sbml_string).expect("Failed to write file");
+
+    // Alternatively, save in a COMBINE archive
+    let mut archive = CombineArchive::new();
+    archive
+        .add_entry(
+            "./model.xml",
+            KnownFormats::SBML,
+            true,
+            sbml_string.as_bytes(),
+        )
+        .expect("Failed to add entry to archive");
+    archive
+        .save("./model.omex")
+        .expect("Failed to save archive");
 
     Ok(())
 }

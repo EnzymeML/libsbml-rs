@@ -17,9 +17,10 @@ crate-type = ["staticlib", "rlib"]
 autocxx = "0.28.0"
 cxx = "1.0.140"
 paste = "1.0.15"
-quick-xml = { version = "0.37.2", features = ["serialize"] }
+quick-xml = { version = "0.38.0", features = ["serialize"] }
 serde = { version = "1.0.217", features = ["derive"] }
 thiserror = "2.0.12"
+zip = "4.0.0"
 
 [build-dependencies]
 autocxx-build = "0.28.0"
@@ -31,6 +32,7 @@ vcpkg = "0.2.15"
 [dev-dependencies]
 insta = "1.43.1"
 pretty_assertions = "1.4.1"
+tempfile = "3.20.0"
 
 [lints.clippy]
 needless-lifetimes = "allow"

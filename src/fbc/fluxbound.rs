@@ -169,8 +169,8 @@ mod tests {
         ];
 
         for (i, operation) in operations.iter().enumerate() {
-            let id = format!("fb{}", i);
-            let reaction_id = format!("reaction{}", i);
+            let id = format!("fb{i}");
+            let reaction_id = format!("reaction{i}");
 
             let flux_bound = FluxBound::new(&model, &id, &reaction_id, *operation)
                 .expect("Failed to create flux bound");
@@ -267,7 +267,7 @@ mod tests {
         )
         .expect("Failed to create flux bound");
 
-        let debug_string = format!("{:?}", flux_bound);
+        let debug_string = format!("{flux_bound:?}");
         assert!(debug_string.contains("FluxBound"));
         assert!(debug_string.contains("debug_test"));
         assert!(debug_string.contains("debug_reaction"));
